@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RangeOps target mark">
+  <rect width="512" height="512" rx="112" fill="#123c31"/>
+  <circle cx="256" cy="256" r="142" fill="none" stroke="#e7c86e" stroke-width="28"/>
+  <circle cx="256" cy="256" r="72" fill="#f8f5e9"/>
+  <path d="M256 84v58M256 370v58M84 256h58M370 256h58" fill="none" stroke="#e7c86e" stroke-linecap="round" stroke-width="28"/>
+  <circle cx="256" cy="256" r="22" fill="#df6b4e"/>
+</svg>
