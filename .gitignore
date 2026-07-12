@@ -82,6 +82,7 @@ out
 .nuxt
 dist
 .output
+.DS_Store
 
 # Gatsby files
 .cache/
