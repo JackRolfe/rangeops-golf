@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 490" font-family="Helvetica, Arial, sans-serif" font-size="13" role="img" aria-label="Mulligan: gate detail">
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 10 5 0 9z" fill="#56655b"/></marker>
+  <pattern id="grass" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v8" stroke="#1d5a39" stroke-width="1.2" opacity=".5"/></pattern>
+</defs>
+<rect width="940" height="490" fill="#ffffff"/>
+<text x="24" y="34" font-size="18" font-weight="700" fill="#14211a">Mulligan: gate detail</text>
+<rect x="110" y="410" width="800" height="14" fill="url(#grass)"/>
+<path d="M110 410L910 410" fill="none" stroke="#1d5a39" stroke-width="2"/>
+<path d="M470 362L870 362L870 170L470 170z" fill="#14211a" stroke="#56655b" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".06" stroke-dasharray="6 4"/>
+<circle cx="498.2" cy="324.6" r="85.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<path d="M470 162L470 378" fill="none" stroke="#1d5a39" stroke-width="4" stroke-dasharray="8 6" opacity=".75"/>
+<circle cx="460" cy="230" r="6" fill="#14211a" stroke="#14211a" stroke-width="1.6"/>
+<path d="M470 162L611.7 325" fill="none" stroke="#1d5a39" stroke-width="6" stroke-linecap="round"/>
+<circle cx="470" cy="162" r="6" fill="#14211a" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="248.6" cy="324.6" r="85.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6" fill-opacity=".45" stroke-dasharray="5 3"/>
+<path d="M158 324.6H222" stroke="#56655b" stroke-width="1.4" marker-end="url(#a)" fill="none"/>
+<path d="M630 82L470 162" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="470" cy="162" r="2.4" fill="#56655b"/>
+<text x="636" y="86" text-anchor="start" fill="#14211a">Hinge rod, 3 mm</text>
+<path d="M310 98L460 230" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="460" cy="230" r="2.4" fill="#56655b"/>
+<text x="304" y="102" text-anchor="end" fill="#14211a">Stop rod: flaps cannot swing out</text>
+<path d="M718 146L566 274" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="566" cy="274" r="2.4" fill="#56655b"/>
+<text x="724" y="150" text-anchor="start" fill="#14211a">Flap riding over a ball</text>
+<path d="M302 202L470 354" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="470" cy="354" r="2.4" fill="#56655b"/>
+<text x="296" y="206" text-anchor="end" fill="#14211a">Flap at rest</text>
+<path d="M750 274L710 210" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="710" cy="210" r="2.4" fill="#56655b"/>
+<text x="756" y="278" text-anchor="start" fill="#14211a">Pen rail</text>
+<path d="M470 410H902M470 162H902" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M902 410V162" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="896" y="290" text-anchor="end" fill="#56655b">62</text>
+<path d="M470 410H422M470 378H422" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M422 410V378" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="416" y="398" text-anchor="end" fill="#56655b">8</text>
+<path d="M710 410H854M710 362H854" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M854 410V362" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="848" y="390" text-anchor="end" fill="#56655b">12</text>
+<path d="M412.8 410V450M583.6 410V450" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M412.8 450H583.6" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="498.2" y="445" text-anchor="middle" fill="#56655b">ball ⌀42.7</text>
+<text x="24" y="56" fill="#56655b">Section through the gate, four times size. Outside is to the left; the robot drives left. Dimensions in millimetres.</text>
+</svg>

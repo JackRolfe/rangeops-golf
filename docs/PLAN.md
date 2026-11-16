@@ -110,13 +110,13 @@ Done when: the pilot range can run a day without asking us for anything.
 
 ## The robot
 
-Summarised here; the detail is in [robot/README.md](../robot/README.md).
+Summarised here. The build plan is in [robot/README.md](../robot/README.md) and the design, with drawings and a parts list, is in [robot/DESIGN.md](../robot/DESIGN.md).
 
 | Stage | What it is | Proves |
 | --- | --- | --- |
 | R0 | Bench rover: a driven chassis, firmware, Bluetooth link | Hold-to-drive, stop on lost signal, speed cap, runtime estimate |
 | R1 | Pickup: the ball corral on the rover, on real grass | It collects and carries ten balls and comes home |
-| R2 | Lane limit and dock | It stays in its lane and within 30 m, and charges at the bay |
+| R2 | Lane limit and dock | It stays in its lane and within 30 m, and re-zeros its position at the bay |
 | R3 | Pilot build: shell, flag, strike protection, a few units | It survives a range and a week of children |
 
 ## Order of work

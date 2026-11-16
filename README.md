@@ -9,7 +9,7 @@ This repository holds all of it: the app, the site, the robot and the plan.
 | Product | What it is | Where | Status |
 | --- | --- | --- | --- |
 | RangeOps app | The phone app golfers and families use. Practice tracking today; games, driving the robot, booking and buying balls to come. | [apps/player](apps/player) | Practice tracking is [live](https://jackrolfe.github.io/rangeops-golf/app/). The rest is planned. |
-| Mulligan | The robot. A knee-high buggy a child drives from the app to scoop up topped shots and bring them back to the bay. | [robot](robot) | Not built yet. Build plan written. |
+| Mulligan | The robot. A knee-high buggy a child drives from the app to scoop up topped shots and bring them back to the bay. | [robot](robot) | Not built yet. Designed on paper, with a build plan. |
 | Range console | The range owner's side: bays, prices, bookings, bucket codes and the robot fleet. | not started | Planned, after the robot and games. |
 | Site | The public page that explains the offering, with a working demo of where the app is heading. | [apps/site](apps/site) | [Live](https://jackrolfe.github.io/rangeops-golf/) as a concept preview. |
 
@@ -19,6 +19,7 @@ This repository holds all of it: the app, the site, the robot and the plan.
 
 - [docs/PLAN.md](docs/PLAN.md) covers what gets built, in what order, and the decisions still open.
 - [robot/README.md](robot/README.md) is the robot build plan: target spec, subsystems, build stages and the draft control link.
+- [robot/DESIGN.md](robot/DESIGN.md) is the robot design: dimensions, drawings, sizing, electronics and a parts list.
 
 ## Layout
 
@@ -26,7 +27,7 @@ This repository holds all of it: the app, the site, the robot and the plan.
 apps/player      the RangeOps app (React, Vite, offline-capable PWA)
 apps/site        the site (one HTML page with its demo inline)
 packages/brand   brand colours and type, shared by the app and the site
-robot            the Mulligan build plan; firmware and CAD will live here
+robot            the Mulligan build plan and design; firmware and CAD will live here
 docs             the product and build plan
 scripts          the build that assembles everything into dist/
 ```
