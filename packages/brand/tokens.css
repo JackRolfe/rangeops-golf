@@ -1,0 +1,15 @@
+/* RangeOps brand tokens.
+   The site and the app both read their brand colours and type from here, so a change
+   to the brand is one edit. Each surface keeps its own neutrals and layout tokens and
+   maps its brand slots onto these. */
+:root {
+  --ro-turf: #1d5a39;       /* brand green: headers, primary actions */
+  --ro-turf-deep: #123f28;  /* pressed states, deep bands, the app icon */
+  --ro-ball: #f3cf2e;       /* range-ball yellow: targets, highlights */
+  --ro-on-ball: #1b1a05;    /* text on yellow */
+  --ro-flag: #dc4a2c;       /* flag red: the robot, misses, destructive actions */
+
+  --ro-font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --ro-font-body: "Figtree Variable", "Figtree", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --ro-font-sign: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+}

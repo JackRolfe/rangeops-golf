@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// start_url and scope are left to the plugin so they follow Vite's base: the app
+// runs at / in development and at /app/ inside the full RangeOps build.
 export default defineConfig({
   plugins: [
     react(),
@@ -12,12 +14,10 @@ export default defineConfig({
         name: 'RangeOps',
         short_name: 'RangeOps',
         description: 'Track where every range shot lands and measure your accuracy over time.',
-        theme_color: '#123c31',
+        theme_color: '#123f28',
         background_color: '#f3f0e6',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
         icons: [
           {
             src: 'favicon.svg',

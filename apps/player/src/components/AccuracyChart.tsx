@@ -80,8 +80,8 @@ export function AccuracyChart({
       <title>{ariaLabel}</title>
       <defs>
         <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#064f36" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#064f36" stopOpacity="0.01" />
+          <stop offset="0%" stopColor="var(--forest)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--forest)" stopOpacity="0.01" />
         </linearGradient>
       </defs>
 
@@ -119,7 +119,7 @@ export function AccuracyChart({
             cx={PLOT_LEFT + plotWidth / 2}
             cy={PLOT_TOP + plotHeight / 2 - 9}
             r="3"
-            fill="#064f36"
+            fill="var(--forest)"
           />
           <text
             x={PLOT_LEFT + plotWidth / 2}
@@ -139,7 +139,7 @@ export function AccuracyChart({
             <path
               d={linePath}
               fill="none"
-              stroke="#064f36"
+              stroke="var(--forest)"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -164,11 +164,11 @@ export function AccuracyChart({
                   cy={point.y}
                   r="5.5"
                   fill="#fffdf7"
-                  stroke="#064f36"
+                  stroke="var(--forest)"
                   strokeWidth="2.5"
                   vectorEffect="non-scaling-stroke"
                 />
-                <circle cx={point.x} cy={point.y} r="2" fill="#064f36" />
+                <circle cx={point.x} cy={point.y} r="2" fill="var(--forest)" />
                 {shouldShowLabel ? (
                   <text
                     x={point.x}

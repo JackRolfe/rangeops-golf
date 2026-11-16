@@ -1,0 +1,9 @@
+{
+  "name": "@rangeops/brand",
+  "private": true,
+  "version": "0.1.0",
+  "description": "RangeOps brand tokens: the one place the palette and type are defined.",
+  "exports": {
+    "./tokens.css": "./tokens.css"
+  }
+}

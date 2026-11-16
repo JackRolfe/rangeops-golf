@@ -1,0 +1,20 @@
+{
+  "name": "rangeops",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "RangeOps: the driving range app, the Mulligan ball-fetching robot, and the site that sells both.",
+  "workspaces": [
+    "apps/player",
+    "packages/brand"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @rangeops/player",
+    "build": "node scripts/build.mjs",
+    "build:site": "node scripts/build.mjs --site-only",
+    "preview": "vite preview --outDir dist",
+    "typecheck": "npm run typecheck -w @rangeops/player",
+    "test": "npm test -w @rangeops/player",
+    "test:e2e": "npm run test:e2e -w @rangeops/player"
+  }
+}

@@ -3,28 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Mulligan is a little remote-control robot that fetches short shots at the driving range, with an app to drive it, play target games, book a bay and buy balls.">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Mulligan Range Robot</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>RangeOps: the driving range app and its ball-fetching robot</title>
+<meta name="description" content="RangeOps is one app for a trip to the driving range: book a bay, buy a bucket, play target games and track your accuracy. Mulligan, its remote-control robot, fetches the short shots so juniors can hit them again.">
+<meta name="theme-color" content="#1d5a39">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:wght@400;500;600;700&display=swap">
+<!-- Brand colours and type come from packages/brand/tokens.css; the build copies it next to this page. -->
+<link rel="stylesheet" href="brand/tokens.css">
 <style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
 /* Layout: a driving-range lane seen from the bay. A full-width turf band opens with the pitch
    and a working phone; quieter chalk sections follow, with one deep-green band for safety. */
 :root{
   --bg:#f2f5ef; --surface:#ffffff; --surface-2:#e6ece2; --fg:#14211a; --muted:#56655b; --line:#d3dbcf;
-  --turf:#1d5a39; --turf-2:#1a5335; --turf-deep:#123f28; --on-turf:#f1f6ee; --on-turf-muted:#bcd3c2;
-  --ball:#f3cf2e; --on-ball:#1b1a05; --flag:#dc4a2c; --accent-text:#1d5a39;
+  --turf:var(--ro-turf); --turf-2:#1a5335; --turf-deep:var(--ro-turf-deep); --on-turf:#f1f6ee; --on-turf-muted:#bcd3c2;
+  --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:var(--ro-flag); --accent-text:var(--ro-turf);
   --device:#101411; --device-edge:#2a322c; --tyre:#1c2420; --hub:#8a968d;
-  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
-  --body:"Figtree","Helvetica Neue","Segoe UI",system-ui,sans-serif;
-  --sign:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --display:var(--ro-font-display);
+  --body:var(--ro-font-body);
+  --sign:var(--ro-font-sign);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0d1711; --surface:#15231b; --surface-2:#1c2e24; --fg:#e7efe8; --muted:#9db0a3; --line:#2a4135;
     --turf:#184c30; --turf-2:#16462c; --turf-deep:#0f3521; --on-turf:#f1f6ee; --on-turf-muted:#b3ccba;
-    --ball:#f3cf2e; --on-ball:#1b1a05; --flag:#e25a3c; --accent-text:#8fd3a6;
+    --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:#e25a3c; --accent-text:#8fd3a6;
     --device:#050706; --device-edge:#33403a; --tyre:#0c110e; --hub:#7d8a81;
     color-scheme:dark;
   }
@@ -32,7 +38,7 @@
 :root[data-theme="dark"]{
   --bg:#0d1711; --surface:#15231b; --surface-2:#1c2e24; --fg:#e7efe8; --muted:#9db0a3; --line:#2a4135;
   --turf:#184c30; --turf-2:#16462c; --turf-deep:#0f3521; --on-turf:#f1f6ee; --on-turf-muted:#b3ccba;
-  --ball:#f3cf2e; --on-ball:#1b1a05; --flag:#e25a3c; --accent-text:#8fd3a6;
+  --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:#e25a3c; --accent-text:#8fd3a6;
   --device:#050706; --device-edge:#33403a; --tyre:#0c110e; --hub:#7d8a81;
   color-scheme:dark;
 }
@@ -71,6 +77,8 @@ h3{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.2}
 .btn-ball:hover{filter:brightness(1.06)}
 .btn-line{border-color:var(--on-turf-muted);color:var(--on-turf)}
 .btn-line:hover{border-color:var(--on-turf)}
+.btn-quiet{border-color:var(--line);color:var(--fg)}
+.btn-quiet:hover{border-color:var(--muted)}
 .facts{display:flex;flex-wrap:wrap;gap:10px 28px;padding-top:8px;border-top:1px solid rgba(241,246,238,.22)}
 .facts li{display:flex;align-items:baseline;gap:8px;color:var(--on-turf-muted);font-size:.98rem}
 .facts b{font-family:var(--sign);font-weight:700;font-size:1.7rem;color:var(--on-turf);letter-spacing:.01em}
@@ -226,11 +234,13 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   .spec dd{font-size:1.4rem}
 }
 </style>
+</head>
+<body>
 
 <header class="hero">
   <div class="wrap">
     <div class="top">
-      <a class="brand" href="#top" id="top"><i></i>Mulligan</a>
+      <a class="brand" href="#top" id="top"><i></i>RangeOps</a>
       <nav class="nav" aria-label="Sections">
         <a href="#how">How it works</a>
         <a href="#games">Games</a>
@@ -241,16 +251,16 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 
     <div class="hero-grid">
       <div class="hero-copy">
-        <h1>Every duffed shot gets a <em>second go.</em></h1>
-        <p>Mulligan is a little remote-control robot that lives at your bay. Kids drive it out from a phone or iPad, scoop up the short ones and bring them back to hit again. The same app books the bay, pays for the bucket and turns practice into a game.</p>
+        <h1>More swings out of <em>every bucket.</em></h1>
+        <p>RangeOps is one app for a trip to the driving range. Book a bay, buy a bucket, play target games and watch your accuracy improve. Add Mulligan, the little robot kids drive out from a phone to fetch the short ones, and every duffed shot gets a second go.</p>
         <div class="cta-row">
-          <a class="btn btn-ball" href="#app">Try driving it</a>
-          <a class="btn btn-line" href="#ranges">For range owners</a>
+          <a class="btn btn-ball" href="#app">Try the demo</a>
+          <a class="btn btn-line" href="app/">Open the practice app</a>
         </div>
         <ul class="facts">
-          <li><b>10</b> balls a trip</li>
-          <li><b>30 m</b> reach from the bay</li>
-          <li><b>4 km/h</b> walking pace</li>
+          <li><b>Live</b> practice tracker</li>
+          <li><b>In build</b> Mulligan robot</li>
+          <li><b>Next</b> booking and balls</li>
         </ul>
       </div>
 
@@ -352,7 +362,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
             </div>
           </div>
         </div>
-        <small>Everything in the phone works. Tap its tabs to switch screens.</small>
+        <small>A demo of where the app is heading. Everything in the phone works; tap its tabs to switch screens.</small>
       </div>
     </div>
   </div>
@@ -417,7 +427,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
         </li>
       </ul>
       <p class="lead" style="margin-top:32px">And when one dribbles off the tee, Mulligan fetches it for another try.</p>
-      <p style="margin-top:20px"><button type="button" class="btn btn-turf" data-go="games">Play Bullseye in the app</button></p>
+      <p class="lead" style="margin-top:12px">Target practice and accuracy history already work in the practice app. Shrink the Ring comes next.</p>
+      <p class="cta-row" style="margin-top:20px"><button type="button" class="btn btn-turf" data-go="games">Play Bullseye in the demo</button><a class="btn btn-quiet" href="app/">Open the practice app</a></p>
     </div>
   </section>
 
@@ -448,7 +459,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
         <circle class="r-tyre" cx="336" cy="198" r="32"/><circle class="r-hub" cx="336" cy="198" r="12"/>
       </svg>
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">The robot</span>
+        <span class="label" style="color:var(--accent-text)">Mulligan, the robot</span>
         <h2>Small, low and built to take a hit.</h2>
         <p class="lead">A knee-high buggy with chunky tyres for range grass, a bright flag so everyone can see it, and a ball corral with no motors in it.</p>
         <dl class="spec">
@@ -486,7 +497,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
         <div class="stack">
           <span class="label" style="color:var(--accent-text)">For range owners</span>
           <h2>What it does for the range.</h2>
-          <p class="lead">Mulligan makes a family hour at the range go further, without changing how the range runs.</p>
+          <p class="lead">RangeOps makes a family hour at the range go further, without changing how the range runs.</p>
         </div>
         <ul class="rows">
           <li><h3>Nobody walks onto the grass</h3><p>The robot fetches the short ones, so kids stay behind the line.</p></li>
@@ -500,16 +511,16 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
       <div class="pilot">
         <div class="stack">
           <h2 style="font-size:clamp(1.5rem,3vw,2rem)">We're looking for our first range.</h2>
-          <p>Mulligan is at prototype stage. We'd like to run a pilot on a couple of bays at one range, and shape the booking side around how that range really works.</p>
+          <p>The practice tracker works today. The robot is being built, and booking and payments come after it. We'd like to run a pilot on a couple of bays at one range, and shape the booking side around how that range really works.</p>
         </div>
-        <a class="btn" href="#app">Try the app again</a>
+        <a class="btn" href="#app">Try the demo again</a>
       </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap"><span>Mulligan, the range robot</span><span>Concept preview</span></div>
+  <div class="wrap"><span>RangeOps, the range app, and Mulligan, its robot</span><span>Concept preview. Prices and robot specs are placeholders.</span></div>
 </footer>
 
 <script>
