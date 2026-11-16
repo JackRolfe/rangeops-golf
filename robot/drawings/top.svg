@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 680" font-family="Helvetica, Arial, sans-serif" font-size="13" role="img" aria-label="Mulligan: top view">
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 10 5 0 9z" fill="#56655b"/></marker>
+  <pattern id="grass" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v8" stroke="#1d5a39" stroke-width="1.2" opacity=".5"/></pattern>
+</defs>
+<rect width="1040" height="680" fill="#ffffff"/>
+<text x="24" y="34" font-size="18" font-weight="700" fill="#14211a">Mulligan: top view</text>
+<path d="M95 127.5L245 127.5L245 172.5L95 172.5z" fill="#1c2420" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".9"/>
+<path d="M95 507.5L245 507.5L245 552.5L95 552.5z" fill="#1c2420" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".9"/>
+<path d="M355 127.5L505 127.5L505 172.5L355 172.5z" fill="#1c2420" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".9"/>
+<path d="M355 507.5L505 507.5L505 552.5L355 552.5z" fill="#1c2420" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".9"/>
+<path d="M100 177.5L500 177.5L500 502.5L100 502.5z" fill="#e6ece2" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M93 178L507 178L507 502L93 502z" fill="#dc4a2c" stroke="#dc4a2c" stroke-width="2.2" stroke-linejoin="round" fill-opacity=".14"/>
+<path d="M292.9 276L307.1 276L307.1 404L292.9 404z" fill="none" stroke="#dc4a2c" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M93 178L292.9 276" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M93 502L292.9 404" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M507 178L307.1 276" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M507 502L307.1 404" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M235 300L365 300L365 380L235 380z" fill="none" stroke="#56655b" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="6 4"/>
+<circle cx="180" cy="340" r="5" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<path d="M505 190L695 190L695 180L505 180z" fill="#14211a" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".1"/>
+<path d="M695 185L775 130" fill="none" stroke="#14211a" stroke-width="3"/>
+<path d="M647 178L695 178L695 164L647 164z" fill="#56655b" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M505 490L695 490L695 500L505 500z" fill="#14211a" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".1"/>
+<path d="M695 495L775 550" fill="none" stroke="#14211a" stroke-width="3"/>
+<path d="M647 502L695 502L695 516L647 516z" fill="#56655b" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M505 180L515 180L515 500L505 500z" fill="#14211a" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".1"/>
+<path d="M500 220L505 220" fill="none" stroke="#14211a" stroke-width="1.6"/>
+<path d="M500 460L505 460" fill="none" stroke="#14211a" stroke-width="1.6"/>
+<path d="M692 192.5L698 192.5L698 207.5L692 207.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 212.5L698 212.5L698 227.5L692 227.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 232.5L698 232.5L698 247.5L692 247.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 252.5L698 252.5L698 267.5L692 267.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 272.5L698 272.5L698 287.5L692 287.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 292.5L698 292.5L698 307.5L692 307.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 312.5L698 312.5L698 327.5L692 327.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 332.5L698 332.5L698 347.5L692 347.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 352.5L698 352.5L698 367.5L692 367.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 372.5L698 372.5L698 387.5L692 387.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 392.5L698 392.5L698 407.5L692 407.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 412.5L698 412.5L698 427.5L692 427.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 432.5L698 432.5L698 447.5L692 447.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 452.5L698 452.5L698 467.5L692 467.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M692 472.5L698 472.5L698 487.5L692 487.5z" fill="#1d5a39" stroke="none" stroke-width="1.6" stroke-linejoin="round"/>
+<circle cx="545" cy="230" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="549" cy="290" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="543" cy="360" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="551" cy="430" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="597" cy="218" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="601" cy="270" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="595" cy="328" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="603" cy="392" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="599" cy="458" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="647" cy="310" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<circle cx="845" cy="380" r="21.4" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
+<path d="M270 90L240 230" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="240" cy="230" r="2.4" fill="#56655b"/>
+<text x="276" y="94" text-anchor="start" fill="#14211a">Shell</text>
+<path d="M360 595L320 360" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="320" cy="360" r="2.4" fill="#56655b"/>
+<text x="366" y="599" text-anchor="start" fill="#14211a">Battery</text>
+<path d="M150 595L180 340" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="180" cy="340" r="2.4" fill="#56655b"/>
+<text x="144" y="599" text-anchor="end" fill="#14211a">Flag mast</text>
+<path d="M800 90L695 300" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="695" cy="300" r="2.4" fill="#56655b"/>
+<text x="806" y="94" text-anchor="start" fill="#14211a">Gate: 15 flaps</text>
+<path d="M860 140L755 144" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="755" cy="144" r="2.4" fill="#56655b"/>
+<text x="866" y="144" text-anchor="start" fill="#14211a">Funnel wing</text>
+<path d="M800 595L671 509" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="671" cy="509" r="2.4" fill="#56655b"/>
+<text x="806" y="599" text-anchor="start" fill="#14211a">Skid</text>
+<path d="M600 595L575 490" stroke="#56655b" stroke-width="1" fill="none"/><circle cx="575" cy="490" r="2.4" fill="#56655b"/>
+<text x="606" y="599" text-anchor="start" fill="#14211a">Pen, 10 balls shown</text>
+<path d="M93 530V640M775 550V640" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M93 640H775" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="434" y="635" text-anchor="middle" fill="#56655b">682 overall</text>
+<path d="M95 127.5H56M95 552.5H56" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M56 127.5V552.5" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="50" y="344" text-anchor="end" fill="#56655b">425</text>
+<path d="M701 190H860M701 490H860" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M860 190V490" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="854" y="344" text-anchor="end" fill="#56655b"></text>
+<text x="866" y="344" fill="#56655b">300 gate</text>
+<path d="M775 130H940M775 550H940" stroke="#56655b" stroke-width=".8" fill="none"/>
+<path d="M940 130V550" stroke="#56655b" stroke-width="1" marker-start="url(#a)" marker-end="url(#a)" fill="none"/>
+<text x="934" y="344" text-anchor="end" fill="#56655b"></text>
+<text x="946" y="344" fill="#56655b">420 mouth</text>
+<text x="24" y="56" fill="#56655b">Top view. Front is to the right. Dimensions in millimetres.</text>
+</svg>
