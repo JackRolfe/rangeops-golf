@@ -76,7 +76,7 @@ test('records a session, restores it after reload, and starts offline', async ({
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
 
-  await page.goto('/');
+  await page.goto('./');
   await expect(page).toHaveTitle('RangeOps');
   await expect(page.getByRole('heading', { name: 'Set up your range.' })).toBeVisible();
 
@@ -174,7 +174,7 @@ test.describe('desktop frame', () => {
   test.use({ viewport: { width: 1024, height: 900 }, isMobile: false, hasTouch: false });
 
   test('centres the mobile app without horizontal overflow', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Set up your range.' })).toBeVisible();
     const shell = page.locator('.app-shell');
     const box = await shell.boundingBox();

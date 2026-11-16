@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RangeOps: the driving range app and its ball-fetching robot</title>
+<meta name="description" content="RangeOps is one app for a trip to the driving range: book a bay, buy a bucket, play target games and track your accuracy. Mulligan, its remote-control robot, fetches the short shots so juniors can hit them again.">
+<meta name="theme-color" content="#1d5a39">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:wght@400;500;600;700&display=swap">
+<!-- Brand colours and type come from packages/brand/tokens.css; the build copies it next to this page. -->
+<link rel="stylesheet" href="brand/tokens.css">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: a driving-range lane seen from the bay. A full-width turf band opens with the pitch
+   and a working phone; quieter chalk sections follow, with one deep-green band for safety. */
+:root{
+  --bg:#f2f5ef; --surface:#ffffff; --surface-2:#e6ece2; --fg:#14211a; --muted:#56655b; --line:#d3dbcf;
+  --turf:var(--ro-turf); --turf-2:#1a5335; --turf-deep:var(--ro-turf-deep); --on-turf:#f1f6ee; --on-turf-muted:#bcd3c2;
+  --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:var(--ro-flag); --accent-text:var(--ro-turf);
+  --device:#101411; --device-edge:#2a322c; --tyre:#1c2420; --hub:#8a968d;
+  --display:var(--ro-font-display);
+  --body:var(--ro-font-body);
+  --sign:var(--ro-font-sign);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1711; --surface:#15231b; --surface-2:#1c2e24; --fg:#e7efe8; --muted:#9db0a3; --line:#2a4135;
+    --turf:#184c30; --turf-2:#16462c; --turf-deep:#0f3521; --on-turf:#f1f6ee; --on-turf-muted:#b3ccba;
+    --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:#e25a3c; --accent-text:#8fd3a6;
+    --device:#050706; --device-edge:#33403a; --tyre:#0c110e; --hub:#7d8a81;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1711; --surface:#15231b; --surface-2:#1c2e24; --fg:#e7efe8; --muted:#9db0a3; --line:#2a4135;
+  --turf:#184c30; --turf-2:#16462c; --turf-deep:#0f3521; --on-turf:#f1f6ee; --on-turf-muted:#b3ccba;
+  --ball:var(--ro-ball); --on-ball:var(--ro-on-ball); --flag:#e25a3c; --accent-text:#8fd3a6;
+  --device:#050706; --device-edge:#33403a; --tyre:#0c110e; --hub:#7d8a81;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+h1,h2,h3,p,dl,dd,ul{margin:0}
+ul{padding:0;list-style:none}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ball);outline-offset:2px}
+.wrap{max-width:1120px;margin-inline:auto;
+  padding-left:max(clamp(16px,4vw,40px),env(safe-area-inset-left,0px));
+  padding-right:max(clamp(16px,4vw,40px),env(safe-area-inset-right,0px))}
+h2{font-family:var(--display);font-weight:750;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.2}
+.lead{font-size:1.12rem;color:var(--muted);max-width:60ch}
+.label{font-family:var(--sign);font-weight:600;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase}
+
+/* ---------- hero ---------- */
+.hero{background:repeating-linear-gradient(90deg,var(--turf) 0 140px,var(--turf-2) 140px 280px);color:var(--on-turf)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.01em;text-decoration:none}
+.brand i{width:18px;height:18px;border-radius:50%;background:var(--ball);box-shadow:inset -3px -3px 0 rgba(0,0,0,.14)}
+.nav{display:flex;gap:26px;font-weight:600;font-size:.98rem}
+.nav a{text-decoration:none;color:var(--on-turf-muted)}
+.nav a:hover{color:var(--on-turf)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:48px;align-items:center;padding-block:36px 72px}
+.hero-copy{display:flex;flex-direction:column;gap:24px;min-width:0}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(2.7rem,6.4vw,4.9rem);line-height:.96;letter-spacing:-.025em;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--ball)}
+.hero-copy p{font-size:1.18rem;color:var(--on-turf-muted);max-width:52ch}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 24px;border-radius:999px;font-weight:700;text-decoration:none;border:2px solid transparent;cursor:pointer}
+.btn-ball{background:var(--ball);color:var(--on-ball)}
+.btn-ball:hover{filter:brightness(1.06)}
+.btn-line{border-color:var(--on-turf-muted);color:var(--on-turf)}
+.btn-line:hover{border-color:var(--on-turf)}
+.btn-quiet{border-color:var(--line);color:var(--fg)}
+.btn-quiet:hover{border-color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:10px 28px;padding-top:8px;border-top:1px solid rgba(241,246,238,.22)}
+.facts li{display:flex;align-items:baseline;gap:8px;color:var(--on-turf-muted);font-size:.98rem}
+.facts b{font-family:var(--sign);font-weight:700;font-size:1.7rem;color:var(--on-turf);letter-spacing:.01em}
+.hero-phone{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.hero-phone small{color:var(--on-turf-muted);font-size:.9rem;text-align:center}
+
+.try{width:min(100%,340px);display:flex;flex-direction:column;gap:8px}
+.try .label{color:var(--on-turf-muted)}
+.try-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.try-row button{min-height:44px;padding:0 10px;border-radius:999px;border:2px solid rgba(241,246,238,.4);background:none;color:var(--on-turf);font-weight:700;font-size:.95rem;cursor:pointer}
+.try-row button:hover{border-color:var(--on-turf)}
+.try-row button[aria-pressed="true"]{background:var(--ball);border-color:var(--ball);color:var(--on-ball)}
+.btn-turf{background:var(--turf);color:var(--on-turf)}
+.btn-turf:hover{filter:brightness(1.1)}
+.tab{position:relative}
+.tab.unseen::after{content:"";position:absolute;top:2px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;background:var(--flag);box-shadow:0 0 0 2px var(--surface)}
+@media (prefers-reduced-motion:no-preference){.tab.unseen::after{animation:ping 1.6s ease-in-out infinite}}
+@keyframes ping{50%{transform:scale(1.4)}}
+
+/* ---------- phone ---------- */
+.phone{width:min(100%,340px);padding:10px;border-radius:48px;background:var(--device);border:1px solid var(--device-edge);box-shadow:0 30px 60px -20px rgba(0,0,0,.55)}
+.screen{height:672px;border-radius:38px;overflow:hidden;background:var(--surface);color:var(--fg);display:flex;flex-direction:column;font-size:14px;line-height:1.35}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:9px 24px 3px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
+.statusbar .pill{width:76px;height:20px;border-radius:12px;background:var(--device)}
+.statusbar .batt{width:22px;height:11px;border-radius:3px;border:1.5px solid var(--fg);position:relative}
+.statusbar .batt::after{content:"";position:absolute;inset:1.5px 6px 1.5px 1.5px;background:var(--fg);border-radius:1px}
+.apphead{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 10px}
+.apphead strong{font-family:var(--display);font-weight:800;font-size:18px}
+.chip{font-family:var(--sign);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:5px;background:var(--turf);color:var(--on-turf)}
+.panel{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+#lane{display:block;width:100%;aspect-ratio:300/300}
+.hud{display:flex;justify-content:space-between;gap:10px;padding:8px 16px 0;font-variant-numeric:tabular-nums}
+.hud span{color:var(--muted);font-size:12px}
+.hud b{display:block;font-size:15px;color:var(--fg)}
+.msg{padding:4px 16px 0;font-size:12.5px;color:var(--muted);min-height:36px}
+.stickrow{flex:1;display:flex;align-items:center;justify-content:center;padding-bottom:6px}
+.stick{position:relative;width:112px;height:112px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.stick:active{cursor:grabbing}
+.knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:var(--flag);box-shadow:0 4px 10px rgba(0,0,0,.3),inset 0 -4px 0 rgba(0,0,0,.16);pointer-events:none}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:6px 10px 12px;background:var(--surface)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border:0;background:none;border-radius:12px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--accent-text)}
+.pad{padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.pad h4{margin:0;font-family:var(--sign);font-weight:600;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.days{display:flex;gap:6px}
+.days button{flex:1;min-width:0;padding:6px 0;border:1.5px solid var(--line);border-radius:10px;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--muted)}
+.days button b{font-size:16px;color:var(--fg);font-variant-numeric:tabular-nums}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.slots button{padding:9px 0;border:1.5px solid var(--line);border-radius:10px;background:none;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums}
+.bays{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.bays button{aspect-ratio:1;border:1.5px solid var(--line);border-radius:8px;background:none;cursor:pointer;font-family:var(--sign);font-weight:700;font-size:18px}
+.bays button:disabled{background:var(--surface-2);color:var(--muted);text-decoration:line-through;cursor:not-allowed;opacity:.7}
+.days button[aria-pressed="true"],.slots button[aria-pressed="true"],.bays button[aria-pressed="true"]{background:var(--turf);border-color:var(--turf);color:var(--on-turf)}
+.days button[aria-pressed="true"] b{color:var(--on-turf)}
+.addon{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2);cursor:pointer}
+.addon span{display:block;font-size:12px;color:var(--muted)}
+.addon input{width:20px;height:20px;accent-color:var(--turf)}
+.paybtn{min-height:48px;border:0;border-radius:14px;background:var(--ball);color:var(--on-ball);font-weight:700;font-size:15px;cursor:pointer}
+.paybtn:hover{filter:brightness(1.05)}
+.ghost{min-height:44px;border:1.5px solid var(--line);border-radius:14px;background:none;font-weight:600;cursor:pointer}
+.done{margin:auto 0;padding:24px 20px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.done .tick{width:56px;height:56px;margin:0 auto;border-radius:50%;background:var(--turf);color:var(--on-turf);display:grid;place-items:center;font-size:28px;font-weight:700}
+.done strong{font-family:var(--display);font-size:22px;font-weight:800}
+.done p{color:var(--muted)}
+.code{font-family:var(--sign);font-weight:700;font-size:44px;letter-spacing:.18em;font-variant-numeric:tabular-nums}
+.bucket{display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer}
+.bucket input{position:absolute;opacity:0;width:1px;height:1px}
+.bucket:has(input:checked){border-color:var(--turf);background:var(--surface-2)}
+.bucket:has(input:focus-visible){outline:3px solid var(--ball);outline-offset:2px}
+.bucket i{flex:none;border-radius:4px 4px 9px 9px;background:var(--ball);width:26px}
+.bucket .grow{flex:1}
+.bucket .grow span{display:block;font-size:12px;color:var(--muted)}
+.bucket b{font-variant-numeric:tabular-nums}
+.saved{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:13px}
+.saved b{font-family:var(--sign);font-size:24px;font-variant-numeric:tabular-nums}
+
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px 6px}
+.modes{display:flex;gap:6px;min-width:0}
+.modes button,.clubbtn{padding:6px 10px;border:1.5px solid var(--line);border-radius:999px;background:none;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.modes button[aria-pressed="true"]{background:var(--turf);border-color:var(--turf);color:var(--on-turf)}
+.gmsg{padding:0 16px 8px;font-size:12.5px;color:var(--muted)}
+#rangemap{display:block;width:100%;aspect-ratio:300/280;touch-action:none;cursor:crosshair}
+.gfoot{padding:0 16px 10px}
+.gfoot .ghost{width:100%;min-height:40px;margin-top:10px}
+.gfoot .ghost:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- sections ---------- */
+.games-band{background:var(--surface);border-block:1px solid var(--line)}
+.games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:40px}
+.games li{display:flex;flex-direction:column;gap:12px}
+.games svg{width:100%;max-width:440px;height:auto;display:block;border-radius:16px}
+.games p{color:var(--muted)}
+.g-ring{fill:var(--ball);fill-opacity:.2;stroke:var(--ball);stroke-width:3}
+.g-ghost{fill:none;stroke:var(--on-turf);stroke-opacity:.5;stroke-width:2;stroke-dasharray:5 6}
+.g-hit{fill:var(--ball);stroke:var(--turf-deep);stroke-width:1.5}
+.g-miss{fill:var(--on-turf);stroke:var(--turf-deep);stroke-width:1.5}
+.g-card{fill:var(--surface-2)}
+.g-track{fill:none;stroke:var(--line);stroke-width:9}
+.g-prog{fill:none;stroke:var(--accent-text);stroke-width:9;stroke-linecap:round}
+.g-pct{fill:var(--fg);font-family:var(--sign);font-weight:700;font-size:22px}
+.g-grid{stroke:var(--line);stroke-width:1}
+.g-trend{fill:none;stroke:var(--accent-text);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.g-end{fill:var(--accent-text)}
+.band{padding-block:clamp(56px,8vw,96px)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:40px}
+.steps li{display:flex;flex-direction:column;gap:12px}
+.plate{width:56px;height:56px;display:grid;place-items:center;border:2.5px solid var(--accent-text);border-radius:8px;font-family:var(--sign);font-weight:700;font-size:2.1rem;color:var(--accent-text);line-height:1}
+.steps p{color:var(--muted)}
+.robot{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center}
+.robot svg{width:100%;height:auto;display:block;border-radius:20px;background:var(--surface-2)}
+.spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin-top:8px}
+.spec div{padding:12px 0;border-top:1px solid var(--line)}
+.spec dt{font-size:.9rem;color:var(--muted)}
+.spec dd{font-family:var(--sign);font-weight:700;font-size:1.6rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.spec dd small{font-family:var(--body);font-weight:500;font-size:.9rem;color:var(--muted)}
+.safety{background:var(--turf-deep);color:var(--on-turf)}
+.safety .lead{color:var(--on-turf-muted)}
+.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px;margin-top:40px}
+.four li{display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:2px solid var(--ball)}
+.four p{color:var(--on-turf-muted);font-size:1rem}
+.range{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:56px;align-items:start}
+.rows li{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:8px 24px;padding:18px 0;border-top:1px solid var(--line)}
+.rows li:last-child{border-bottom:1px solid var(--line)}
+.rows p{color:var(--muted)}
+.pilot{margin-top:56px;padding:clamp(24px,4vw,44px);border-radius:24px;background:var(--surface);border:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center}
+.pilot p{color:var(--muted);max-width:58ch}
+.pilot .btn{background:var(--turf);color:var(--on-turf)}
+footer{padding-block:28px 40px;color:var(--muted);font-size:.92rem;border-top:1px solid var(--line)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+
+/* robot drawing */
+.r-sky{fill:var(--surface-2)} .r-grass{fill:var(--turf)} .r-grass2{fill:var(--turf-2)}
+.r-shell{fill:var(--flag)} .r-shade{fill:#000;opacity:.16} .r-tyre{fill:var(--tyre)} .r-hub{fill:var(--hub)}
+.r-ball{fill:var(--ball)} .r-frame{fill:none;stroke:var(--fg);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.r-mesh{fill:var(--fg);opacity:.08} .r-finger{fill:none;stroke:var(--fg);stroke-width:2.5;stroke-linecap:round;opacity:.75}
+.r-whip{fill:none;stroke:var(--fg);stroke-width:2.5;stroke-linecap:round} .r-lens{fill:var(--on-turf)}
+.r-board{fill:var(--surface)} .r-board-t{fill:var(--fg);font-family:var(--sign);font-weight:700;font-size:22px}
+
+@media (max-width:900px){
+  .nav{display:none}
+  .hero-grid{grid-template-columns:1fr;gap:40px;padding-block:20px 56px}
+  .robot,.range{grid-template-columns:1fr;gap:32px}
+  .four{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps,.games{grid-template-columns:1fr;gap:28px}
+  .pilot{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .four{grid-template-columns:1fr}
+  .rows li{grid-template-columns:1fr}
+  .spec dd{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="top">
+      <a class="brand" href="#top" id="top"><i></i>RangeOps</a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#games">Games</a>
+        <a href="#robot">The robot</a>
+        <a href="#ranges">For ranges</a>
+      </nav>
+    </div>
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1>More swings out of <em>every bucket.</em></h1>
+        <p>RangeOps is one app for a trip to the driving range. Book a bay, buy a bucket, play target games and watch your accuracy improve. Add Mulligan, the little robot kids drive out from a phone to fetch the short ones, and every duffed shot gets a second go.</p>
+        <div class="cta-row">
+          <a class="btn btn-ball" href="#app">Try the demo</a>
+          <a class="btn btn-line" href="app/">Open the practice app</a>
+        </div>
+        <ul class="facts">
+          <li><b>Live</b> practice tracker</li>
+          <li><b>In build</b> Mulligan robot</li>
+          <li><b>Next</b> booking and balls</li>
+        </ul>
+      </div>
+
+      <div class="hero-phone" id="app">
+        <div class="try" role="group" aria-label="Try the app">
+          <span class="label">Tap to try the app</span>
+          <div class="try-row">
+            <button type="button" data-go="drive" aria-pressed="true">Drive the robot</button>
+            <button type="button" data-go="games" aria-pressed="false">Play a game</button>
+            <button type="button" data-go="book" aria-pressed="false">Book a bay</button>
+            <button type="button" data-go="balls" aria-pressed="false">Buy balls</button>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>4:12</span><span class="pill"></span><span class="batt" aria-hidden="true"></span></div>
+            <div class="apphead"><strong id="app-title">Drive</strong><span class="chip" id="bay-chip">Bay 7</span></div>
+
+            <div class="panel" id="screen-drive" role="tabpanel" aria-labelledby="tab-drive">
+              <canvas id="lane" aria-label="Top-down view of the lane in front of Bay 7, showing the robot and the balls it can collect"></canvas>
+              <div class="hud">
+                <span>On board<b id="hud-load">0 / 10</b></span>
+                <span>Brought back<b id="hud-saved">0</b></span>
+                <span>Robot battery<b>82%</b></span>
+              </div>
+              <p class="msg" id="hud-msg" aria-live="polite">Drag the stick to drive out and scoop the balls.</p>
+              <div class="stickrow">
+                <div class="stick" id="stick" tabindex="0" role="application" aria-label="Joystick. Drag, or use the arrow keys, to drive the robot."><div class="knob" id="knob"></div></div>
+              </div>
+            </div>
+
+            <div class="panel" id="screen-games" role="tabpanel" aria-labelledby="tab-games" hidden>
+              <div class="gtop">
+                <div class="modes" id="modes" role="group" aria-label="Game">
+                  <button type="button" data-mode="bullseye" aria-pressed="true">Bullseye</button>
+                  <button type="button" data-mode="shrink" aria-pressed="false">Shrink the Ring</button>
+                </div>
+                <button type="button" class="clubbtn" id="g-club" aria-label="Change club">7 iron</button>
+              </div>
+              <p class="gmsg" id="g-msg" aria-live="polite">Tap where the ball landed. Drag the ring to move it.</p>
+              <canvas id="rangemap" aria-label="Map of the range with a target ring. Tap to mark where each ball landed."></canvas>
+              <div class="hud">
+                <span>On target<b id="g-on">3 of 5</b></span>
+                <span>Accuracy<b id="g-acc">60%</b></span>
+                <span>In a row<b id="g-streak">0</b></span>
+              </div>
+              <div class="gfoot"><button class="ghost" id="g-undo" type="button">Undo last</button></div>
+            </div>
+
+            <div class="panel" id="screen-book" role="tabpanel" aria-labelledby="tab-book" hidden>
+              <div class="pad" id="book-form">
+                <div class="days" id="days"></div>
+                <h4>Time, 1 hour</h4>
+                <div class="slots" id="slots"></div>
+                <h4>Bay</h4>
+                <div class="bays" id="bays"></div>
+                <label class="addon" for="add-robot">
+                  <div><b>Add the Mulligan robot</b><span>Fetches the short ones. +$5</span></div>
+                  <input type="checkbox" id="add-robot" checked>
+                </label>
+                <button class="paybtn" id="book-btn" type="button">Book Bay 7</button>
+              </div>
+              <div class="done" id="book-done" hidden>
+                <div class="tick" aria-hidden="true">✓</div>
+                <strong>You're booked</strong>
+                <p id="book-summary"></p>
+                <button class="ghost" id="book-again" type="button">Book another</button>
+              </div>
+            </div>
+
+            <div class="panel" id="screen-balls" role="tabpanel" aria-labelledby="tab-balls" hidden>
+              <div class="pad" id="balls-form">
+                <h4>Choose a bucket</h4>
+                <label class="bucket" for="b-small"><input type="radio" name="bucket" id="b-small" value="6" data-n="30"><i style="height:20px"></i><div class="grow"><b>Small</b><span>30 balls</span></div><b>$6</b></label>
+                <label class="bucket" for="b-medium"><input type="radio" name="bucket" id="b-medium" value="10" data-n="60" checked><i style="height:28px"></i><div class="grow"><b>Medium</b><span>60 balls</span></div><b>$10</b></label>
+                <label class="bucket" for="b-large"><input type="radio" name="bucket" id="b-large" value="15" data-n="100"><i style="height:36px"></i><div class="grow"><b>Large</b><span>100 balls</span></div><b>$15</b></label>
+                <div class="saved"><span>Second goes Mulligan has<br>brought back today</span><b id="balls-saved">0</b></div>
+                <button class="paybtn" id="pay-btn" type="button">Pay $10</button>
+              </div>
+              <div class="done" id="balls-done" hidden>
+                <div class="tick" aria-hidden="true">✓</div>
+                <strong>Paid</strong>
+                <p id="balls-summary"></p>
+                <div class="code" id="balls-code">0000</div>
+                <p>Punch this code in at the ball machine.</p>
+                <button class="ghost" id="balls-again" type="button">Buy another bucket</button>
+              </div>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="App sections">
+              <button class="tab" id="tab-drive" role="tab" aria-selected="true" aria-controls="screen-drive" data-tab="drive" data-title="Drive" type="button">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>Drive</button>
+              <button class="tab unseen" id="tab-games" role="tab" aria-selected="false" aria-controls="screen-games" data-tab="games" data-title="Games" type="button">
+                <svg viewBox="0 0 24 24"><path d="M6 21V4l12 4.5L6 13"/></svg>Games</button>
+              <button class="tab unseen" id="tab-book" role="tab" aria-selected="false" aria-controls="screen-book" data-tab="book" data-title="Book a bay" type="button">
+                <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Book</button>
+              <button class="tab unseen" id="tab-balls" role="tab" aria-selected="false" aria-controls="screen-balls" data-tab="balls" data-title="Balls" type="button">
+                <svg viewBox="0 0 24 24"><path d="M5 9h14l-1.6 10a2 2 0 0 1-2 1.7H8.6a2 2 0 0 1-2-1.7z"/><circle cx="9" cy="6" r="2"/><circle cx="14.5" cy="5.5" r="2"/></svg>Balls</button>
+            </div>
+          </div>
+        </div>
+        <small>A demo of where the app is heading. Everything in the phone works; tap its tabs to switch screens.</small>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="band" id="how">
+    <div class="wrap">
+      <div class="stack">
+        <span class="label" style="color:var(--accent-text)">How it works</span>
+        <h2>From topped shot back to the tee in a minute.</h2>
+        <p class="lead">Juniors top a lot of shots, and most of them stop within twenty metres. Mulligan turns those into extra swings instead of a wasted bucket.</p>
+      </div>
+      <ol class="steps" style="padding:0;list-style:none">
+        <li><span class="plate">1</span><h3>Book a bay, add the robot</h3><p>Pick a time and a bay in the app, tick the robot, and pay for a bucket. Mulligan is waiting on its charger when you arrive.</p></li>
+        <li><span class="plate">2</span><h3>Drive out and scoop</h3><p>One thumb on the stick. Roll over a ball and it pops through the soft fingers into the corral. It holds ten.</p></li>
+        <li><span class="plate">3</span><h3>Bring them home, hit again</h3><p>Drive back to the mat, lift the balls out and tee them up. Mum and Dad's bucket stays full.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band games-band" id="games">
+    <div class="wrap">
+      <div class="stack">
+        <span class="label" style="color:var(--accent-text)">Games</span>
+        <h2>Turn a bucket of balls into a game.</h2>
+        <p class="lead">Pick a club, drop a target ring on a map of the range, and tap where each ball lands. The app keeps score, so every bucket has something to beat.</p>
+      </div>
+      <ul class="games">
+        <li>
+          <svg viewBox="0 0 240 150" role="img" aria-label="A target ring on the range with four balls inside it and two outside">
+            <rect class="r-grass" width="240" height="150"/><rect class="r-grass2" x="60" width="60" height="150"/><rect class="r-grass2" x="180" width="60" height="150"/>
+            <circle class="g-ring" cx="128" cy="72" r="42"/>
+            <circle class="g-hit" cx="116" cy="60" r="6"/><circle class="g-hit" cx="140" cy="84" r="6"/><circle class="g-hit" cx="124" cy="96" r="6"/><circle class="g-hit" cx="148" cy="56" r="6"/>
+            <circle class="g-miss" cx="50" cy="106" r="6"/><circle class="g-miss" cx="206" cy="36" r="6"/>
+          </svg>
+          <h3>Bullseye</h3>
+          <p>Drop the ring anywhere on the range and tap where each ball lands. The app counts how many found the target.</p>
+        </li>
+        <li>
+          <svg viewBox="0 0 240 150" role="img" aria-label="A target ring that has shrunk twice, with three balls inside the smallest ring">
+            <rect class="r-grass" width="240" height="150"/><rect class="r-grass2" x="60" width="60" height="150"/><rect class="r-grass2" x="180" width="60" height="150"/>
+            <circle class="g-ghost" cx="120" cy="75" r="62"/><circle class="g-ghost" cx="120" cy="75" r="46"/>
+            <circle class="g-ring" cx="120" cy="75" r="30"/>
+            <circle class="g-hit" cx="111" cy="70" r="6"/><circle class="g-hit" cx="129" cy="83" r="6"/><circle class="g-hit" cx="124" cy="62" r="6"/>
+          </svg>
+          <h3>Shrink the Ring</h3>
+          <p>Three in a row and the ring gets smaller. See how tight you can get it before the bucket runs out.</p>
+        </li>
+        <li>
+          <svg viewBox="0 0 240 150" role="img" aria-label="An accuracy ring showing 64 percent beside a line that climbs over five visits">
+            <rect class="g-card" width="240" height="150"/>
+            <circle class="g-track" cx="62" cy="75" r="32"/>
+            <circle class="g-prog" cx="62" cy="75" r="32" stroke-dasharray="129 201" transform="rotate(-90 62 75)"/>
+            <text class="g-pct" x="62" y="83" text-anchor="middle">64%</text>
+            <path class="g-grid" d="M120 45h100M120 75h100M120 105h100"/>
+            <polyline class="g-trend" points="122,104 146,96 170,99 194,78 218,58"/>
+            <circle class="g-end" cx="218" cy="58" r="5"/>
+          </svg>
+          <h3>Beat Your Best</h3>
+          <p>Every round is saved by club, so you can watch your accuracy climb from one visit to the next.</p>
+        </li>
+      </ul>
+      <p class="lead" style="margin-top:32px">And when one dribbles off the tee, Mulligan fetches it for another try.</p>
+      <p class="lead" style="margin-top:12px">Target practice and accuracy history already work in the practice app. Shrink the Ring comes next.</p>
+      <p class="cta-row" style="margin-top:20px"><button type="button" class="btn btn-turf" data-go="games">Play Bullseye in the demo</button><a class="btn btn-quiet" href="app/">Open the practice app</a></p>
+    </div>
+  </section>
+
+  <section class="band" id="robot">
+    <div class="wrap robot">
+      <svg viewBox="40 30 480 240" role="img" aria-label="Side view of the Mulligan robot: a low red buggy with chunky tyres, a yellow flag on a whip aerial, and a ball corral at the front holding three range balls">
+        <rect class="r-sky" width="520" height="300"/>
+        <rect class="r-board" x="52" y="150" width="54" height="34" rx="4"/>
+        <text class="r-board-t" x="79" y="175" text-anchor="middle">20</text>
+        <rect class="r-tyre" x="76" y="184" width="6" height="46"/>
+        <rect class="r-grass" y="228" width="520" height="72"/>
+        <rect class="r-grass2" y="228" width="130" height="72"/>
+        <rect class="r-grass2" x="260" y="228" width="130" height="72"/>
+        <path class="r-whip" d="M176 132V52"/>
+        <path class="r-ball" d="M176 50l36 11-36 11z"/>
+        <path class="r-shell" d="M140 196l18-52q3-10 14-10l170-8q10-1 16 7l28 34v29z" stroke-linejoin="round"/>
+        <path class="r-shade" d="M140 196l5-14h241v14z"/>
+        <rect class="r-lens" x="322" y="144" width="34" height="10" rx="5"/>
+        <rect class="r-mesh" x="386" y="170" width="92" height="52"/>
+        <path class="r-frame" d="M386 170h92v40"/>
+        <path class="r-finger" d="M478 174l-14 46M470 174l-14 46M462 174l-14 46"/>
+        <circle class="r-tyre" cx="474" cy="219" r="9"/>
+        <circle class="r-ball" cx="408" cy="218" r="10"/>
+        <circle class="r-ball" cx="430" cy="218" r="10"/>
+        <circle class="r-ball" cx="419" cy="200" r="10"/>
+        <circle class="r-ball" cx="504" cy="218" r="10"/>
+        <circle class="r-tyre" cx="190" cy="198" r="32"/><circle class="r-hub" cx="190" cy="198" r="12"/>
+        <circle class="r-tyre" cx="336" cy="198" r="32"/><circle class="r-hub" cx="336" cy="198" r="12"/>
+      </svg>
+      <div class="stack">
+        <span class="label" style="color:var(--accent-text)">Mulligan, the robot</span>
+        <h2>Small, low and built to take a hit.</h2>
+        <p class="lead">A knee-high buggy with chunky tyres for range grass, a bright flag so everyone can see it, and a ball corral with no motors in it.</p>
+        <dl class="spec">
+          <div><dt>Carries</dt><dd>10 <small>balls a trip</small></dd></div>
+          <div><dt>Reach</dt><dd>30 m <small>from the bay</small></dd></div>
+          <div><dt>Top speed</dt><dd>4 km/h <small>walking pace</small></dd></div>
+          <div><dt>Height</dt><dd>22 cm <small>to the shell</small></dd></div>
+          <div><dt>Runtime</dt><dd>3 hrs <small>a charge</small></dd></div>
+          <div><dt>Control</dt><dd>Bluetooth <small>phone or iPad</small></dd></div>
+        </dl>
+        <p style="font-size:.9rem;color:var(--muted)">Target spec for the pilot build.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band safety" id="safety">
+    <div class="wrap">
+      <div class="stack">
+        <span class="label" style="color:var(--ball)">Safety</span>
+        <h2>Made for a range with people hitting on it.</h2>
+        <p class="lead">The robot goes out so that children never have to.</p>
+      </div>
+      <ul class="four">
+        <li><h3>Hold to drive</h3><p>It moves only while a thumb is on the stick. Let go, or lose signal, and it stops.</p></li>
+        <li><h3>Stays in its lane</h3><p>A limit keeps it within 30 m and in front of its own bay, away from other golfers' shots.</p></li>
+        <li><h3>Takes a direct hit</h3><p>A low, sloped shell sheds a stray ball and shields the battery.</p></li>
+        <li><h3>Nothing spins</h3><p>Balls push through soft fingers into the corral. There are no rollers or blades to catch small hands.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="band" id="ranges">
+    <div class="wrap">
+      <div class="range">
+        <div class="stack">
+          <span class="label" style="color:var(--accent-text)">For range owners</span>
+          <h2>What it does for the range.</h2>
+          <p class="lead">RangeOps makes a family hour at the range go further, without changing how the range runs.</p>
+        </div>
+        <ul class="rows">
+          <li><h3>Nobody walks onto the grass</h3><p>The robot fetches the short ones, so kids stay behind the line.</p></li>
+          <li><h3>Families stay for the whole bucket</h3><p>Topped shots come back for another go instead of ending the fun early.</p></li>
+          <li><h3>A reason to come back</h3><p>Target games and saved scores give juniors something to beat on the next visit.</p></li>
+          <li><h3>Bays booked and paid up front</h3><p>Bookings and bucket sales run through one app, with a code for the ball machine.</p></li>
+          <li><h3>A new add-on to sell</h3><p>Robot hire goes onto a bay booking with one tap.</p></li>
+          <li><h3>Nothing to rebuild</h3><p>It works from the bays and mats you already have, and parks on a charger at closing time.</p></li>
+        </ul>
+      </div>
+      <div class="pilot">
+        <div class="stack">
+          <h2 style="font-size:clamp(1.5rem,3vw,2rem)">We're looking for our first range.</h2>
+          <p>The practice tracker works today. The robot is being built, and booking and payments come after it. We'd like to run a pilot on a couple of bays at one range, and shape the booking side around how that range really works.</p>
+        </div>
+        <a class="btn" href="#app">Try the demo again</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>RangeOps, the range app, and Mulligan, its robot</span><span>Concept preview. Prices and robot specs are placeholders.</span></div>
+</footer>
+
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var CUR = '$';
+
+  /* ---------- tabs ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var screens = { drive: $('#screen-drive'), games: $('#screen-games'), book: $('#screen-book'), balls: $('#screen-balls') };
+  function show(name){
+    tabs.forEach(function(t){
+      var on = t.dataset.tab === name;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on){ $('#app-title').textContent = t.dataset.title; t.classList.remove('unseen'); }
+    });
+    Object.keys(screens).forEach(function(k){ screens[k].hidden = k !== name; });
+    $('#bay-chip').hidden = name === 'book';
+    Array.prototype.forEach.call(document.querySelectorAll('.try-row button'), function(b){
+      b.setAttribute('aria-pressed', b.dataset.go === name ? 'true' : 'false');
+    });
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.tab); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function(b){
+    b.addEventListener('click', function(){
+      show(b.dataset.go);
+      if (!b.closest('#app')) $('#app').scrollIntoView({ block:'start' });
+    });
+  });
+
+  /* ---------- drive ---------- */
+  var cv = $('#lane'), ctx = cv.getContext('2d');
+  var W = 300, H = 300, CAP = 10, STEP = 58;
+  var BAY = { x: W/2, y: H-26, w: 78, h: 30 };
+  var BAYTOP = BAY.y - BAY.h/2;
+  var bot = { x: W/2, y: BAYTOP-20, a: -Math.PI/2 };
+  var balls = [[92,220],[188,199],[236,232],[60,158],[150,140],[214,119],[118,86],[250,65]]
+    .map(function(p){ return { x:p[0], y:p[1], got:false }; });
+  var onboard = 0, saved = 0, msgHold = 0, respawnAt = 0, lastMsg = '';
+  var joy = { x:0, y:0 }, dragging = false, keys = {};
+
+  function fit(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = W*dpr; cv.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function rr(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+  function say(text, hold){
+    if (text !== lastMsg){ $('#hud-msg').textContent = text; lastMsg = text; }
+    if (hold) msgHold = performance.now() + hold;
+  }
+  function hud(){
+    $('#hud-load').textContent = onboard + ' / ' + CAP;
+    $('#hud-saved').textContent = saved;
+    $('#balls-saved').textContent = saved;
+  }
+  function spawn(){
+    balls = [];
+    var tries = 0;
+    while (balls.length < 8 && tries < 400){
+      tries++;
+      var x = 24 + Math.random()*(W-48);
+      var y = BAYTOP - 26 - Math.pow(Math.random(),1.4)*(BAYTOP-58);
+      var ok = balls.every(function(b){ return Math.hypot(b.x-x,b.y-y) > 26; });
+      if (ok) balls.push({ x:x, y:y, got:false });
+    }
+  }
+  function input(){
+    if (dragging) return joy;
+    var x = (keys.ArrowRight?1:0) - (keys.ArrowLeft?1:0);
+    var y = (keys.ArrowDown?1:0) - (keys.ArrowUp?1:0);
+    return { x:x, y:y };
+  }
+  function turn(a,t,max){
+    var d = Math.atan2(Math.sin(t-a), Math.cos(t-a));
+    return Math.abs(d) <= max ? t : a + (d>0?1:-1)*max;
+  }
+  function update(dt, now){
+    var v = input(), m = Math.min(1, Math.hypot(v.x, v.y)), moving = m > 0.1, limited = false;
+    if (moving){
+      var t = Math.atan2(v.y, v.x);
+      bot.a = turn(bot.a, t, 7*dt);
+      var nx = bot.x + Math.cos(t)*80*m*dt, ny = bot.y + Math.sin(t)*80*m*dt;
+      var cx = Math.max(18, Math.min(W-18, nx)), cy = Math.max(18, Math.min(H-14, ny));
+      limited = (cx !== nx || cy !== ny);
+      bot.x = cx; bot.y = cy;
+    }
+    var mx = bot.x + Math.cos(bot.a)*13, my = bot.y + Math.sin(bot.a)*13;
+    for (var i=0;i<balls.length;i++){
+      var b = balls[i];
+      if (!b.got && onboard < CAP && Math.hypot(b.x-mx, b.y-my) < 12){ b.got = true; onboard++; hud(); }
+    }
+    var home = Math.abs(bot.x-BAY.x) < BAY.w/2 && Math.abs(bot.y-BAY.y) < BAY.h/2+8;
+    if (home && onboard > 0){
+      say(onboard + (onboard===1?' ball':' balls') + ' back at Bay 7. Tee them up and hit again.', 2600);
+      saved += onboard; onboard = 0; hud();
+      if (balls.every(function(b){ return b.got; })) respawnAt = now + 1600;
+    }
+    if (respawnAt && now > respawnAt){ respawnAt = 0; spawn(); }
+    if (now > msgHold){
+      var left = balls.filter(function(b){ return !b.got; }).length;
+      if (limited) say('Lane limit. Mulligan stays in front of its own bay.', 900);
+      else if (onboard >= CAP) say('Full. Bring them back to the bay.');
+      else if (onboard > 0 && left === 0) say('Got them all. Bring them back to the bay.');
+      else if (moving) say('Driving at walking pace. Let go and it stops.');
+      else if (onboard > 0) say('Stopped. ' + onboard + ' on board.');
+      else say('Drag the stick to drive out and scoop the balls.');
+    }
+  }
+  function draw(){
+    var i;
+    for (i=0; i*40 < H; i++){ ctx.fillStyle = i%2 ? '#2b7646' : '#2f7f4c'; ctx.fillRect(0, i*40, W, 40); }
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(7,0); ctx.lineTo(7,H); ctx.moveTo(W-7,0); ctx.lineTo(W-7,H); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '600 12px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textBaseline = 'bottom';
+    for (i=1;i<=4;i++){
+      var y = BAYTOP - STEP*i;
+      ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(14,y); ctx.lineTo(W-14,y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.textAlign = 'left';
+      ctx.fillText((i*5)+' m', 16, y-2);
+    }
+    rr(BAY.x-BAY.w/2, BAY.y-BAY.h/2, BAY.w, BAY.h, 5); ctx.fillStyle = '#1b2a22'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('BAY 7', BAY.x, BAY.y+1);
+    balls.forEach(function(b){
+      if (b.got) return;
+      ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(b.x+1.5, b.y+2.5, 5, 3.5, 0, 0, 6.3); ctx.fill();
+      ctx.fillStyle = '#f3cf2e'; ctx.beginPath(); ctx.arc(b.x, b.y, 4.6, 0, 6.3); ctx.fill();
+    });
+    ctx.save(); ctx.translate(bot.x, bot.y);
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(2, 4, 17, 13, 0, 0, 6.3); ctx.fill();
+    ctx.rotate(bot.a);
+    ctx.fillStyle = '#141a16';
+    ctx.fillRect(-12,-13,9,5); ctx.fillRect(-12,8,9,5); ctx.fillRect(2,-13,9,5); ctx.fillRect(2,8,9,5);
+    rr(-14,-10,26,20,6); ctx.fillStyle = '#dc4a2c'; ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(5,-5,3,10);
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(12,-10); ctx.lineTo(20,-10); ctx.lineTo(20,10); ctx.lineTo(12,10); ctx.stroke();
+    ctx.restore();
+    if (onboard > 0){
+      rr(bot.x-11, bot.y-31, 22, 15, 7); ctx.fillStyle = '#f3cf2e'; ctx.fill();
+      ctx.fillStyle = '#1b1a05'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '700 12px "Barlow Condensed","Arial Narrow",sans-serif';
+      ctx.fillText(String(onboard), bot.x, bot.y-23);
+    }
+  }
+  var last = 0;
+  function frame(now){
+    var dt = Math.min(0.05, (now - last)/1000 || 0); last = now;
+    if (!screens.drive.hidden){ update(dt, now); draw(); }
+    if (!screens.games.hidden) drawGame();
+    requestAnimationFrame(frame);
+  }
+
+  var stick = $('#stick'), knob = $('#knob'), R = 32;
+  function setJoy(e){
+    var r = stick.getBoundingClientRect();
+    var dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    var m = Math.hypot(dx, dy);
+    if (m > R){ dx *= R/m; dy *= R/m; }
+    joy.x = dx/R; joy.y = dy/R;
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  }
+  function release(){ dragging = false; joy.x = 0; joy.y = 0; knob.style.transform = ''; }
+  stick.addEventListener('pointerdown', function(e){
+    dragging = true;
+    try { stick.setPointerCapture(e.pointerId); } catch (err) {}
+    setJoy(e); e.preventDefault();
+  });
+  stick.addEventListener('pointermove', function(e){ if (dragging) setJoy(e); });
+  stick.addEventListener('pointerup', release);
+  stick.addEventListener('pointercancel', release);
+  stick.addEventListener('lostpointercapture', release);
+  stick.addEventListener('keydown', function(e){
+    if (e.key.indexOf('Arrow') === 0){
+      keys[e.key] = true; e.preventDefault();
+      var x = (keys.ArrowRight?1:0) - (keys.ArrowLeft?1:0), y = (keys.ArrowDown?1:0) - (keys.ArrowUp?1:0);
+      knob.style.transform = 'translate(' + x*R*0.7 + 'px,' + y*R*0.7 + 'px)';
+    }
+  });
+  stick.addEventListener('keyup', function(e){
+    keys[e.key] = false;
+    if (!keys.ArrowLeft && !keys.ArrowRight && !keys.ArrowUp && !keys.ArrowDown) knob.style.transform = '';
+  });
+  stick.addEventListener('blur', function(){ keys = {}; knob.style.transform = ''; });
+
+  fit(); hud(); draw();
+  window.addEventListener('resize', fit);
+  requestAnimationFrame(frame);
+
+  /* ---------- games ---------- */
+  var gcv = $('#rangemap'), g = gcv.getContext('2d');
+  var GW = 300, GH = 280, BASE_R = 36, mode = 'bullseye';
+  var tgt = { x:168, y:118, r:BASE_R };
+  var shots = [[158,108],[186,132],[120,176],[176,96],[236,84]].map(function(p){
+    return { x:p[0], y:p[1], hit: Math.hypot(p[0]-tgt.x, p[1]-tgt.y) <= tgt.r };
+  });
+  var CLUBS = ['7 iron','Wedge','Driver'], clubIdx = 0;
+  var GMSG = {
+    bullseye: 'Tap where the ball landed. Drag the ring to move it.',
+    shrink: 'Three in a row shrinks the ring. Tap where the ball landed.'
+  };
+  function fitGame(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    gcv.width = GW*dpr; gcv.height = GH*dpr;
+    g.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function replay(){
+    var streak = 0, r = BASE_R, on = 0;
+    shots.forEach(function(s){
+      if (s.hit){ on++; streak++; if (mode === 'shrink' && streak % 3 === 0) r = Math.max(12, r*0.8); }
+      else streak = 0;
+    });
+    tgt.r = r;
+    $('#g-on').textContent = on + ' of ' + shots.length;
+    $('#g-acc').textContent = (shots.length ? Math.round(on/shots.length*100) : 0) + '%';
+    $('#g-streak').textContent = streak;
+    $('#g-undo').disabled = !shots.length;
+  }
+  function drawGame(){
+    var i;
+    for (i=0; i*35 < GH; i++){ g.fillStyle = i%2 ? '#2b7646' : '#2f7f4c'; g.fillRect(0, i*35, GW, 35); }
+    g.fillStyle = '#3a9a5e';
+    [[66,150,18],[238,92,20],[130,52,15]].forEach(function(c){ g.beginPath(); g.arc(c[0],c[1],c[2],0,6.3); g.fill(); });
+    g.font = '600 12px "Barlow Condensed","Arial Narrow",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'bottom';
+    [[90,'50 m'],[170,'100 m'],[250,'150 m']].forEach(function(d){
+      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1;
+      g.beginPath(); g.arc(GW/2, GH+30, d[0], Math.PI, 2*Math.PI); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.8)'; g.fillText(d[1], GW/2, GH+30-d[0]-2);
+    });
+    g.beginPath(); g.arc(tgt.x, tgt.y, tgt.r, 0, 6.3);
+    g.fillStyle = 'rgba(243,207,46,.2)'; g.fill();
+    g.strokeStyle = '#f3cf2e'; g.lineWidth = 2.5; g.stroke();
+    g.beginPath(); g.moveTo(tgt.x-4,tgt.y); g.lineTo(tgt.x+4,tgt.y); g.moveTo(tgt.x,tgt.y-4); g.lineTo(tgt.x,tgt.y+4);
+    g.lineWidth = 1.5; g.stroke();
+    shots.forEach(function(s){
+      g.beginPath(); g.arc(s.x, s.y, 4.8, 0, 6.3);
+      g.fillStyle = s.hit ? '#f3cf2e' : '#f1f6ee'; g.fill();
+      g.strokeStyle = '#123f28'; g.lineWidth = 1.5; g.stroke();
+    });
+  }
+  function gpt(e){
+    var r = gcv.getBoundingClientRect();
+    return { x:(e.clientX-r.left)*GW/r.width, y:(e.clientY-r.top)*GH/r.height };
+  }
+  var gdown = null, gdrag = false;
+  gcv.addEventListener('pointerdown', function(e){
+    var p = gpt(e);
+    gdown = { x:p.x, y:p.y, inRing: Math.hypot(p.x-tgt.x, p.y-tgt.y) <= tgt.r+6, ox:tgt.x-p.x, oy:tgt.y-p.y };
+    gdrag = false;
+    try { gcv.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  gcv.addEventListener('pointermove', function(e){
+    if (!gdown || !gdown.inRing) return;
+    var p = gpt(e);
+    if (!gdrag && Math.hypot(p.x-gdown.x, p.y-gdown.y) > 6) gdrag = true;
+    if (gdrag){
+      tgt.x = Math.max(tgt.r, Math.min(GW-tgt.r, p.x+gdown.ox));
+      tgt.y = Math.max(tgt.r, Math.min(GH-tgt.r, p.y+gdown.oy));
+    }
+  });
+  gcv.addEventListener('pointerup', function(e){
+    if (!gdown) return;
+    if (!gdrag){
+      var p = gpt(e);
+      shots.push({ x:p.x, y:p.y, hit: Math.hypot(p.x-tgt.x, p.y-tgt.y) <= tgt.r });
+      replay();
+    }
+    gdown = null; gdrag = false;
+  });
+  gcv.addEventListener('pointercancel', function(){ gdown = null; gdrag = false; });
+  $('#modes').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-mode]'); if (!b) return;
+    mode = b.dataset.mode; shots = []; tgt.x = 168; tgt.y = 118;
+    Array.prototype.forEach.call(this.children, function(el){ el.setAttribute('aria-pressed', el === b); });
+    $('#g-msg').textContent = GMSG[mode];
+    replay();
+  });
+  $('#g-club').addEventListener('click', function(){
+    clubIdx = (clubIdx+1) % CLUBS.length; this.textContent = CLUBS[clubIdx];
+  });
+  $('#g-undo').addEventListener('click', function(){ shots.pop(); replay(); });
+  fitGame(); replay(); drawGame();
+  window.addEventListener('resize', fitGame);
+
+  /* ---------- book ---------- */
+  var DN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var SLOTS = ['3:30 pm','4:00 pm','4:30 pm','5:00 pm','5:30 pm','6:00 pm'];
+  var BAY_PRICE = 16, ROBOT_PRICE = 5;
+  var st = { day:0, slot:2, bay:7 };
+  var today = new Date(), days = [];
+  for (var d=0; d<5; d++){
+    var dt = new Date(today.getFullYear(), today.getMonth(), today.getDate()+d);
+    days.push({ top: d===0 ? 'Today' : DN[dt.getDay()], num: dt.getDate(),
+                long: d===0 ? 'today' : d===1 ? 'tomorrow' : 'on ' + DN[dt.getDay()] });
+  }
+  function taken(bay){ return (bay*7 + st.slot*5 + st.day*3) % 4 === 0; }
+  var daysEl = $('#days'), slotsEl = $('#slots'), baysEl = $('#bays'), addRobot = $('#add-robot');
+  daysEl.innerHTML = days.map(function(x,i){ return '<button type="button" data-i="'+i+'">'+x.top+'<b>'+x.num+'</b></button>'; }).join('');
+  slotsEl.innerHTML = SLOTS.map(function(s,i){ return '<button type="button" data-i="'+i+'">'+s+'</button>'; }).join('');
+  var bh = ''; for (var n=1;n<=12;n++) bh += '<button type="button" data-i="'+n+'" aria-label="Bay '+n+'">'+n+'</button>';
+  baysEl.innerHTML = bh;
+  function sync(){
+    if (taken(st.bay)){ for (var b=1;b<=12;b++){ if (!taken(b)){ st.bay = b; break; } } }
+    Array.prototype.forEach.call(daysEl.children, function(el,i){ el.setAttribute('aria-pressed', i===st.day); });
+    Array.prototype.forEach.call(slotsEl.children, function(el,i){ el.setAttribute('aria-pressed', i===st.slot); });
+    Array.prototype.forEach.call(baysEl.children, function(el,i){
+      var t = taken(i+1); el.disabled = t; el.setAttribute('aria-pressed', !t && i+1===st.bay);
+    });
+    var total = BAY_PRICE + (addRobot.checked ? ROBOT_PRICE : 0);
+    $('#book-btn').textContent = 'Book Bay ' + st.bay + ' · ' + CUR + total;
+  }
+  function pick(el, key){
+    el.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-i]'); if (!b || b.disabled) return;
+      st[key] = +b.dataset.i; sync();
+    });
+  }
+  pick(daysEl,'day'); pick(slotsEl,'slot'); pick(baysEl,'bay');
+  addRobot.addEventListener('change', sync);
+  $('#book-btn').addEventListener('click', function(){
+    $('#book-summary').textContent = 'Bay ' + st.bay + ' at ' + SLOTS[st.slot] + ' ' + days[st.day].long + ', for 1 hour.' +
+      (addRobot.checked ? ' Mulligan will be waiting at the bay.' : '');
+    $('#book-form').hidden = true; $('#book-done').hidden = false;
+  });
+  $('#book-again').addEventListener('click', function(){ $('#book-done').hidden = true; $('#book-form').hidden = false; });
+  sync();
+
+  /* ---------- balls ---------- */
+  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="bucket"]'));
+  function chosen(){ return radios.filter(function(r){ return r.checked; })[0] || radios[1]; }
+  function syncPay(){ $('#pay-btn').textContent = 'Pay ' + CUR + chosen().value; }
+  radios.forEach(function(r){ r.addEventListener('change', syncPay); });
+  $('#pay-btn').addEventListener('click', function(){
+    var c = chosen();
+    $('#balls-summary').textContent = c.dataset.n + ' balls, ' + CUR + c.value + '.';
+    $('#balls-code').textContent = String(1000 + Math.floor(Math.random()*9000));
+    $('#balls-form').hidden = true; $('#balls-done').hidden = false;
+  });
+  $('#balls-again').addEventListener('click', function(){ $('#balls-done').hidden = true; $('#balls-form').hidden = false; });
+  syncPay();
+})();
+</script>
+
+</body>
+</html>

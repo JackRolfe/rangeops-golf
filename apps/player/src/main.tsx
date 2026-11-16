@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@fontsource-variable/manrope';
+import '@fontsource-variable/figtree';
+import '@fontsource-variable/bricolage-grotesque';
+import '@rangeops/brand/tokens.css';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './styles.css';

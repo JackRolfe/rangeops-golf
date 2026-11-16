@@ -389,8 +389,8 @@ export function RangeMapCanvas({
           cx={targetX}
           cy={targetY}
           r={targetRadiusPixels}
-          fill="rgba(228, 246, 54, 0.14)"
-          stroke="#e4f636"
+          fill="color-mix(in srgb, var(--target) 14%, transparent)"
+          stroke="var(--target)"
           strokeWidth={3}
           vectorEffect="non-scaling-stroke"
           pointerEvents={canEditTarget ? 'all' : 'none'}
@@ -511,8 +511,8 @@ export function RangeMapCanvas({
               cx={keyboardPoint.x * width}
               cy={keyboardPoint.y * height}
               r={markerRadius * 1.16}
-              fill="rgba(228, 246, 54, 0.08)"
-              stroke="#e4f636"
+              fill="color-mix(in srgb, var(--target) 8%, transparent)"
+              stroke="var(--target)"
               strokeWidth={2}
               vectorEffect="non-scaling-stroke"
             />
@@ -520,7 +520,7 @@ export function RangeMapCanvas({
               cx={keyboardPoint.x * width}
               cy={keyboardPoint.y * height}
               r={Math.max(2.5, markerRadius * 0.22)}
-              fill="#e4f636"
+              fill="var(--target)"
             />
           </g>
         ) : null}
