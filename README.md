@@ -8,10 +8,10 @@ This repository holds all of it: the app, the site, the robot and the plan.
 
 | Product | What it is | Where | Status |
 | --- | --- | --- | --- |
-| RangeOps app | The phone app golfers and families use. Practice tracking today; games, driving the robot, booking and buying balls to come. | [apps/player](apps/player) | Practice tracking works. The rest is planned. |
+| RangeOps app | The phone app golfers and families use. Practice tracking today; games, driving the robot, booking and buying balls to come. | [apps/player](apps/player) | Practice tracking is [live](https://jackrolfe.github.io/rangeops-golf/app/). The rest is planned. |
 | Mulligan | The robot. A knee-high buggy a child drives from the app to scoop up topped shots and bring them back to the bay. | [robot](robot) | Not built yet. Build plan written. |
 | Range console | The range owner's side: bays, prices, bookings, bucket codes and the robot fleet. | not started | Planned, after the robot and games. |
-| Site | The public page that explains the offering, with a working demo of where the app is heading. | [apps/site](apps/site) | Live as a concept preview. |
+| Site | The public page that explains the offering, with a working demo of where the app is heading. | [apps/site](apps/site) | [Live](https://jackrolfe.github.io/rangeops-golf/) as a concept preview. |
 
 **On names.** RangeOps is the name of the whole offering and of the app. Mulligan is the name of the robot and nothing else. It suits the robot, because a mulligan is a second go at a bad shot, and that is exactly what the robot gives you. The name has not been checked for trademark or domain availability.
 
@@ -73,14 +73,9 @@ The end-to-end tests run against the app on its own by default. To run them agai
 
 ## Deploy
 
-`npm run build` produces a static folder, `dist/`, that any static host can serve. The site was first deployed to the Azure Static Web App `mulligan-range-robot` in resource group `rg-mulligan`, and the same app can serve the combined build:
+Every push to `main` is tested, built and published to GitHub Pages by [.github/workflows/deploy.yml](.github/workflows/deploy.yml). The live site is https://jackrolfe.github.io/rangeops-golf/ and the app is at https://jackrolfe.github.io/rangeops-golf/app/.
 
-```bash
-export SWA_CLI_DEPLOYMENT_TOKEN="$(az staticwebapp secrets list --name mulligan-range-robot --resource-group rg-mulligan --query properties.apiKey -o tsv)"
-npx -y @azure/static-web-apps-cli deploy ./dist --env production
-```
-
-If the site is served from a sub-path instead of the domain root, set `RANGEOPS_BASE` when building, for example `RANGEOPS_BASE=/rangeops-golf/ npm run build`.
+The build is a plain static folder, `dist/`, so any static host can serve it. When the site is served from a sub-path instead of the domain root, set `RANGEOPS_BASE` when building, for example `RANGEOPS_BASE=/rangeops-golf/ npm run build`. The workflow does this for you, and needs no change if a custom domain is added later.
 
 ## Data and privacy
 
