@@ -310,6 +310,31 @@ def shell_body():
     return colour(hollow, FLAG, "shell")
 
 
+def shell_mounts():
+    """The shell's aluminium frame ring, carried on four posts with rubber bushes on top.
+
+    The shell's base is above the chassis wall top so its sloped sides clear the motors.
+    The posts stand on the plate inside the corners.
+    """
+    z = shell["baseZ"]
+    ring_t, ring_w = 2.0, 15.0
+    # Just inside the shell's inner faces at the top of the ring.
+    end_in = shell["halfLength"] - SHELL_T / math.sin(math.radians(shell["endSlopeDeg"])) - ring_t / math.tan(math.radians(shell["endSlopeDeg"])) - 0.5
+    side_in = shell["halfWidth"] - SHELL_T / math.sin(math.radians(shell["sideSlopeDeg"])) - ring_t / math.tan(math.radians(shell["sideSlopeDeg"])) - 0.5
+    ring = box_between(-end_in, end_in, -side_in, side_in, z, z + ring_t)
+    ring -= box_between(-end_in + ring_w, end_in - ring_w, -side_in + ring_w, side_in - ring_w, z, z + ring_t)
+    parts = [colour(ring, ALUMINIUM, "shell_frame")]
+    bush_h = 10.0
+    post_x, post_y = end_in - ring_w / 2, side_in - ring_w / 2
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            name = f"{'front' if sx > 0 else 'rear'}_{'left' if sy > 0 else 'right'}"
+            post = bd.Pos(sx * post_x, sy * post_y, PLATE_TOP) * bd.Cylinder(5, z - bush_h - PLATE_TOP, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+            bush = bd.Pos(sx * post_x, sy * post_y, z - bush_h) * bd.Cylinder(7, bush_h, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+            parts += [colour(post, ALUMINIUM, f"shell_post_{name}"), colour(bush, RUBBER, f"shell_bush_{name}")]
+    return bd.Compound(children=parts, label="shell_mounts")
+
+
 def shell_height_at_x(x):
     return shell["baseZ"] + (shell["halfLength"] - abs(x)) * math.tan(math.radians(shell["endSlopeDeg"]))
 
@@ -359,6 +384,7 @@ def mulligan():
             electronics(),
             pen_assembly(),
             *hinge_bolts(),
+            shell_mounts(),
             shell_body(),
             *stop_switch(),
             flag_assembly(),

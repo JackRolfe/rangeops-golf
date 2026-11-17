@@ -8,13 +8,13 @@ A 3D model of the [Mulligan design](../DESIGN.md), written as a [build123d](http
 | --- | --- |
 | ![Side view](renders/mulligan_side.png) | ![Top view](renders/mulligan_top.png) |
 
-[mulligan.py](mulligan.py) reads its numbers from [../design/params.mjs](../design/params.mjs), the same file the drawings and sizing checks use, so a change there reaches the model with no copying. Parts that `params.mjs` does not size come from the parts list in DESIGN.md and are placeholders: the electronics boxes, the hinge tabs and bolts, the gate posts and the flag's cloth.
+[mulligan.py](mulligan.py) reads its numbers from [../design/params.mjs](../design/params.mjs), the same file the drawings and sizing checks use, so a change there reaches the model with no copying. Parts that `params.mjs` does not size come from the parts list in DESIGN.md and are placeholders: the electronics boxes, the hinge tabs and bolts, the gate posts, the shell's frame ring and posts, and the flag's cloth.
 
 ## Models
 
 | Model | What it is | Export |
 | --- | --- | --- |
-| `mulligan` | The pilot build: chassis, drive, electronics, pen and gate, shell, stop switch and flag | [STEP](exports/mulligan.step), [GLB](exports/mulligan.glb) |
+| `mulligan` | The pilot build: chassis, drive, electronics, pen and gate, shell on its mounts, stop switch and flag | [STEP](exports/mulligan.step), [GLB](exports/mulligan.glb) |
 | `mulligan_rover` | R0 and R1: the rover and pickup, without the shell and flag | [STEP](exports/mulligan_rover.step) |
 | `mulligan_with_balls` | The pilot build with ten balls in the pen and one about to be collected | |
 
@@ -42,11 +42,7 @@ cad model interference <mulligan id>
 
 ## What the model found
 
-**The shell hits the motors.** `cad model interference` passes for `mulligan_rover` and fails for `mulligan`: each of the four gearmotors cuts about 1.8 cm³ into the shell. The shell's lower edge rests on the chassis wall top, 80 mm up, and its sides slope in at 55°. Each motor's shaft is at axle height, 75 mm up, so the 37 mm motor body stands 94 mm tall where it meets the side wall, inside the shell's sloped sides. You can see the motor ends poking through near each wheel in the top view. Ways out, for the design to choose:
-
-- Lift the shell about 15 mm on its rubber bushes (`shell.baseZ` 80 to 95). The slopes and the 220 mm top stay as they are, and the ridge gets longer. With that one change the interference check passes.
-- Turn each motor's offset output shaft (the 37D gearbox shaft sits 7 mm off the motor's axis) to put the body lower and further inboard. On its own this gives back only about 3.5 mm.
-- Mount the motors lengthwise with a right-angle gearbox.
+**The shell hit the motors, so it was raised.** With the shell's lower edge on the chassis wall top, 80 mm up, its 55° sides cut about 1.8 cm³ into each of the four gearmotors. Each motor's shaft is at axle height, 75 mm up, so the 37 mm motor body stands 94 mm tall where it meets the side wall. The shell base is now 95 mm up (`shell.baseZ`), carried on an aluminium frame ring on four posts with rubber bushes. The slopes and the 220 mm top are unchanged and the ridge is longer, 57 mm instead of 14. `cad model interference` now passes for every model. The other ways out were turning each motor's offset gearbox shaft to drop the body (only about 3.5 mm on its own) or a right-angle gearbox.
 
 DESIGN.md says the motors hang "on L-brackets under the plate edge", but with the plate 50 mm off the ground and the axle at 75 mm, the motor body has to sit above the plate. That is how it is modelled here.
 

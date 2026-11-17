@@ -15,7 +15,7 @@ export const P = {
   chassis: { length: 400, width: 325, floorZ: 50, plate: 3, wallTopZ: 80 },
 
   // A hip-roof shell: shallow faces fore and aft, steeper on the sides.
-  shell: { baseZ: 80, topZ: 220, halfLength: 207, halfWidth: 162, endSlopeDeg: 35, sideSlopeDeg: 55 },
+  shell: { baseZ: 95, topZ: 220, halfLength: 207, halfWidth: 162, endSlopeDeg: 35, sideSlopeDeg: 55 },
 
   battery: { length: 130, width: 80, height: 90 },
 

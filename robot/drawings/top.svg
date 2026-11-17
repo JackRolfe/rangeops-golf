@@ -11,11 +11,11 @@
 <path d="M355 507.5L505 507.5L505 552.5L355 552.5z" fill="#1c2420" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".9"/>
 <path d="M100 177.5L500 177.5L500 502.5L100 502.5z" fill="#e6ece2" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round"/>
 <path d="M93 178L507 178L507 502L93 502z" fill="#dc4a2c" stroke="#dc4a2c" stroke-width="2.2" stroke-linejoin="round" fill-opacity=".14"/>
-<path d="M292.9 276L307.1 276L307.1 404L292.9 404z" fill="none" stroke="#dc4a2c" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M93 178L292.9 276" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
-<path d="M93 502L292.9 404" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
-<path d="M507 178L307.1 276" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
-<path d="M507 502L307.1 404" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M271.5 265.5L328.5 265.5L328.5 414.5L271.5 414.5z" fill="none" stroke="#dc4a2c" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M93 178L271.5 265.5" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M93 502L271.5 414.5" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M507 178L328.5 265.5" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
+<path d="M507 502L328.5 414.5" fill="none" stroke="#dc4a2c" stroke-width="1.6"/>
 <path d="M235 300L365 300L365 380L235 380z" fill="none" stroke="#56655b" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="6 4"/>
 <circle cx="180" cy="340" r="5" fill="#f3cf2e" stroke="#14211a" stroke-width="1.6"/>
 <path d="M505 190L695 190L695 180L505 180z" fill="#14211a" stroke="#14211a" stroke-width="1.6" stroke-linejoin="round" fill-opacity=".1"/>

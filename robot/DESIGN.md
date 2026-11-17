@@ -57,7 +57,7 @@ Nothing here has been built or tested. The dimensions and sizing come from [desi
 
 ### Shell and flag
 
-- **Shape.** A hip roof: 414 × 324 mm at its base, 80 mm off the ground, rising to a short ridge at 220 mm.
+- **Shape.** A hip roof: 414 × 324 mm at its base, 95 mm off the ground, rising to a short ridge at 220 mm. The base sits 15 mm above the chassis walls so the sloped sides clear the motors, which stand 94 mm tall where they meet the side walls.
 - **Material.** 4.5 mm polycarbonate, cut as four flat panels on an aluminium angle frame, mounted to the chassis on rubber bushes so the shell can give. Whether that survives a full shot is for the strike test to say, not this document.
 - **What it does not cover.** The tyres stand outside the shell and rise above its lower edge. They are rubber and will take a hit, but a ball can come off a tyre in any direction.
 - **Flag.** A fibreglass whip mounted to the chassis behind the ridge, flag at 900 mm.
