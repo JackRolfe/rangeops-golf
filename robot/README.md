@@ -2,7 +2,7 @@
 
 Mulligan is a knee-high remote-control buggy that lives at a driving range bay. A child drives it out from the RangeOps app, rolls it over the short shots to scoop them up, and drives them back to hit again.
 
-Nothing here is built yet. This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. There is a 3D model of it in [cad/](cad/README.md). Firmware and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
+Nothing here is built yet. This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. [BUILD.md](BUILD.md) is how to build it from bought parts with hand tools, for someone who has never built anything, and there is a 3D model of it in [cad/](cad/README.md). Firmware and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
 
 ## Target spec
 
@@ -32,9 +32,9 @@ Two more that the site does not mention but a range will ask about: a physical s
 
 ## Subsystems
 
-**Pickup.** A bottomless pen at the front with a gate of light flaps hanging from a rod. Driving over a ball lifts the flaps; they fall back behind it and a stop rod keeps them from swinging out. The flaps have to be nearly weightless, because grass is all that holds a ball still while the gate passes over it. Unloading is by hand at the mat. This is the part with no off-the-shelf answer and the one to prototype first, by hand, with no electronics: flap weight and spacing; whether it works on wet grass, in a divot and at the edge of a mat; whether ten balls stay in on the drive home.
+**Pickup.** A bottomless pen at the front with a gate of light flaps hanging from a rod. Driving over a ball lifts the flaps; they fall back behind it and a stop rod keeps them from swinging out. The flaps have to be nearly weightless, because grass is all that holds a ball still while the gate passes over it. Unloading is by hand at the mat. This is the part with no off-the-shelf answer and the one to prototype first, by hand, with no electronics, from the same parts the robot uses: flap weight and spacing; whether it works on wet grass, in a divot and at the edge of a mat; whether ten balls stay in on the drive home.
 
-**Chassis and drive.** Four wheels, driven as left and right sides and steered by running the sides at different speeds, as in the drawing on the site. Wheels of 12 to 15 cm for range grass. A 15 cm wheel turning at about 140 rpm gives the 4 km/h top speed, so look for geared motors around that output speed with encoders. Start R0 on a bought four-wheel chassis rather than designing one.
+**Chassis and drive.** Four wheels, driven as left and right sides and steered by running the sides at different speeds, as in the drawing on the site. It is built from goBILDA parts, an aluminium construction system that bolts together with a hex key: two channel rails, a floor plate, four geared motors with encoders, and 144 mm wheels. The same frame serves from R0 to the pilot, so there is no throwaway chassis.
 
 **Electronics.**
 
@@ -119,20 +119,20 @@ One open question to settle on R0: what the stick means. The site demo steers in
 
 Each stage ends with a test on grass. The thresholds are proposals to argue with.
 
-**R0. Bench rover.** A bought chassis, the controller, motor driver, encoders, motion sensor and a tool battery. No pickup, no shell.
+**R0. Bench rover.** The goBILDA chassis, the controller, motor driver, encoders, motion sensor and a tool battery. No pickup, no shell.
 
 - Drives from a phone, held to the speed cap.
 - Stops within 30 cm of the stick being released, and within 60 cm when the phone is switched off or walks out of range.
 - Power draw measured over an hour of stop-start driving on grass, giving a real runtime figure.
 - Odometry drift measured over ten 30 m out-and-back runs.
 
-**R1. Pickup.** The corral that worked by hand, mounted on the rover.
+**R1. Pickup.** The pen that worked by hand, bolted on to the rover.
 
 - Collects ten scattered balls and brings them home, nine runs in ten.
 - Loses none on the drive back, over bumps and through a turn.
 - A child can unload it at the mat without help.
 
-**R2. Lane limit and dock.** Position sensing, the dock and a first chassis of our own.
+**R2. Lane limit and dock.** Position sensing and the dock.
 
 - Holds its lane within a bay width at 30 m, twenty runs in a row, and stops at the limit however the stick is held.
 - Parks on the dock and re-zeros its position there.

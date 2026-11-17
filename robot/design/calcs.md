@@ -8,54 +8,54 @@ Anything marked *assumed* is a guess to be replaced by a measurement from the R0
 
 | | |
 | --- | --- |
-| Length, shell tail to funnel mouth | 682 mm |
-| Width | 425 mm |
+| Length, shell tail to funnel mouth | 726 mm |
+| Width | 422 mm |
 | Height to the top of the shell | 220 mm |
-| Ground clearance under the chassis | 50 mm |
-| Motors with encoders (4) | 0.84 kg |
-| Wheels and hubs (4) | 1.00 kg |
-| Chassis plate, walls and brackets | 1.50 kg |
-| Battery and adapter | 0.75 kg |
+| Ground clearance under the chassis | 48 mm |
+| Motors with encoders (4) | 1.75 kg |
+| Wheels and hubs (4) | 1.48 kg |
+| Rails, floor plate and screws | 1.25 kg |
+| Battery and adapter | 0.85 kg |
 | Electronics and wiring | 0.50 kg |
-| Shell, 4.5 mm polycarbonate, and frame | 2.10 kg |
-| Pen, gate and skids | 0.50 kg |
-| Flag, switches, fasteners | 0.40 kg |
-| **Empty** | **7.6 kg** |
-| With 10 balls | 8.0 kg |
+| Shell and end skirts, corrugated plastic | 0.35 kg |
+| Pen, gate and skids | 0.65 kg |
+| Flag and stop switch | 0.25 kg |
+| **Empty** | **7.1 kg** |
+| With 10 balls | 7.5 kg |
 
 ## Speed
 
 | | |
 | --- | --- |
 | Speed cap | 4 km/h, 1.11 m/s |
-| Wheel speed at the cap | 141 rpm |
-| Fastest the motors can turn the wheels, unloaded at 12 V | 5.7 km/h |
-| Encoder resolution | 6.8 counts per mm of travel |
+| Wheel speed at the cap | 147 rpm |
+| Fastest the motors can turn the wheels, unloaded at 12 V | 6.1 km/h |
+| Encoder resolution | 1.7 counts per mm of travel |
 
 ## Drive
 
 | | |
 | --- | --- |
-| Rolling resistance on grass, *assumed* 0.15 of weight | 11.8 N |
-| Climbing a 10% slope | 7.9 N |
-| Accelerating at 1 m/s² | 8.0 N |
-| Torque per wheel, cruising on the flat | 0.22 N·m |
-| Torque per wheel, all three at once | 0.52 N·m |
-| Motor stall torque | 2.06 N·m, 4.0 times the worst case |
-| Speed available in the worst case | 4.2 km/h |
-| Current, cruising / worst case / all four stalled | 3.1 A / 6.2 A / 22 A |
-| Most power one motor can deliver | 10.8 W |
-| Hardest the robot can push, at the supply's 10 A limit | 48 N, the weight of 4.9 kg |
+| Rolling resistance on grass, *assumed* 0.15 of weight | 11.1 N |
+| Climbing a 10% slope | 7.4 N |
+| Accelerating at 1 m/s² | 7.5 N |
+| Torque per wheel, cruising on the flat | 0.20 N·m |
+| Torque per wheel, all three at once | 0.47 N·m |
+| Motor stall torque | 3.73 N·m, 8.0 times the worst case |
+| Speed available in the worst case | 5.3 km/h |
+| Current, cruising / worst case / all four stalled | 2.9 A / 5.5 A / 37 A |
+| Most power one motor can deliver | 21.8 W |
+| Hardest the robot can push, at the supply's 10 A limit | 52 N, the weight of 5.3 kg |
 
 ## Power and runtime
 
 | | |
 | --- | --- |
-| Mechanical power, cruising | 13.2 W |
-| Electrical power, cruising | 31.9 W |
-| Average over a hire, moving 50% of the time (*assumed*) | 17.5 W |
-| Runtime on a 90 Wh pack, using 85% of it | 4.4 hours |
-| Pack needed for 3 hours | 62 Wh |
+| Mechanical power, cruising | 12.3 W |
+| Electrical power, cruising | 26.6 W |
+| Average over a hire, moving 50% of the time (*assumed*) | 14.8 W |
+| Runtime on a 90 Wh pack, using 85% of it | 5.2 hours |
+| Pack needed for 3 hours | 52 Wh |
 
 ## Stopping and stability
 
@@ -63,21 +63,21 @@ Anything marked *assumed* is a guess to be replaced by a measurement from the R0
 | --- | --- |
 | Stopping distance from the cap, stick released | 0.25 m |
 | Stopping distance when the link drops (300 ms timeout) | 0.58 m |
-| Tips sideways beyond | 66° |
-| Tips end over end beyond | 57° |
+| Tips sideways beyond | 63° |
+| Tips end over end beyond | 52° |
 | Heading error that puts it 1.5 m off line at 30 m | 2.9° |
 
 ## Gate
 
 | | |
 | --- | --- |
-| Flaps across the gate | 15, each 1.1 g |
+| Flaps across the gate | 15, each 1.2 g |
 | Flap tip above the ground | 8 mm |
 | Flaps one ball lifts | 3 |
-| Most the flaps push a ball forward | 12.2 mN, at 41° of swing |
+| Most the flaps push a ball forward | 12.3 mN, at 40° of swing |
 | What holds a ball still on a smooth, fast surface | 25.2 mN |
 | What holds a ball still on range grass (*assumed*) | 67.5 mN |
-| Balls that fit loosely on the pen floor | 28 |
+| Balls that fit loosely on the pen floor | 21 |
 
 A ball goes through the gate only if the surface holds it harder than the flaps push it. Otherwise the gate shoves it along in front.
 
@@ -86,8 +86,23 @@ A ball goes through the gate only if the surface holds it harder than the flaps 
 | | |
 | --- | --- |
 | Energy of a ball at 70 m/s | 112 J |
-| Speed it could give the robot if it stopped dead against it | 0.40 m/s |
+| Speed it could give the robot if it stopped dead against it | 0.43 m/s |
 | A level ball meeting a 35° face | leaves 70° above its line of flight; at most 33% of its energy goes into the shell |
 | A level ball meeting a 55° face | leaves 110° above its line of flight; at most 67% of its energy goes into the shell |
 
 A face at 45° sends a level ball straight up. Shallower than that and the ball carries on the way it was going; steeper and it starts to come back.
+
+## Panels to cut
+
+From 4 mm corrugated plastic sign board, with a craft knife and a steel rule. Sizes are in millimetres. Each trapezoid is symmetrical: centre the top edge over the bottom one and join the ends. Its height is measured square to the bottom edge.
+
+| Panel | Number | Size |
+| --- | --- | --- |
+| Shell side | 2 | trapezoid: 428 along the bottom, 74 along the top, 151 high |
+| Shell end | 2 | trapezoid: 290 along the bottom, 116 along the top, 216 high |
+| Shell top | 1 | rectangle: 74 by 116 |
+| Chassis end skirt | 2 | rectangle: 184 by 46 |
+| Pen back wall | 1 | rectangle: 300 by 48 |
+| Funnel wing | 2 | 92 long, 38 high at one end and 26 at the other |
+
+All of them together use 0.21 m², so one 600 × 900 mm sheet is enough with room for mistakes. Cut the shell panels with the flutes running up the slope, from the bottom edge to the top, so any water that gets inside drains out.

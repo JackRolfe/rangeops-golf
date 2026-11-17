@@ -133,8 +133,8 @@ Robot   R0 Bench rover ───────────────────
 
 The first three things to do:
 
-1. **Prototype the pickup by hand.** Before any electronics, build the finger gate and corral out of whatever is to hand and push it over balls on a range mat and on grass. It is the one part of the robot with no off-the-shelf answer, and everything else is sized around it.
-2. **Build R0** from a bought chassis, and settle the control link while doing it.
+1. **Prototype the pickup by hand.** Before any electronics, build the pen and gate from the robot's own parts ([robot/BUILD.md](../robot/BUILD.md)) and push it over balls on a range mat and on grass. It is the one part of the robot with no off-the-shelf answer, and everything else is sized around it.
+2. **Build R0** from goBILDA parts, as in [robot/BUILD.md](../robot/BUILD.md), and settle the control link while doing it.
 3. **Ship app stage 1.** It needs nothing from the robot and makes the app worth opening on its own.
 
 Talk to a range early. Decisions 3, 5 and 6 all depend on a real range: how wide the bays are, what ball machine it has, whether it will give up end bays for a trial. A range that is interested before the robot works is worth more than a finished robot with nowhere to go.
