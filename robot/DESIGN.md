@@ -53,7 +53,7 @@ Nothing here has been built or tested. The dimensions and sizing come from [desi
 - **Hinge.** The pen pivots on two bolts at the chassis front, 60 mm up, and rests on two UHMW skids at its front corners. The pen follows the ground while the chassis rocks, and its weight never comes off the drive wheels. A strap limits how far it can drop or lift.
 - **Funnel.** Two wings of 3 mm polycarbonate flare from the 300 mm gate to a 420 mm mouth, as wide as the wheels. They only push balls sideways along the ground, which takes no finesse, and they make aiming much easier for a child.
 - **Gate.** A 3 mm stainless rod across the pen mouth, 62 mm up. Fifteen flaps of 1.5 mm polypropylene, 15 mm wide and 54 mm long, threaded on it with 5 mm spacers, tips 8 mm off the ground. A second rod just outside the flaps, 45 mm up, is the stop.
-- **Skids, not a nose wheel.** The site drawing shows a small wheel under the pen. A fixed wheel scrubs sideways in every turn; a skid slides any way.
+- **Skids, not a nose wheel.** A fixed wheel under the pen would scrub sideways in every turn; a skid slides any way.
 
 ### Shell and flag
 
@@ -169,12 +169,3 @@ Examples are starting points, not endorsements. Check each against its datasheet
 1. **The gate, by hand.** Build only the pen and gate, about two hours with a saw and a drill. Push it by hand at walking pace over balls on a range mat, short grass, long grass, wet grass and a divot. Count how many of twenty go in on each. Then try heavier flaps and lighter ones. If the gate does not work on grass, nothing else in this document matters.
 2. **Retention.** With ten balls in, pull the pen backwards and swing it through a tight turn. None should escape.
 3. **The rover on grass.** Top speed, stopping distances, an hour's power draw, and heading drift over ten 30 m out-and-back runs. These replace every figure marked as assumed in the sizing checks.
-
-## Where this differs from the site
-
-The site was drawn before this design. Four things on it are now out of date:
-
-- "Soft fingers" are hanging flaps, for the reason in choice 2.
-- The robot in the picture has a steep rear face and a nose wheel under the pen. This design has a shallow rear face and skids.
-- "Parks on a charger" becomes a battery swap, at least for the pilot.
-- The picture shows three balls in the pen from the side, which is right; the pen is wider than it looks and takes ten.
