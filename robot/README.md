@@ -2,7 +2,7 @@
 
 Mulligan is a knee-high remote-control buggy that lives at a driving range bay. A child drives it out from the RangeOps app, rolls it over the short shots to scoop them up, and drives them back to hit again.
 
-Nothing here is built yet. This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. [BUILD.md](BUILD.md) is how to build it from bought parts with hand tools, for someone who has never built anything, and there is a 3D model of it in [cad/](cad/README.md). Firmware and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
+Nothing here is built yet. The first build is a private proof of concept, tested by the builder with no children and no public demos, so the strike-proof shell and the pilot's safety work come later (stage R3). This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. [BUILD.md](BUILD.md) is how to build it from bought parts with hand tools, for someone who has never built anything, and there is a 3D model of it in [cad/](cad/README.md). Firmware and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
 
 ## Target spec
 

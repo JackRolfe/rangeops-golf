@@ -18,7 +18,7 @@ Nothing here has been built or tested. The dimensions and sizing come from [desi
 | Weight | 7.1 kg empty, 7.5 kg with ten balls | |
 | Carries | Ten balls loosely; the pen floor fits 21 | 10 |
 | Speed | Capped at 4 km/h. The motors cannot exceed 6.1 km/h. | 4 km/h |
-| Runtime | About 5 hours on a 90 Wh battery, if it is moving half the time | 3 hours |
+| Runtime | About 4 hours on a 72 Wh (18 V, 4 Ah) battery, if it is moving half the time | 3 hours |
 | Drive | Four wheels, four geared motors, steered by driving the sides at different speeds | |
 | Pickup | A bottomless pen pushed along the ground, with a gate of hanging flaps. No motors. | No motors |
 | Control | Bluetooth LE from the RangeOps app | Bluetooth |

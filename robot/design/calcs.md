@@ -54,7 +54,7 @@ Anything marked *assumed* is a guess to be replaced by a measurement from the R0
 | Mechanical power, cruising | 12.3 W |
 | Electrical power, cruising | 26.6 W |
 | Average over a hire, moving 50% of the time (*assumed*) | 14.8 W |
-| Runtime on a 90 Wh pack, using 85% of it | 5.2 hours |
+| Runtime on a 72 Wh pack, using 85% of it | 4.1 hours |
 | Pack needed for 3 hours | 52 Wh |
 
 ## Stopping and stability

@@ -2,113 +2,152 @@
 
 How to build the robot in [DESIGN.md](DESIGN.md) if you have never built anything and own no tools. Every part is bought. Nothing is welded, machined, 3D-printed, drilled or soldered. The only cutting is plastic sheet with a craft knife and two threaded rods with a hacksaw.
 
+The first build is a private proof of concept: tested at home and on a field by the builder, with no children and no public demos. It doesn't need to survive a golf ball yet, so the shell is cheap plastic sheet.
+
 ![The pen and gate, the first thing to build](cad/renders/mulligan_pen.png)
 
 ## How it goes together
 
-- **The metal is goBILDA.** goBILDA sells aluminium channel, plates, motors and wheels for school robotics teams. Every part already has holes in the same pattern, so parts bolt together with M4 screws, nuts and a hex key. In Australia, Core Electronics stocks it; elsewhere, buy from goBILDA or RobotShop.
-- **The panels are corrugated plastic sign board**, called Corflute in Australia, Coroplast in the US and Correx in the UK. It is cut with a craft knife and fixed with cable ties.
+- **The metal is goBILDA.** goBILDA sells aluminium channel, plates, motors and wheels for school robotics teams. Every part already has holes in the same pattern, so parts bolt together with M4 screws, nuts and a hex key.
+- **The panels are corrugated plastic sign board**, called Corflute. It is cut with a craft knife and fixed with cable ties.
 - **The electronics are boards with screw terminals and plug-in leads.** Wires join with lever connectors, and boards stick down with hook-and-loop tape or tie through the floor plate's holes.
 
 The numbers come from [design/params.mjs](design/params.mjs), and the plastic panel sizes are in [design/calcs.md](design/calcs.md#panels-to-cut). The 3D model in [cad/](cad/README.md) shows where every part goes.
 
-## Tools to buy
+## Where to buy it in Sydney
+
+| Shop | What from it | How |
+| --- | --- | --- |
+| [Core Electronics](https://core-electronics.com.au) | All the goBILDA parts, the controller, motor driver and sensors | Online, from Newcastle. Most goBILDA parts are in stock, but some show a lead time of a week or two, so check each page before relying on a date. |
+| [Jaycar](https://www.jaycar.com.au) | Stop button, wire, fuses, multimeter, wire stripper | Stores all over Sydney, or online |
+| [Bunnings](https://www.bunnings.com.au) | Tools, Corflute, cable ties, hook-and-loop tape, furniture glides, lever connectors, the Ozito battery | Any store |
+| Kmart | Flexible chopping mats for the gate flaps | Any store |
+| [Phipps Electronics](https://www.phippselectronics.com) | The 12 V power converter | Online, Australian |
+| eBay or Amazon Australia | The 30 A relay board and the battery adapter | Online. Pick a seller that ships from Australia. |
+| [Schnap](https://www.schnap.com.au) or a bolt shop | M4 threaded rod. Bunnings stores don't reliably stock M4. | Online, or any fastener shop |
+
+## Buy it in three orders
+
+Don't buy everything at once. The pen and gate are the part nobody knows will work, and they cost about a fifth of the whole robot. Build them, push them over balls on grass, and only order the rover if the gate works.
+
+Prices are in Australian dollars, including GST, from the shops' listings in November 2026. A `~` means I couldn't see a listed price and it's an estimate. Shipping is extra. goBILDA's own US prices are about half of Core Electronics', but ordering from the US adds shipping and GST, so compare at checkout for the large second order.
+
+### Order 1: the pen and gate test, about A$310
+
+Tools for this stage, about A$110 at Bunnings:
 
 | Tool | What it is for |
 | --- | --- |
-| 3 mm hex key, a T-handle and an L-shaped one | goBILDA's M4 screws |
+| Metric hex key set, including 3 mm | goBILDA's M4 screws |
 | 7 mm spanner or nut driver | M4 nuts |
-| Small flat screwdriver, 2 to 3 mm | Screw terminals on the boards |
-| Wire stripper and cutter | Stripping wire ends, cutting the plugs off the motor leads |
-| Multimeter | Setting the 12 V supply and checking wiring before switching on. Do not skip this one. |
-| Craft knife with snap-off blades, 600 mm steel rule, cutting mat | Cutting the plastic panels |
 | Junior hacksaw | Two cuts in a threaded rod |
+| Craft knife with snap-off blades, 600 mm steel rule, cutting mat | Cutting the plastic panels |
 | Bradawl | Poking cable-tie holes in plastic |
 | Scissors | Cutting the gate flaps |
 | Safety glasses | Everything |
 
-## Shopping list
+Parts, about A$200:
 
-These are prices I found in November 2026 or typical prices, not quotes. goBILDA's are its US list prices. For comparison, the Hyper Hub is US$7.99 at goBILDA and A$13.50 at Core Electronics.
-
-### goBILDA parts
-
-| Part | goBILDA number | Qty | Each, US$ |
+| Part | Where | Qty | Each, A$ |
 | --- | --- | --- | --- |
-| 5203 Yellow Jacket gearmotor, 26.9:1, 223 rpm, with encoder | 5203-2402-0027 | 4 | 54.99 |
-| Wasteland Wheel, 144 mm | 3616-0014-0144 | 4 | 24.99 |
-| 1310 Hyper Hub, 8 mm REX bore | 1310-0016-4008 | 4 | 7.99 |
-| 1120 U-channel, 456 mm, for the rails | 1120-0018-0456 | 2 | 21.99 |
-| 1120 U-channel, 240 mm, for the pen walls | 1120-0010-0240 | 2 | 13.99 |
-| 1116 grid plate, 232 x 424 mm, for the floor | 1116-0232-0424 | 1 | 29.99 |
-| Angle mount for the pen pivots and gate rod, such as the 1202 Angle Pattern Mount | 1202-0001-0003 | 4 | 8.99 |
-| M4 socket head screws, 8, 12 and 30 mm | 2800-0004-00xx | a pack of each | |
-| M4 nylon-insert locknuts and washers | | a pack of each | |
+| 1120 U-channel, 9 holes, 240 mm, for the pen walls (GB-1120-0009-0240) | Core Electronics | 2 | 23.15 |
+| 1202 Angle Pattern Mount (1-3), for the pivots and gate rod (GB-1202-0001-0003) | Core Electronics | 4 | 15.20 |
+| M4 x 8 mm socket head screws, 25 pack (GB-2800-0004-0008) | Core Electronics | 1 | 5.70 |
+| M4 x 12 mm socket head screws, 25 pack (GB-2800-0004-0012) | Core Electronics | 1 | 6.50 |
+| M4 nylon-insert locknuts, 25 pack (GB-2812-0004-0007) | Core Electronics | 2 | 4.80 |
+| 1502 spacer, 4 mm bore, 6 mm across, 5 mm long, 4 pack | Core Electronics | 5 | ~5 |
+| M4 threaded rod, 1 m | Schnap or a bolt shop | 1 | 8.20 |
+| 3 mm Corflute, 900 x 600 mm | Bunnings | 2 | ~6 |
+| Thin flexible chopping mats | Kmart | 1 pack | ~4 |
+| Nylon furniture glides, about 40 mm, with a screw stud or a hole for an M4 bolt | Bunnings | 1 pack | ~6 |
+| Cable ties, small and medium | Bunnings | 1 pack each | ~5 |
 
-About US$560 with screws and nuts.
+You'll also need a broom handle and some golf balls.
 
-### Electronics
+The second Corflute sheet is a spare for mistakes, and later becomes the shell.
 
-| Part | Qty | Notes |
-| --- | --- | --- |
-| Espressif ESP32-S3-DevKitC-1 | 1 | The controller. Its pins come fitted, so leads push on. |
-| Cytron MDD10A dual motor driver | 1 | Screw terminals for power and motors. Its control pins take 3 to 5.5 V, so the controller drives it directly. |
-| Adafruit BNO085 motion sensor, STEMMA QT (#4754) | 1 | Plugs in with no soldering. |
-| Adafruit INA228 power monitor, STEMMA QT (#5832) | 1 | Measures the battery voltage. Its screw terminal comes fitted. Don't run motor current through it. |
-| STEMMA QT cable to female sockets, 150 mm (#4397), and a STEMMA QT cable, 50 mm (#4399) | 1 each | Controller to the sensors, then sensor to sensor |
-| JST-XH 4-pin to female jumper leads | 2 | Rear motor encoders to the controller. The front encoders are spares. |
-| Female-to-female jumper wires | 1 pack | Controller to the motor driver |
-| CC/CV buck converter, 300 W, 20 A, 6 to 40 V in, with screw terminals | 1 | The 12 V motor supply. Set to 12.0 V and 10 A. |
-| 12 V relay module, 1 channel, 30 A, opto-isolated, with screw terminals | 1 | Cuts motor power. |
-| 12 to 24 V to 5 V USB converter, wired input, and a USB-C cable | 1 | Powers the controller. |
-| 22 mm latching emergency stop button with a normally closed contact | 1 | Goes through the shell. |
-| Battery adapter for your tool brand's 18 V pack, with switch and fuse holder | 1 | Fit a 15 A blade fuse in place of the one supplied. |
-| 15 A blade fuses | 1 pack | |
-| Lever wire connectors, such as Wago 221, rated 20 A or more | 1 assortment | Every power join |
-| Wire, 2.5 mm² (about 14 AWG) red and black, 2 m each | | Power |
+### Order 2: the rover, about A$1,330
 
-About US$200.
+Only order this once the gate works on grass.
 
-### Materials and hardware
+Tools for this stage, about A$60 at Jaycar:
 
-| Part | Qty | Notes |
-| --- | --- | --- |
-| 4 mm corrugated plastic sheet, 600 x 900 mm | 1 | Shell, skirts, pen back wall, funnel wings. Pick a red one. |
-| Thin flexible polypropylene chopping mats | 1 pack | The gate flaps |
-| M4 threaded rod, 1 m | 1 | Cut into two 330 mm pieces for the gate rod and stop rod |
-| M4 nylon spacers, 5 mm long | 20 | Between the flaps |
-| M4 nylon spacers, 10 mm long | 2 | Pen pivots |
-| Nylon furniture glides, about 40 mm, with an M4 threaded stud | 2 | Skids under the pen. If the stud isn't M4, use a flat glide on an M4 bolt. |
-| Child's bike safety flag with a two-piece pole | 1 | Use one section. The pole must fit a 14 mm hole. |
-| Cable ties, small and medium | 1 pack each | |
-| Hook-and-loop tape, and two 25 mm hook-and-loop straps | | Mounting boards; holding the shell's back edge down |
+| Tool | What it is for |
+| --- | --- |
+| Entry-level multimeter | Setting the 12 V supply and checking wiring before switching on. Do not skip this one. |
+| Wire stripper and cutter | Stripping wire ends, cutting the plugs off the motor leads |
+| Small flat screwdriver, 2 to 3 mm | Screw terminals on the boards |
 
-About US$80.
+goBILDA parts from Core Electronics, about A$825:
 
-### Battery
+| Part | Core Electronics SKU | Qty | Each, A$ |
+| --- | --- | --- | --- |
+| 5203 Yellow Jacket gearmotor, 26.9:1, 223 rpm, with encoder | GB-5203-2402-0027 | 4 | 94.95 |
+| Wasteland Wheel, 144 mm | GB-3616-0014-0144 | 4 | 51.10 |
+| 1310 Hyper Hub, 8 mm REX bore | GB-1310-0016-4008 | 4 | 13.50 |
+| 1120 U-channel, 18 holes, 456 mm, for the rails | GB-1120-0018-0456 | 2 | 40.05 |
+| 1116 grid plate, 232 x 424 mm, for the floor | GB-1116-0232-0424 | 1 | 58.25 |
+| M4 x 12 mm socket head screws, 25 pack | GB-2800-0004-0012 | 1 | 6.50 |
+| M4 x 30 mm socket head screws, 25 pack | GB-2800-0004-0030 | 1 | ~7 |
+| M4 nylon-insert locknuts, 25 pack | GB-2812-0004-0007 | 2 | 4.80 |
+| Encoder breakout cable, JST XH to four single sockets [MH-FC], 300 mm | GB-3801-0919-0300 | 2 | ~10 |
+| 1502 spacer, 4 mm bore, 10 mm long, 4 pack, for the pen pivots | | 1 | ~5 |
 
-An 18 V, 5 Ah power-tool pack and its charger. If you already own cordless tools, use that brand and buy the matching adapter. A second pack lets one charge while the other runs.
+The motors and wheels are A$585 of that. Check the encoder cable's name ends in [MH-FC], meaning sockets that push onto the controller's pins, and not [FH-MC], which ends in pins.
+
+Electronics, about A$365:
+
+| Part | Where | Qty | Each, A$ |
+| --- | --- | --- | --- |
+| ESP32-S3-DevKitC-1, the controller | Core Electronics | 1 | 59.75 |
+| Cytron MDD10A dual motor driver. Its control pins take 3 to 5.5 V, so the controller drives it directly. | Core Electronics | 1 | 41.13 |
+| Adafruit BNO085 motion sensor, STEMMA QT (ADA4754) | Core Electronics | 1 | ~47 |
+| Adafruit INA228 power monitor, STEMMA QT (ADA5832). Measures the battery voltage only; don't run motor current through it. | Core Electronics | 1 | ~25 |
+| STEMMA QT cable to female sockets, 150 mm (ADA4397), and a STEMMA QT cable, 50 mm (ADA4399) | Core Electronics | 1 each | ~2 |
+| Female-to-female jumper wires | Core Electronics or Jaycar | 1 pack | ~6 |
+| DC-DC 20 A, 300 W adjustable step-down converter with constant current. Takes 6 to 40 V in, so a full 21 V pack is fine. | Phipps Electronics | 1 | 36.95 |
+| 12 V, 30 A, 1-channel relay board, opto-isolated, high/low trigger jumper | eBay or Amazon Australia | 1 | ~15 |
+| 12 to 24 V to 5 V USB converter with wired input, and a USB-C cable | Jaycar or Amazon Australia | 1 | ~20 |
+| Latching emergency stop switch (SP0786). Use its normally closed contact. | Jaycar | 1 | 16.95 |
+| Ozito PXC 18 V battery adapter with switch and wire leads | eBay Australia | 1 | ~35 |
+| Inline blade fuse holder for 2.5 mm² wire, and 15 A blade fuses | Jaycar | 1 each | ~10 |
+| Wago 221 lever connectors, rated 20 A or more, assortment | Bunnings or Jaycar | 1 | ~25 |
+| 2.5 mm² wire, red and black, 2 m each | Jaycar | | ~15 |
+| Hook-and-loop tape | Bunnings | 1 | ~10 |
+
+The battery, about A$50 to A$100:
+
+An **Ozito PXC 18 V 4.0 Ah battery and charger pack**, from Bunnings. Ozito is the cheapest 18 V tool battery in Australia, and its adapters are easy to find. The price swings between about A$50 and A$100 with Bunnings' specials. A 4 Ah pack gives about 4 hours of driving ([calcs.md](design/calcs.md#power-and-runtime)). If you already own another brand's 18 V tools, use that battery and buy the adapter for it instead.
+
+### Order 3: the shell, about A$25
+
+| Part | Where | Qty | Each, A$ |
+| --- | --- | --- | --- |
+| Hook-and-loop straps, 25 mm | Bunnings | 2 | ~5 |
+| Child's bike safety flag with a two-piece pole, optional for private testing | Kmart or Big W | 1 | ~15 |
+
+The shell itself comes from the spare Corflute sheet in order 1.
 
 ### Total
 
-Roughly US$1,000 with tools, plus a battery if you don't have one.
+About A$1,650: A$310 for the pen test, then A$1,330 for the rover and A$25 for the shell. More than half of it is goBILDA parts, and the motors and wheels alone are A$585.
 
 ## Check before ordering
 
 I designed around the parts' published figures but couldn't confirm all of them. Each check below is quick:
 
-- **Angle mount hole heights.** The pen pivot needs a hole in the bracket's upright about 20 mm above the pen wall, and the gate rod one about 8 mm above. Look at goBILDA's drawing of the bracket. If its holes are elsewhere, choose another goBILDA angle mount, or change `pen.hingeZ` and `gate.hingeZ` in `params.mjs` and rerun the drawings.
-- **Relay trigger.** Some 30 A relay modules don't switch reliably from a 3.3 V pin. Test it on the bench before fitting it, or buy one sold as working from 3.3 V.
-- **Buck converter input.** A full 18 V pack is about 21 V. Buy a converter rated for at least 30 V in.
-- **Battery adapter.** Get the one for your pack's brand and voltage. Check the fuse holder takes standard blade fuses.
+- **Angle mount hole heights.** The pen pivot needs a hole in the bracket's upright about 20 mm above the pen wall, and the gate rod one about 8 mm above. Look at the drawing on goBILDA's page for the 1202 mount before order 1. If its holes are elsewhere, choose another goBILDA angle mount, or change `pen.hingeZ` and `gate.hingeZ` in `params.mjs` and rerun the drawings.
+- **Relay board.** Boards called "30 A relay module" are sold at 10 A too, so check the listing says 30 A. Some don't switch reliably from a 3.3 V pin. Test it on the bench with the controller before fitting it.
+- **Battery adapter.** Get the one for your pack's brand and voltage, with a switch. It probably has no fuse, which is why the list has an inline fuse holder.
 - **Hub length.** The track of 370 mm assumes the hub and wheel sit about 19 mm out from the rail. Measure once they're on. The shell clears the wheels by 14 mm, so there is some margin.
+- **Stock.** Some goBILDA parts at Core Electronics come from a supplier with a week or two's lead time. Check the dispatch date on each page.
 
 ## Wiring
 
 ```mermaid
 flowchart LR
-  B[18 V pack] --> A[Adapter: switch + 15 A fuse]
-  A --> W{{Lever connectors}}
+  B[18 V pack] --> A[Adapter with switch] --> F[15 A inline fuse]
+  F --> W{{Lever connectors}}
   W --> U[USB 5 V converter] --> C[ESP32-S3 DevKitC-1]
   W --> V[INA228: voltage only]
   W --> K[Buck converter 12 V, 10 A]
@@ -125,6 +164,7 @@ flowchart LR
 ```
 
 - **Grounds.** Every board's ground joins the battery's negative.
+- **Fuse.** Put the inline fuse holder in the positive lead straight after the adapter, before anything else.
 - **Motors.** Cut the bullet plugs off the motor leads, strip 8 mm, and put each side's front and rear leads into the same driver terminals. The right-hand motors face the other way, so they turn backwards for the same command. Reverse them in the firmware, not by rewiring.
 - **Encoders.** They run on the controller's 3.3 V pin, so their signals are safe for its inputs with no level shifter.
 - **Stop button.** It breaks the relay coil's supply directly, so it cuts motor power even if the controller has crashed. The controller and sensors stay powered and can report why it stopped. Leave enough slack in its wires for the shell to hinge up.
@@ -160,13 +200,13 @@ This is the hand test from the build plan, made from the real parts. If the gate
 
 Bolt the pen on with an M4 x 30 mm screw at each side. The screw goes from inside the rail out through the small hole above and in front of the rail's front-most large hole, then through a 10 mm spacer and the pivot bracket. Finish with a locknut, snug but not tight, so the pen swings up and down freely.
 
-### 4. Shell, skirts and flag (R3)
+### 4. Shell, skirts and flag
 
 1. Cut the shell panels and the two end skirts using the sizes in [calcs.md](design/calcs.md#panels-to-cut). The flutes in the shell panels should run up the slope.
 2. Join the shell's seams with cable ties through bradawl holes every 40 mm or so, then tape them inside.
 3. Cut a 22 mm hole in the rear panel, on its centre line and about 45 mm up the slope from its bottom edge, for the stop button. Fit the button with its ring nut.
 4. Cable-tie the shell's front edge loosely to the rails' top flanges so it hinges up, and hold its back edge down with the two hook-and-loop straps. Lift it to swap the battery.
 5. Cable-tie the skirts across the ends of the rails.
-6. Drop the flag pole through the left pen wall's flanges at the second hole, and cable-tie it to the wall.
+6. If you're fitting the flag, drop its pole through the left pen wall's flanges at the second hole, and cable-tie it to the wall.
 
-Corrugated plastic is for the first builds. It is light and easy to cut, but it may not survive a full shot. For the strike test and the pilot, order the same panel shapes in 4.5 mm polycarbonate from a cutting service such as SendCutSend, which routes polycarbonate in that thickness from a drawing, and join them the same way.
+The Corflute shell keeps rain and grass off the electronics and carries the stop button. It is not meant to survive a golf ball. That only matters once the robot goes to a working range, and then the same panel shapes can be cut from 4.5 mm polycarbonate by a plastics cutting service and joined the same way.

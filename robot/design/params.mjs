@@ -58,7 +58,7 @@ export const P = {
   // Assumptions to replace with measurements from the R0 rover.
   drive: { crrGrass: 0.15, slopePercent: 10, accel: 1.0, decel: 2.5, linkTimeoutS: 0.3, cgHeight: 95 },
 
-  power: { movingFraction: 0.5, electronicsW: 1.5, buckEfficiency: 0.92, packWh: 90, usableFraction: 0.85, motorSupplyLimitA: 10 },
+  power: { movingFraction: 0.5, electronicsW: 1.5, buckEfficiency: 0.92, packWh: 72, usableFraction: 0.85, motorSupplyLimitA: 10 },
 
   // A full shot from the next bay, as a worst case.
   strike: { ballSpeed: 70 },
