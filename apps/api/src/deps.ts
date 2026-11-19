@@ -1,5 +1,6 @@
 import type { Mailer } from './auth/mailer.js';
 import type { Db } from './db/db.js';
+import type { PaymentProvider } from './payments/provider.js';
 
 export interface Config {
   /** Where the RangeOps app lives; links in emails and hire links point here. */
@@ -12,4 +13,5 @@ export interface Deps {
   now: () => Date;
   config: Config;
   mailer: Mailer;
+  payments: PaymentProvider;
 }

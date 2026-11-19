@@ -6,6 +6,7 @@ import { consoleMailer } from './auth/mailer.js';
 import { openDatabase } from './db/db.js';
 import { seedDemo } from './db/seed.js';
 import type { Deps } from './deps.js';
+import { FakePaymentProvider } from './payments/fake.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT ?? 8787);
@@ -20,6 +21,7 @@ const deps: Deps = {
   now: () => new Date(),
   config: { appUrl: process.env.APP_URL ?? 'http://localhost:5173/app' },
   mailer: consoleMailer,
+  payments: new FakePaymentProvider(process.env.FAKE_PAYMENTS === 'decline'),
 };
 
 const app = createApp(deps);

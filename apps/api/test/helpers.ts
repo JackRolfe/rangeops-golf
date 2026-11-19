@@ -3,6 +3,7 @@ import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { createApp, type Api } from '../src/app.js';
 import { CapturingMailer } from '../src/auth/mailer.js';
 import { Db, migrate } from '../src/db/db.js';
+import { FakePaymentProvider } from '../src/payments/fake.js';
 import { seedDemo } from '../src/db/seed.js';
 import type { Deps } from '../src/deps.js';
 
@@ -32,6 +33,7 @@ export interface TestApp {
   deps: Deps;
   clock: TestClock;
   mailer: CapturingMailer;
+  payments: FakePaymentProvider;
   /** Signs in by email link and returns the session token. */
   signIn: (email: string) => Promise<string>;
   close: () => Promise<void>;
@@ -43,11 +45,13 @@ export async function makeTestApp(): Promise<TestApp> {
   const db = new Db(await freshPg());
   const clock = new TestClock();
   const mailer = new CapturingMailer();
+  const payments = new FakePaymentProvider();
   const deps: Deps = {
     db,
     now: clock.now,
     config: { appUrl: 'https://app.rangeops.test' },
     mailer,
+    payments,
   };
   const app = createApp(deps);
   const call: TestApp['call'] = async (method, path, opts = {}) => {
@@ -69,5 +73,5 @@ export async function makeTestApp(): Promise<TestApp> {
     if (res.status !== 200) throw new Error(`sign in failed: ${JSON.stringify(res.body)}`);
     return res.body.sessionToken as string;
   };
-  return { app, deps, clock, mailer, call, signIn, close: () => db.close() };
+  return { app, deps, clock, mailer, payments, call, signIn, close: () => db.close() };
 }

@@ -1,6 +1,6 @@
 # 04. Payments interface, fake provider and orders
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: [../spec.md](../spec.md) (Payments)
 
@@ -13,3 +13,7 @@ Spec: [../spec.md](../spec.md) (Payments)
 - [ ] Fake provider unit tests: success, decline, global decline, refund
 - [ ] Zero totals skip the charge
 - [ ] No Stripe keys or network calls anywhere
+
+## Comments
+
+Done. `src/payments/provider.ts` is the seam for Stripe. Charges run outside database transactions (a real provider is a network call) and use the order id as the idempotency key. Unknown payment methods decline.
