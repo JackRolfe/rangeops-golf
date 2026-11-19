@@ -1,0 +1,31 @@
+{
+  "name": "@rangeops/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "RangeOps backend: bookings, payments, ball codes, passes, robot hires and the fleet.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit --pretty false",
+    "openapi": "tsx scripts/write-openapi.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "@hono/node-server": "^2.1.9",
+    "@hono/zod-openapi": "^1.6.3",
+    "hono": "^4.13.19",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

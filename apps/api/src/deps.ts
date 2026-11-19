@@ -1,0 +1,19 @@
+import type { Mailer } from './auth/mailer.js';
+import type { Db } from './db/db.js';
+import type { HireKeySigner } from './hires/signer.js';
+import type { PaymentProvider } from './payments/provider.js';
+
+export interface Config {
+  /** Where the RangeOps app lives; links in emails and hire links point here. */
+  appUrl: string;
+}
+
+/** Everything the routes need from outside. Tests swap each one. */
+export interface Deps {
+  db: Db;
+  now: () => Date;
+  config: Config;
+  mailer: Mailer;
+  payments: PaymentProvider;
+  signer: HireKeySigner;
+}
