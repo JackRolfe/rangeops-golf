@@ -10,7 +10,7 @@ Options for later: a real-time clock module with a coin cell, set in the worksho
 
 ## Decision
 
-For R0, time sits behind a `Clock` interface (`bool now(uint32_t& unixSeconds)`, false while unknown), and the implementation is an **anchored clock**:
+For R0, time sits behind a `Clock` interface (`bool now(uint32_t monotonicMs, uint32_t& unixSeconds)`, false while unknown, and `offerAnchor(unixSeconds, monotonicMs)`, which a real clock ignores), and the implementation is an **anchored clock**:
 
 - Unknown at boot.
 - The first key whose version, signature and serial all check out sets the clock to that key's start time; from then on the clock counts up from the ESP32's monotonic timer.
