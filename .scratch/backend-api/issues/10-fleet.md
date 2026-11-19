@@ -1,6 +1,6 @@
 # 10. Fleet status
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06
 Spec: [../spec.md](../spec.md) (Fleet)
 
@@ -14,3 +14,7 @@ Spec: [../spec.md](../spec.md) (Fleet)
 - [ ] A hirer can post status only during their hire
 - [ ] A robot out of service is never assigned to a hire
 - [ ] Serials must be 4 characters of A–Z or 0–9 and unique
+
+## Comments
+
+Done. States are the control-link telemetry states by name: idle, driving, at_limit, link_lost, stopped_by_switch, fault, low_battery, locked. `ballsOnBoard` is null when the robot does not count (telemetry 255). Fault flags are not stored yet. A partner portal has no way to read the fleet yet (needs an API key, out of scope).

@@ -1393,6 +1393,294 @@
           "booking",
           "hireLink"
         ]
+      },
+      "Fleet": {
+        "type": "object",
+        "properties": {
+          "rangeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "robots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FleetRobot"
+            }
+          }
+        },
+        "required": [
+          "rangeId",
+          "at",
+          "robots"
+        ]
+      },
+      "FleetRobot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rangeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serial": {
+            "type": "string"
+          },
+          "bluetoothName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "homeBay": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "number": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "name"
+            ]
+          },
+          "inService": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "idle",
+                  "driving",
+                  "at_limit",
+                  "link_lost",
+                  "stopped_by_switch",
+                  "fault",
+                  "low_battery",
+                  "locked",
+                  null
+                ]
+              },
+              "batteryPct": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "ballsOnBoard": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "firmware": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastSeenAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "example": "2026-11-24T05:00:00.000Z"
+              }
+            },
+            "required": [
+              "state",
+              "batteryPct",
+              "ballsOnBoard",
+              "firmware",
+              "lastSeenAt"
+            ],
+            "description": "The latest status reported, by staff or by the phone driving it"
+          },
+          "currentHire": {
+            "$ref": "#/components/schemas/FleetHire"
+          },
+          "nextHire": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FleetHire"
+              },
+              {
+                "description": "The next hire later today, local time"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "rangeId",
+          "serial",
+          "bluetoothName",
+          "name",
+          "homeBay",
+          "inService",
+          "status",
+          "currentHire",
+          "nextHire"
+        ]
+      },
+      "FleetHire": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "hireId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bayNumber": {
+            "type": "integer"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "checkedInAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          }
+        },
+        "required": [
+          "hireId",
+          "bookingId",
+          "bayNumber",
+          "startsAt",
+          "endsAt",
+          "checkedInAt"
+        ]
+      },
+      "RobotStatusReport": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "driving",
+              "at_limit",
+              "link_lost",
+              "stopped_by_switch",
+              "fault",
+              "low_battery",
+              "locked"
+            ]
+          },
+          "batteryPct": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "ballsOnBoard": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 254,
+            "description": "Null if the robot does not count balls (telemetry 255)"
+          },
+          "firmware": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "state",
+          "batteryPct"
+        ]
+      },
+      "NewRobot": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "homeBayId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "inService": {
+            "type": "boolean"
+          },
+          "serial": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{4}$",
+            "description": "4 characters, A–Z or 0–9, as after \"Mulligan-\" in its Bluetooth name",
+            "example": "E5F6"
+          }
+        },
+        "required": [
+          "serial"
+        ]
+      },
+      "RobotUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "homeBayId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "inService": {
+            "type": "boolean"
+          }
+        }
       }
     },
     "parameters": {}
@@ -2582,6 +2870,367 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/fleet": {
+      "get": {
+        "tags": [
+          "Robots"
+        ],
+        "summary": "The range's robots: status, battery and hires (staff)",
+        "description": "What the console shows. A partner portal could read the same thing later, once it has a way to authenticate.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The fleet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fleet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/robots/{robotId}/status": {
+      "post": {
+        "tags": [
+          "Robots"
+        ],
+        "summary": "Report a robot's latest telemetry",
+        "description": "Staff can post it, and so can the account holding the robot's current hire, so the phone driving it can relay what the robot says.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "robotId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RobotStatusReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetRobot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/robots": {
+      "post": {
+        "tags": [
+          "Robots"
+        ],
+        "summary": "Add a robot to the range (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRobot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetRobot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/robots/{robotId}": {
+      "patch": {
+        "tags": [
+          "Robots"
+        ],
+        "summary": "Rename a robot, change its home bay, or take it out of service (staff)",
+        "description": "A robot out of service is never assigned to a new hire. Hires it already has stay.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "robotId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RobotUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetRobot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {

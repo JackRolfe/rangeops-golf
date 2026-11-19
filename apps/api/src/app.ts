@@ -6,6 +6,7 @@ import { authRoutes } from './auth/routes.js';
 import { ballRoutes } from './balls/routes.js';
 import { bookingRoutes } from './bookings/routes.js';
 import { checkInRoutes } from './checkin/routes.js';
+import { fleetRoutes } from './fleet/routes.js';
 import { healthRoutes } from './health.js';
 import { hireRoutes } from './hires/routes.js';
 import { rangeRoutes } from './ranges/routes.js';
@@ -57,6 +58,7 @@ export function createApp(deps: Deps): Api {
   hireRoutes(app, deps);
   ballRoutes(app, deps);
   checkInRoutes(app, deps);
+  fleetRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;
