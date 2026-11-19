@@ -1,6 +1,6 @@
 # 06. Encoders, speed controller and odometry
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 01
 Spec: [spec.md](../spec.md#hardware-layer)
@@ -17,4 +17,8 @@ Plain C++ in `lib/mulligan_core/`:
 
 ## Acceptance
 
-- [ ] Tests for both directions of rotation, invalid transitions, controller saturation and windup, odometry on a straight run and a square, tilt at 0°, 35° and upside down.
+- [x] Tests for both directions of rotation, invalid transitions, controller saturation and windup, odometry on a straight run and a square, tilt at 0°, 35° and upside down.
+
+## Comments
+
+Done in lib/mulligan_core/src/motion.{h,cpp}. The speed controller never gives more than 0.8 duty (about 1.36 m/s unloaded), so a dead encoder cannot run the wheels flat out; the stall rule in the safety core then stops it. Gains are first guesses for the bench. Odometry takes heading from the motion sensor when valid and from the wheels otherwise.
