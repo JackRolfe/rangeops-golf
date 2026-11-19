@@ -49,6 +49,19 @@ export async function signIn(baseUrl: string, linkOrToken: string, preferredRang
   return { baseUrl: base, token: session.sessionToken, rangeId: range.id, rangeName: range.name, email: me.account.email };
 }
 
+/**
+ * Checks a saved session is still good: the API still knows the token, and the account is still staff
+ * at the saved range (a reset local database has new ids). Returns null when staff should sign in again.
+ */
+export async function checkSession(session: StaffSession, fetchFn: typeof fetch = fetch): Promise<StaffSession | null> {
+  const response = await fetchFn(`${session.baseUrl}/me`, { headers: { authorization: `Bearer ${session.token}` } });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`The API answered ${response.status}.`);
+  const me = (await response.json()) as ApiMe;
+  const range = me.staffAt.find((r) => r.id === session.rangeId);
+  return range ? { ...session, rangeName: range.name } : null;
+}
+
 export async function signOut(session: StaffSession, fetchFn: typeof fetch = fetch): Promise<void> {
   await post(fetchFn, `${session.baseUrl}/auth/sign-out`, {}, session.token).catch(() => undefined);
 }
