@@ -91,7 +91,7 @@ test('records a session, restores it after reload, and starts offline', async ({
   await expect(page.getByRole('heading', { name: 'Harbour Practice Range' })).toBeVisible();
   await expect(page.getByText('No sessions yet')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start practice' }).click();
+  await page.getByRole('button', { name: /^Bullseye/ }).click();
   await expect(page.getByRole('heading', { name: 'What are you hitting?' })).toBeVisible();
   await page.getByLabel('Club').selectOption({ label: '7 iron' });
   await page.getByLabel(/Note/).fill('Tempo drill');
@@ -143,7 +143,7 @@ test('records a session, restores it after reload, and starts offline', async ({
   await expect(page.getByRole('heading', { name: 'Harbour Practice Range' })).toBeVisible();
   await expect(page.getByText('Tempo drill')).toBeVisible();
 
-  await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'View all' }).click();
   await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
   await expect(page.getByText('50%', { exact: true }).first()).toBeVisible();
   await page.screenshot({ path: '/tmp/rangeops-history.png' });
@@ -167,6 +167,86 @@ test('records a session, restores it after reload, and starts offline', async ({
   await expect(page.getByText('50%', { exact: true }).first()).toBeVisible();
   await context.setOffline(false);
 
+  expect(consoleErrors).toEqual([]);
+});
+
+test('plays Shrink the Ring start to finish', async ({ page }) => {
+  await page.goto('./');
+  await page.getByLabel('Range name').fill('Shrink Range');
+  await page.locator('#range-image').setInputFiles({
+    name: 'range.png',
+    mimeType: 'image/png',
+    buffer: await makeRangeImage(page),
+  });
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('button', { name: /^Shrink the Ring/ }).click();
+  await expect(page.getByRole('heading', { name: 'Shrink the Ring' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Shrink the Ring' })).toBeChecked();
+  await page.getByLabel('Club').selectOption({ label: 'Pitching wedge' });
+  await page.getByRole('button', { name: 'Set target' }).click();
+  await page.getByRole('button', { name: 'Set target' }).click();
+  await expect(page.getByText('3 more in a row to shrink the ring.')).toBeVisible();
+
+  // The default ring is centred at (0.5, 0.42).
+  for (let shot = 1; shot <= 3; shot++) {
+    await clickMapAtNormalized(page, 0.5, 0.42);
+    await expect(page.getByText(`${shot} ${shot === 1 ? 'shot' : 'shots'}`, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByText('The ring shrank to 80%.')).toBeVisible();
+  await expect(page.getByTestId('streak')).toHaveText('3');
+  await clickMapAtNormalized(page, 0.1, 0.9);
+  await expect(page.getByTestId('streak')).toHaveText('0');
+  await page.screenshot({ path: '/tmp/rangeops-shrink.png' });
+
+  await page.getByRole('button', { name: 'Finish' }).click();
+  await expect(page.getByRole('heading', { name: 'Pitching wedge' })).toBeVisible();
+  await expect(page.getByText('Shrank the ring 1 time, down to 80%.')).toBeVisible();
+  await expect(page.getByText('Play 5 shots or more to set a best.')).toBeVisible();
+  await page.screenshot({ path: '/tmp/rangeops-shrink-detail.png' });
+  await expect(page.getByText('75%', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Go back' }).click();
+  await expect(page.getByText(/Shrink the Ring · 4 shots/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Beat your best' })).toBeVisible();
+  await expect(page.getByText('With Pitching wedge')).toBeVisible();
+  await page.getByRole('heading', { name: 'Beat your best' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/tmp/rangeops-games-best.png' });
+});
+
+test('drives the simulated robot from the Drive tab', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => consoleErrors.push(error.message));
+  await page.goto('./');
+  await page.getByLabel('Range name').fill('Drive Range');
+  await page.locator('#range-image').setInputFiles({
+    name: 'range.png',
+    mimeType: 'image/png',
+    buffer: await makeRangeImage(page),
+  });
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('button', { name: 'Drive' }).click();
+  await page.getByRole('button', { name: 'Connect to Mulligan' }).click();
+  await expect(page.getByText('Mulligan-SIM1 · simulator')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Hold the stick to drive out and scoop the balls.');
+
+  const stick = page.getByRole('application', { name: /Joystick/ });
+  const box = await stick.boundingBox();
+  if (!box) throw new Error('Joystick has no bounding box.');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + 4, { steps: 4 });
+  await expect(page.getByRole('status')).toHaveText('Driving at walking pace. Let go and it stops.');
+  await expect.poll(async () => parseFloat((await page.getByTestId('distance').textContent()) ?? '0')).toBeGreaterThan(2);
+  await page.screenshot({ path: '/tmp/rangeops-drive.png' });
+  await page.mouse.up();
+  await expect(page.getByRole('status')).toHaveText('Hold the stick to drive out and scoop the balls.');
+  const stopped = await page.getByTestId('distance').textContent();
+  await page.waitForTimeout(600);
+  await expect(page.getByTestId('distance')).toHaveText(stopped ?? '');
+
+  await page.getByRole('button', { name: 'Games' }).click();
+  await expect(page.getByRole('heading', { name: 'Drive Range' })).toBeVisible();
   expect(consoleErrors).toEqual([]);
 });
 

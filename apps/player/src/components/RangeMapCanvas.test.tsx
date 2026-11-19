@@ -9,8 +9,8 @@ import { RangeMapCanvas } from './RangeMapCanvas';
 const TARGET: Target = { cx: 0.5, cy: 0.5, radius: 0.1 };
 
 const SHOTS: Shot[] = [
-  { id: 'inside', x: 0.53, y: 0.5, recordedAt: '2026-07-11T01:00:00.000Z' },
-  { id: 'outside', x: 0.8, y: 0.5, recordedAt: '2026-07-11T01:01:00.000Z' },
+  { id: 'inside', x: 0.53, y: 0.5, radius: 0.1, recordedAt: '2026-07-11T01:00:00.000Z' },
+  { id: 'outside', x: 0.8, y: 0.5, radius: 0.1, recordedAt: '2026-07-11T01:01:00.000Z' },
 ];
 
 beforeAll(() => {

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { PracticeSession, Shot } from './types'
 import {
+  MIN_SHOTS_FOR_BEST,
   filterSessionsByClub,
+  getBestSession,
   getLastNAccuracy,
   getOverallAccuracy,
   getRecentShots,
@@ -17,6 +19,7 @@ function shot(index: number, onTarget: boolean, base = Date.UTC(2026, 0, 1)): Sh
     id: `shot-${index}`,
     x: onTarget ? 0.5 : 0.9,
     y: 0.5,
+    radius: 0.1,
     recordedAt: new Date(base + index * 1000).toISOString(),
   }
 }
@@ -34,6 +37,7 @@ function session(
     id,
     rangeId: 'range-1',
     rangeRevision: options.revision ?? 1,
+    mode: 'bullseye',
     club,
     note: '',
     target: { cx: 0.5, cy: 0.5, radius: 0.1 },
@@ -144,5 +148,51 @@ describe('accuracy metrics', () => {
       total: 2,
       percentage: 50,
     })
+  })
+})
+
+describe('Shrink the Ring sessions', () => {
+  it('judges each shot against the ring it was played at', () => {
+    // 0.09 from the centre: on target at the starting ring, a miss once it shrinks.
+    const edge = (index: number, radius: number): Shot => ({ ...shot(index, true), x: 0.59, radius })
+    const shrink = { ...session('session-1', 'Driver', [edge(1, 0.1), edge(2, 0.1), edge(3, 0.1), edge(4, 0.08)]), mode: 'shrink' as const }
+    expect(getSessionAccuracy(shrink, dimensions)).toEqual({ onTarget: 3, total: 4, percentage: 75 })
+  })
+})
+
+describe('getBestSession (Beat Your Best)', () => {
+  const shots = (on: number, total: number): Shot[] =>
+    Array.from({ length: total }, (_, index) => shot(index, index < on))
+  const at = (day: number) => new Date(Date.UTC(2026, 1, day)).toISOString()
+  const history: PracticeSession[] = [
+    session('s1', '7 iron', shots(3, 5), { completedAt: at(1) }),
+    session('s2', '7 Iron ', shots(4, 5), { completedAt: at(2) }),
+    session('s3', '7 iron', shots(8, 10), { completedAt: at(3) }), // ties s2 at 80%
+    session('s4', '7 iron', shots(3, 3), { completedAt: at(4) }), // 100% but too few shots
+    session('s5', 'Driver', shots(5, 5), { completedAt: at(5) }),
+    { ...session('s6', '7 iron', shots(5, 5), { completedAt: at(6) }), mode: 'shrink' },
+    session('s7', '7 iron', shots(5, 5), { status: 'draft' }),
+  ]
+
+  it('needs at least five shots for a session to count', () => {
+    expect(MIN_SHOTS_FOR_BEST).toBe(5)
+  })
+
+  it('finds the best completed session for the club and game, earliest on a tie', () => {
+    expect(getBestSession(history, resolveRange, { club: '7 IRON', mode: 'bullseye' })).toMatchObject({
+      sessionId: 's2',
+      onTarget: 4,
+      total: 5,
+      percentage: 80,
+    })
+    expect(getBestSession(history, resolveRange, { club: '7 iron', mode: 'shrink' })?.sessionId).toBe('s6')
+    expect(getBestSession(history, resolveRange, { club: 'Driver', mode: 'bullseye' })?.sessionId).toBe('s5')
+    expect(getBestSession(history, resolveRange, { club: 'Wedge', mode: 'bullseye' })).toBeNull()
+  })
+
+  it('can leave a session out and look only at sessions finished before a time', () => {
+    expect(getBestSession(history, resolveRange, { club: '7 iron', mode: 'bullseye', excludeSessionId: 's2' })?.sessionId).toBe('s3')
+    expect(getBestSession(history, resolveRange, { club: '7 iron', mode: 'bullseye', before: at(2) })?.sessionId).toBe('s1')
+    expect(getBestSession(history, resolveRange, { club: '7 iron', mode: 'bullseye', before: at(1) })).toBeNull()
   })
 })

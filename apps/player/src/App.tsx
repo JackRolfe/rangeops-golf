@@ -18,17 +18,20 @@ import {
   undoLastShot,
   updateSession,
 } from './data/db';
-import { DEFAULT_PREFERENCES, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
-import { HistoryScreen } from './screens/HistoryScreen';
-import { HomeScreen } from './screens/HomeScreen';
+import { getBestSession } from './domain/metrics';
+import { DEFAULT_PREFERENCES, type GameMode, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
+import type { TabId } from './components/TabBar';
+import { DriveScreen } from './screens/DriveScreen';
+import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
+import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-type View = 'loading' | 'onboarding' | 'home' | 'setup' | 'practice' | 'history' | 'settings' | 'detail' | 'fatal';
-type DetailReturnView = 'home' | 'history';
+type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
+type DetailReturnView = 'games' | 'progress';
 
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
@@ -105,7 +108,8 @@ export default function App() {
   const [currentSession, setCurrentSession] = useState<PracticeSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<PracticeSession | null>(null);
   const [recording, setRecording] = useState(false);
-  const [detailReturn, setDetailReturn] = useState<DetailReturnView>('home');
+  const [setupMode, setSetupMode] = useState<GameMode>('bullseye');
+  const [detailReturn, setDetailReturn] = useState<DetailReturnView>('games');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bootStarted = useRef(false);
@@ -145,7 +149,7 @@ export default function App() {
     void loadSnapshot()
       .then((snapshot) => {
         const range = latestRangeForId(snapshot.ranges, snapshot.preferences.activeRangeId);
-        setView(range ? 'home' : 'onboarding');
+        setView(range ? 'games' : 'onboarding');
       })
       .catch((bootError) => {
         setError(errorMessage(bootError));
@@ -168,7 +172,7 @@ export default function App() {
       const dimensions = await readImageDimensions(file);
       await initializeRange({ name, imageBlob: file, ...dimensions });
       await loadSnapshot();
-      setView('home');
+      setView('games');
     } catch (submitError) {
       setError(errorMessage(submitError));
     } finally {
@@ -176,17 +180,18 @@ export default function App() {
     }
   }
 
-  function openPractice(): void {
+  function openPractice(mode: GameMode = 'bullseye'): void {
     if (activeDraft) {
       setCurrentSession(activeDraft);
       setRecording(activeDraft.targetLocked || activeDraft.shots.length > 0);
       setView('practice');
       return;
     }
+    setSetupMode(mode);
     setView('setup');
   }
 
-  async function startSession(club: string, note: string): Promise<void> {
+  async function startSession(club: string, note: string, mode: GameMode): Promise<void> {
     if (!activeRange) return;
     setBusy(true);
     setError(null);
@@ -194,6 +199,7 @@ export default function App() {
       const session = await createSession({
         rangeId: activeRange.id,
         rangeRevision: activeRange.revision,
+        mode,
         club,
         note,
         target: DEFAULT_TARGET,
@@ -286,7 +292,7 @@ export default function App() {
       upsertSession(completed);
       setSelectedSession(completed);
       setCurrentSession(null);
-      setDetailReturn('home');
+      setDetailReturn('games');
       setView('detail');
     } catch (finishError) {
       setError(errorMessage(finishError));
@@ -308,6 +314,11 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function selectTab(tab: TabId): void {
+    setError(null);
+    setView(tab);
   }
 
   function openDetail(session: PracticeSession, from: DetailReturnView): void {
@@ -385,7 +396,7 @@ export default function App() {
   } else if (view === 'onboarding' || !activeRange) {
     screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} />;
   } else if (view === 'setup') {
-    screen = <SessionSetupScreen lastClub={preferences.lastClub} busy={busy} onBack={() => setView('home')} onContinue={(club, note) => void startSession(club, note)} />;
+    screen = <SessionSetupScreen lastClub={preferences.lastClub} initialMode={setupMode} busy={busy} onBack={() => setView('games')} onContinue={(club, note, mode) => void startSession(club, note, mode)} />;
   } else if (view === 'practice' && currentSession && practiceRange && displayedImageUrl) {
     screen = (
       <PracticeScreen
@@ -394,12 +405,17 @@ export default function App() {
         session={currentSession}
         recording={recording}
         busy={busy}
+        best={getBestSession(sessions, ranges, {
+          club: currentSession.club,
+          mode: currentSession.mode,
+          excludeSessionId: currentSession.id,
+        })}
         onTargetChange={handleTargetChange}
         onSetTarget={() => void lockTarget()}
         onShot={(point) => void recordShot(point)}
         onUndo={() => void undoShot()}
         onFinish={() => void finishSession()}
-        onLeave={() => setView('home')}
+        onLeave={() => setView('games')}
       />
     );
   } else if (view === 'practice') {
@@ -408,24 +424,26 @@ export default function App() {
         <div className="loading-mark"><Brand />Loading range image</div>
       </AppShell>
     );
-  } else if (view === 'history') {
+  } else if (view === 'progress') {
     screen = (
-      <HistoryScreen
+      <ProgressScreen
         range={activeRange}
         ranges={ranges}
         sessions={sessions}
-        onHome={() => setView('home')}
-        onStart={openPractice}
-        onSession={(session) => openDetail(session, 'history')}
+        onBack={() => setView('games')}
+        onSession={(session) => openDetail(session, 'progress')}
+        onTab={selectTab}
       />
     );
+  } else if (view === 'drive') {
+    screen = <DriveScreen onTab={selectTab} />;
   } else if (view === 'settings') {
     screen = (
       <SettingsScreen
         range={activeRange}
         busy={busy}
         error={error}
-        onBack={() => setView('home')}
+        onTab={selectTab}
         onRename={handleRename}
         onReplaceImage={handleReplaceImage}
         onDeleteAll={handleDeleteAll}
@@ -437,6 +455,12 @@ export default function App() {
         range={detailRange}
         imageUrl={displayedImageUrl}
         session={selectedSession}
+        previousBest={getBestSession(sessions, ranges, {
+          club: selectedSession.club,
+          mode: selectedSession.mode,
+          excludeSessionId: selectedSession.id,
+          before: selectedSession.completedAt ?? undefined,
+        })}
         onBack={() => setView(detailReturn)}
       />
     );
@@ -448,17 +472,18 @@ export default function App() {
     );
   } else {
     screen = (
-      <HomeScreen
+      <GamesScreen
         range={activeRange}
         ranges={ranges}
         sessions={sessions}
         draft={activeDraft}
+        club={preferences.lastClub}
         onStart={openPractice}
-        onResume={openPractice}
+        onResume={() => openPractice()}
         onDiscardDraft={() => void discardDraft()}
-        onSettings={() => { setError(null); setView('settings'); }}
-        onHistory={() => setView('history')}
-        onSession={(session) => openDetail(session, 'home')}
+        onProgress={() => setView('progress')}
+        onSession={(session) => openDetail(session, 'games')}
+        onTab={selectTab}
       />
     );
   }

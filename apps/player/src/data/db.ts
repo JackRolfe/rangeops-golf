@@ -1,6 +1,9 @@
-import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase, type IDBPObjectStore } from 'idb'
+import { isGameMode, ringForNextShot } from '../domain/games'
 import {
   DEFAULT_PREFERENCES,
+  type GameMode,
+  type ImageDimensions,
   type PracticeSession,
   type Preferences,
   type RangeMap,
@@ -10,7 +13,13 @@ import {
 } from '../domain/types'
 
 export const RANGEOPS_DB_NAME = 'rangeops'
-export const RANGEOPS_DB_VERSION = 1
+/**
+ * Schema history:
+ * 1. ranges, sessions, preferences.
+ * 2. Games: every session has a `mode` and every shot a `radius`. The upgrade
+ *    back-fills old sessions as `bullseye` and old shots with the session's ring.
+ */
+export const RANGEOPS_DB_VERSION = 2
 export const PREFERENCES_KEY = 'singleton' as const
 
 interface RangeOpsSchema extends DBSchema {
@@ -59,17 +68,22 @@ export interface UpdateRangeInput {
   height?: number
 }
 
+/** A shot as given by a caller; the ring radius is worked out from the game. */
+export type ShotInput = Omit<Shot, 'radius'>
+
 export interface CreateSessionInput {
   id?: string
   rangeId: string
   rangeRevision: number
+  mode?: GameMode
   club: string
   note?: string
   target: Target
-  shots?: Shot[]
+  shots?: ShotInput[]
 }
 
 export interface UpdateSessionInput {
+  mode?: GameMode
   club?: string
   note?: string
   target?: Target
@@ -132,26 +146,72 @@ function validateTarget(target: Target): void {
   }
 }
 
-function validateShot(shot: Pick<Shot, 'x' | 'y'>): void {
+function validateShot(shot: Pick<Shot, 'x' | 'y'> & { radius?: number }): void {
   validateUnitCoordinate(shot.x, 'Shot x coordinate')
   validateUnitCoordinate(shot.y, 'Shot y coordinate')
+  if (shot.radius !== undefined && (!Number.isFinite(shot.radius) || shot.radius <= 0)) {
+    throw new RangeError('Shot ring radius must be a positive finite number.')
+  }
+}
+
+function validateMode(mode: unknown): GameMode {
+  if (!isGameMode(mode)) throw new Error(`Unknown game ${String(mode)}.`)
+  return mode
+}
+
+/** Give each shot the ring it was played against, replaying the game in order. */
+function playShots(
+  mode: GameMode,
+  target: Target,
+  shots: readonly ShotInput[],
+  dimensions: ImageDimensions,
+): Shot[] {
+  const played: Shot[] = []
+  for (const shot of shots) {
+    const { radius } = ringForNextShot({ mode, target, shots: played }, dimensions)
+    played.push({ ...shot, radius })
+  }
+  return played
 }
 
 function targetsEqual(first: Target, second: Target): boolean {
   return first.cx === second.cx && first.cy === second.cy && first.radius === second.radius
 }
 
-function normalizeSession(session: PracticeSession): PracticeSession {
+/** A session as any schema version may have stored it. */
+type StoredSession = Omit<PracticeSession, 'mode' | 'shots'> & {
+  mode?: GameMode
+  shots: Array<Omit<Shot, 'radius'> & { radius?: number }>
+}
+
+/**
+ * Fill in fields older records lack. The version 2 upgrade already does this on
+ * disk; doing it on read too means a record can never reach the app half-formed.
+ */
+function normalizeSession(session: StoredSession): PracticeSession {
   return {
     ...session,
+    mode: session.mode ?? 'bullseye',
     targetLocked: session.targetLocked ?? session.shots.length > 0,
+    shots: session.shots.map((shot) => ({ ...shot, radius: shot.radius ?? session.target.radius })),
+  }
+}
+
+/** Version 1 to 2: every old session was a bullseye game with one fixed ring. */
+async function backfillGames(
+  sessions: IDBPObjectStore<RangeOpsSchema, ArrayLike<'ranges' | 'sessions' | 'preferences'>, 'sessions', 'versionchange'>,
+): Promise<void> {
+  let cursor = await sessions.openCursor()
+  while (cursor) {
+    await cursor.update(normalizeSession(cursor.value as StoredSession))
+    cursor = await cursor.continue()
   }
 }
 
 export function openRangeOpsDatabase(): Promise<IDBPDatabase<RangeOpsSchema>> {
   if (!databasePromise) {
     databasePromise = openDB<RangeOpsSchema>(RANGEOPS_DB_NAME, RANGEOPS_DB_VERSION, {
-      upgrade(database, oldVersion) {
+      upgrade(database, oldVersion, _newVersion, transaction) {
         if (oldVersion < 1) {
           const ranges = database.createObjectStore('ranges', {
             keyPath: ['id', 'revision'],
@@ -165,6 +225,9 @@ export function openRangeOpsDatabase(): Promise<IDBPDatabase<RangeOpsSchema>> {
           sessions.createIndex('by-updated-at', 'updatedAt')
 
           database.createObjectStore('preferences')
+        }
+        if (oldVersion >= 1 && oldVersion < 2) {
+          void backfillGames(transaction.objectStore('sessions'))
         }
       },
       terminated() {
@@ -336,6 +399,7 @@ export async function updateRange(id: string, input: UpdateRangeInput): Promise<
 
 export async function createSession(input: CreateSessionInput): Promise<PracticeSession> {
   const club = validateName(input.club, 'Club')
+  const mode = validateMode(input.mode ?? 'bullseye')
   validateTarget(input.target)
   input.shots?.forEach(validateShot)
   const database = await openRangeOpsDatabase()
@@ -350,11 +414,12 @@ export async function createSession(input: CreateSessionInput): Promise<Practice
     id: input.id ?? newId(),
     rangeId: input.rangeId,
     rangeRevision: input.rangeRevision,
+    mode,
     club,
     note: input.note?.trim() ?? '',
     target: { ...input.target },
     targetLocked: (input.shots?.length ?? 0) > 0,
-    shots: input.shots?.map((shot) => ({ ...shot })) ?? [],
+    shots: playShots(mode, input.target, input.shots ?? [], range),
     status: 'draft',
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -398,6 +463,7 @@ export async function getDraftSession(rangeId?: string): Promise<PracticeSession
 
 export async function saveSession(session: PracticeSession): Promise<PracticeSession> {
   validateName(session.club, 'Club')
+  validateMode(session.mode)
   validateTarget(session.target)
   session.shots.forEach(validateShot)
   const database = await openRangeOpsDatabase()
@@ -410,6 +476,9 @@ export async function saveSession(session: PracticeSession): Promise<PracticeSes
   const normalizedExisting = normalizeSession(existing)
   if (normalizedExisting.targetLocked && !targetsEqual(normalizedExisting.target, session.target)) {
     throw new Error('A target cannot be changed after shot recording has begun.')
+  }
+  if (normalizedExisting.targetLocked && normalizedExisting.mode !== session.mode) {
+    throw new Error('The game cannot be changed after recording has begun.')
   }
 
   const saved: PracticeSession = {
@@ -445,6 +514,10 @@ export async function updateSession(
   if (existing.targetLocked && !targetsEqual(existing.target, target)) {
     throw new Error('A target cannot be changed after recording has begun.')
   }
+  const mode = validateMode(input.mode ?? existing.mode)
+  if (existing.targetLocked && mode !== existing.mode) {
+    throw new Error('The game cannot be changed after recording has begun.')
+  }
 
   validateName(input.club ?? existing.club, 'Club')
   validateTarget(target)
@@ -454,6 +527,7 @@ export async function updateSession(
   const updated: PracticeSession = {
     ...existing,
     ...input,
+    mode,
     club: (input.club ?? existing.club).trim(),
     note: (input.note ?? existing.note).trim(),
     target,
@@ -471,7 +545,7 @@ export async function updateSession(
 export async function addShot(id: string, input: AddShotInput): Promise<PracticeSession> {
   validateShot(input)
   const database = await openRangeOpsDatabase()
-  const transaction = database.transaction('sessions', 'readwrite')
+  const transaction = database.transaction(['sessions', 'ranges'], 'readwrite')
   const store = transaction.objectStore('sessions')
   const stored = await store.get(id)
   if (!stored) {
@@ -481,11 +555,16 @@ export async function addShot(id: string, input: AddShotInput): Promise<Practice
   if (session.status !== 'draft') {
     throw new Error('Shots can only be added to a draft session.')
   }
+  const range = await transaction.objectStore('ranges').get([session.rangeId, session.rangeRevision])
+  if (!range) {
+    throw new Error(`Range ${session.rangeId} revision ${session.rangeRevision} was not found.`)
+  }
 
   const shot: Shot = {
     id: input.id ?? newId(),
     x: input.x,
     y: input.y,
+    radius: ringForNextShot(session, range).radius,
     recordedAt: input.recordedAt ?? nowIso(),
   }
   const updated: PracticeSession = {
