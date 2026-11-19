@@ -36,4 +36,4 @@ To stop all costs, delete the group: `az group delete -n rg-rangeops-aue`. That 
 deploy/azure/deploy.sh
 ```
 
-It builds the API image in the registry and rolls the Container App onto it, then rebuilds and uploads the site, the app and the console.
+It builds the API image in the registry and rolls the Container App onto it, then rebuilds and uploads the site, the app and the console. The app and the console are built pointing at the API (`VITE_API_URL`, `VITE_CONSOLE_API`); built without it, the app runs in demo mode and books nothing.

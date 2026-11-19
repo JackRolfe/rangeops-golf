@@ -17,8 +17,8 @@ echo "API: building $ACR/rangeops-api:$tag in the registry"
 az acr build -r "$ACR" -g "$RG" -t "rangeops-api:$tag" -t rangeops-api:latest -f apps/api/Dockerfile . -o none
 az containerapp update -n "$API_APP" -g "$RG" --image "$ACR.azurecr.io/rangeops-api:$tag" -o none
 
-echo "Site and practice app"
-npm run build
+echo "Site and app, the app pointed at $api_url"
+VITE_API_URL="$api_url" npm run build
 npx -y @azure/static-web-apps-cli@2 deploy ./dist --env production \
   --deployment-token "$(az staticwebapp secrets list -n "$SITE_SWA" -g "$RG" --query properties.apiKey -o tsv)"
 
