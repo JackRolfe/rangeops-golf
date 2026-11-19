@@ -33,8 +33,8 @@ Terms the console uses. The backend should use the same words.
 | **Bucket code** | A six-character code (no 0, O, 1 or I) a player shows to get a bucket. Where it was paid for doesn't matter. |
 | **Order** | A paid bucket. Has a bucket code and a status: `paid`, `handed-over` or `refunded`. |
 | **Handover** | Staff enter or scan a code; the console checks it and marks the order handed over, once. |
-| **Pass** | Held on a player's account. Either a **monthly pass** (a number of free bay-hours and buckets each calendar month, until an end date) or a **ball credit pack** (prepaid buckets that don't expire). |
-| **Ball credit** | One prepaid bucket on a pass. Redeeming one hands over a bucket with no code. |
+| **Pass** | Held on a player's account (ADR 0021). A **monthly pass** is a percent off bay-hours and buckets for a number of days; buying another extends it. |
+| **Ball credit** | A prepaid balance of balls at the range that never expires (ADR 0021). Staff hand a bucket out of it, which takes that bucket's balls off. |
 | **Check-in QR** | A code printed at each bay. Scanned by the app, it starts the session for that bay's booking and, if a robot was hired, issues the hire key. The console only shows and prints it. |
 | **Robot state** | The telemetry states from the [control link](../../robot/README.md#control-link-draft): idle, driving, at-limit, link-lost, stopped, fault, low-battery, locked. Plus `docked` and `charging` from the fleet record. |
 | **Takings** | Money the range took today: bay bookings, robot hires, buckets and passes, minus refunds. Counted when paid, not when used. |
@@ -62,10 +62,10 @@ Terms the console uses. The backend should use the same words.
 
 ### Passes and ball credits
 
-- List passes: player, kind, buckets left, bay-hours left this month, valid until.
-- Sell a monthly pass or a credit pack at the counter (records a payment, so it shows in takings).
-- Redeem a ball credit against a pass (hands over a bucket, no code).
-- Monthly allowances reset on the 1st; a pass past its end date can't be redeemed.
+- List passes and ball credit: player, kind, what's left, valid until.
+- Sell a monthly pass or ball credit at the counter to a player's email (records a payment, so it shows in takings).
+- Hand a bucket out of a player's ball credit, choosing the size.
+- The rules are in ADR 0021, which replaced the first draft's monthly allowances.
 
 ### Check-in QR codes
 

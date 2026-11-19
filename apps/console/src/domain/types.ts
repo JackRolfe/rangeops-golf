@@ -55,20 +55,17 @@ export type BucketSize = 'small' | 'medium' | 'large';
 export const BUCKET_SIZES: readonly BucketSize[] = ['small', 'medium', 'large'];
 export const BUCKET_BALLS: Record<BucketSize, number> = { small: 40, medium: 80, large: 120 };
 
+/** A monthly pass: a percent off bay-hours and buckets, for a number of days (ADR 0021). */
 export interface MonthlyPassProduct {
   price: Cents;
-  bucketsPerMonth: number;
-  bayHoursPerMonth: number;
-  months: number;
-  /** Set when the pass is a discount instead of an allowance (the API's model). */
-  discountPercent?: number;
+  days: number;
+  discountPercent: number;
 }
 
+/** Ball credit: a prepaid balance of balls at the range that never expires (ADR 0021). */
 export interface CreditPackProduct {
   price: Cents;
-  credits: number;
-  /** Set when credit is counted in balls instead of buckets (the API's model). */
-  balls?: number;
+  balls: number;
 }
 
 export interface PriceList {
@@ -76,8 +73,8 @@ export interface PriceList {
   peakWindows: PeakWindow[];
   robotHirePerHour: Cents;
   buckets: Record<BucketSize, Cents>;
-  /** Balls in each bucket when the source sets its own sizes; else BUCKET_BALLS. */
-  bucketBalls?: Record<BucketSize, number>;
+  /** Balls in each bucket size. */
+  bucketBalls: Record<BucketSize, number>;
   monthlyPass: MonthlyPassProduct;
   creditPack: CreditPackProduct;
 }
@@ -126,28 +123,26 @@ export interface Order {
 
 export type PassKind = 'monthly' | 'credits';
 
-export interface PassRedemption {
-  at: LocalDateTime;
-  what: 'bucket' | 'bay-hour';
-}
-
+/**
+ * Held on a player's account (ADR 0021). A monthly pass gives a percent off until its last day;
+ * ball credit is a balance of balls, one entry per account, that staff can hand buckets out of.
+ */
 export interface Pass {
   id: string;
+  /** The account holding it. */
+  accountId: string;
+  /** The player's name, or their email if the account has no name. */
   player: string;
+  email: string;
   kind: PassKind;
-  soldAt: LocalDateTime;
-  /** Last day the pass can be used; `null` never expires (credit packs). */
+  /** When it was sold; `null` for ball credit, which builds up from several sales. */
+  soldAt: LocalDateTime | null;
+  /** Monthly passes: last day it can be used. `null` for ball credit, which never expires. */
   validUntil: IsoDate | null;
-  /** Monthly passes: the allowance each calendar month. */
-  bucketsPerMonth: number;
-  bayHoursPerMonth: number;
-  /** Credit packs: prepaid buckets bought. */
-  creditsBought: number;
-  redemptions: PassRedemption[];
-  /** Monthly passes that give a discount instead of an allowance (the API's model). */
-  discountPercent?: number;
-  /** Ball credit counted in balls (the API's model). */
-  ballsLeft?: number;
+  /** Monthly passes: percent off bay-hours and buckets. 0 for ball credit. */
+  discountPercent: number;
+  /** Ball credit: balls left. 0 for monthly passes. */
+  ballsLeft: number;
 }
 
 export type PaymentKind = 'bay' | 'robot' | 'bucket' | 'pass';

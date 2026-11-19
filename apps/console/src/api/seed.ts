@@ -1,7 +1,6 @@
 // The demo range the fake starts with: 20 bays, three robots, and a believable week of bookings,
 // bucket orders and passes around "now". Seeded by date, so a day looks the same on every reload.
 import { generateCode } from '../domain/buckets';
-import { addMonths } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { addDays, addMinutes, dateTimeAt, hourOf, toIsoDate, toLocalDateTime, weekdayOf } from '../domain/time';
 import { BUCKET_BALLS } from '../domain/types';
@@ -52,8 +51,9 @@ export function demoPrices(): PriceList {
     ],
     robotHirePerHour: 1500,
     buckets: { small: 800, medium: 1400, large: 1900 },
-    monthlyPass: { price: 9900, bucketsPerMonth: 8, bayHoursPerMonth: 4, months: 1 },
-    creditPack: { price: 6000, credits: 5 },
+    bucketBalls: { ...BUCKET_BALLS },
+    monthlyPass: { price: 4900, days: 30, discountPercent: 10 },
+    creditPack: { price: 8000, balls: 500 },
   };
 }
 
@@ -188,32 +188,29 @@ export function seedDemoRange(nowDate: Date): FakeState {
     addOrder(dateTimeAt(addDays(today, -1), 7 + Math.floor(random() * 14), Math.floor(random() * 60)), pick(random, sizes), 'handed-over');
   }
 
-  // Passes: monthly passes and credit packs, one sold today.
-  const passSeed: { player: string; kind: Pass['kind']; daysAgo: number; used: number }[] = [
-    { player: 'The Nguyen family', kind: 'monthly', daysAgo: 12, used: 3 },
-    { player: 'Grace Tan', kind: 'credits', daysAgo: 40, used: 2 },
-    { player: 'Sam Okafor', kind: 'monthly', daysAgo: 45, used: 1 },
-    { player: 'The Rossi family', kind: 'credits', daysAgo: 3, used: 5 },
-    { player: 'Hannah Lee', kind: 'monthly', daysAgo: 70, used: 0 },
-    { player: 'Ruby Singh', kind: 'credits', daysAgo: 0, used: 0 },
+  // Passes (ADR 0021): monthly discount passes, one ended, and ball credit, some sold today.
+  const { monthlyPass, creditPack } = setup.prices;
+  const passSeed: { player: string; email: string; kind: Pass['kind']; daysAgo: number; ballsLeft?: number }[] = [
+    { player: 'The Nguyen family', email: 'nguyen.family@example.com', kind: 'monthly', daysAgo: 12 },
+    { player: 'Sam Okafor', email: 'sam@example.com', kind: 'monthly', daysAgo: 45 },
+    { player: 'Hannah Lee', email: 'hannah@example.com', kind: 'monthly', daysAgo: 3 },
+    { player: 'Grace Tan', email: 'grace@example.com', kind: 'credits', daysAgo: 40, ballsLeft: 260 },
+    { player: 'The Rossi family', email: 'rossi@example.com', kind: 'credits', daysAgo: 3, ballsLeft: 0 },
+    { player: 'Ruby Singh', email: 'ruby@example.com', kind: 'credits', daysAgo: 0, ballsLeft: creditPack.balls },
   ];
   for (const seed of passSeed) {
     const soldAt = seed.daysAgo === 0 ? addMinutes(now, -42) : dateTimeAt(addDays(today, -seed.daysAgo), 10, 15);
-    const { monthlyPass, creditPack } = setup.prices;
     const monthly = seed.kind === 'monthly';
     const pass: Pass = {
       id: id('pass'),
+      accountId: `acct-${seed.email}`,
       player: seed.player,
+      email: seed.email,
       kind: seed.kind,
-      soldAt,
-      validUntil: monthly ? addDays(addMonths(soldAt.slice(0, 10), monthlyPass.months), -1) : null,
-      bucketsPerMonth: monthly ? monthlyPass.bucketsPerMonth : 0,
-      bayHoursPerMonth: monthly ? monthlyPass.bayHoursPerMonth : 0,
-      creditsBought: monthly ? 0 : creditPack.credits,
-      redemptions: Array.from({ length: seed.used }, (_, i) => ({
-        at: notAfterNow(addMinutes(soldAt, 60 * 24 * Math.min(i + 1, seed.daysAgo) + 30)),
-        what: 'bucket' as const,
-      })),
+      soldAt: monthly ? soldAt : null,
+      validUntil: monthly ? addDays(soldAt.slice(0, 10), monthlyPass.days) : null,
+      discountPercent: monthly ? monthlyPass.discountPercent : 0,
+      ballsLeft: monthly ? 0 : seed.ballsLeft!,
     };
     passes.push(pass);
     payments.push({ id: id('pay'), at: soldAt, kind: 'pass', amount: monthly ? monthlyPass.price : creditPack.price, ref: pass.id });

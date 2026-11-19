@@ -105,15 +105,17 @@ export function validatePrices(prices: PriceList, openingHours: OpeningHours): s
   amount('Robot hire per hour', prices.robotHirePerHour);
   for (const size of ['small', 'medium', 'large'] as const) amount(`A ${size} bucket`, prices.buckets[size]);
   amount('The monthly pass', prices.monthlyPass.price);
-  amount('The credit pack', prices.creditPack.price);
-  if (prices.creditPack.balls === undefined && (!Number.isInteger(prices.creditPack.credits) || prices.creditPack.credits < 1)) {
-    errors.push('A credit pack must hold at least one bucket.');
+  amount('Ball credit', prices.creditPack.price);
+  const { days, discountPercent } = prices.monthlyPass;
+  if (!Number.isInteger(days) || days < 1) errors.push('A monthly pass lasts at least one day.');
+  if (!Number.isInteger(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    errors.push('A monthly pass discount is a whole percent from 0 to 100.');
   }
-  const { bucketsPerMonth, bayHoursPerMonth, months } = prices.monthlyPass;
-  if (![bucketsPerMonth, bayHoursPerMonth].every((n) => Number.isInteger(n) && n >= 0)) {
-    errors.push('Monthly pass allowances must be whole numbers, zero or more.');
+  if (!Number.isInteger(prices.creditPack.balls) || prices.creditPack.balls < 1) errors.push('Ball credit must be at least one ball.');
+  for (const size of ['small', 'medium', 'large'] as const) {
+    const balls = prices.bucketBalls[size];
+    if (!Number.isInteger(balls) || balls < 1) errors.push(`A ${size} bucket must hold at least one ball.`);
   }
-  if (!Number.isInteger(months) || months < 1) errors.push('A monthly pass runs for at least one month.');
   return errors;
 }
 

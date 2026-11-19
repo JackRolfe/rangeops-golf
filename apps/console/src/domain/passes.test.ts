@@ -1,96 +1,79 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, newPass, passBalance, redeemBucket } from './passes';
+import { passBalance, redeemBucket, sellPass } from './passes';
 import type { Pass } from './types';
 
 const products = {
-  monthlyPass: { price: 9900, bucketsPerMonth: 2, bayHoursPerMonth: 4, months: 3 },
-  creditPack: { price: 6000, credits: 2 },
+  monthlyPass: { price: 4900, days: 30, discountPercent: 10 },
+  creditPack: { price: 8000, balls: 500 },
 };
 
-function sold(kind: Pass['kind'], at = '2026-10-20T10:00'): Pass {
-  const result = newPass('p1', 'Grace Tan', kind, products, at);
+let n = 0;
+const newId = () => `p${++n}`;
+
+function sold(passes: Pass[], kind: Pass['kind'], at = '2026-10-20T10:00', email = 'grace@example.com', name = 'Grace Tan') {
+  const result = sellPass(passes, { email, name, kind }, products, at, newId);
   if (!result.ok) throw new Error(result.errors.join());
-  return result.value.pass;
+  const { pass, replaces } = result.value;
+  return [...passes.filter((p) => p.id !== replaces), pass];
 }
 
-describe('newPass', () => {
-  it('runs a monthly pass for its months, to the day before', () => {
-    expect(sold('monthly')).toMatchObject({ validUntil: '2027-01-19', bucketsPerMonth: 2, creditsBought: 0 });
+describe('selling a monthly pass', () => {
+  it('gives a discount from today for its days', () => {
+    const [pass] = sold([], 'monthly');
+    expect(pass).toMatchObject({ kind: 'monthly', player: 'Grace Tan', email: 'grace@example.com', validUntil: '2026-11-19', discountPercent: 10 });
+    expect(passBalance(pass!, '2026-11-19')).toEqual({ active: true, reason: null, summary: '10% off bay-hours and buckets', usedUp: false });
+    expect(passBalance(pass!, '2026-11-20')).toMatchObject({ active: false, reason: 'Ended on 2026-11-19.' });
   });
 
-  it('makes a credit pack that never expires', () => {
-    expect(sold('credits')).toMatchObject({ validUntil: null, creditsBought: 2 });
+  it('starts a second pass when the current one ends', () => {
+    const passes = sold(sold([], 'monthly'), 'monthly', '2026-11-01T09:00');
+    expect(passes.map((p) => p.validUntil)).toEqual(['2026-11-19', '2026-12-19']);
   });
 
-  it('needs a name', () => {
-    expect(newPass('p', '  ', 'credits', products, '2026-10-20T10:00').ok).toBe(false);
+  it('starts afresh once the last pass has ended', () => {
+    const passes = sold(sold([], 'monthly'), 'monthly', '2026-12-01T09:00');
+    expect(passes[1]!.validUntil).toBe('2026-12-31');
+  });
+
+  it('needs an email, because passes are held on an account', () => {
+    expect(sellPass([], { email: 'Grace', kind: 'monthly' }, products, '2026-10-20T10:00', newId)).toEqual({
+      ok: false,
+      errors: ['Passes are held on an account: enter the player’s email.'],
+    });
   });
 
   it('charges the product price', () => {
-    const result = newPass('p', 'Sam', 'monthly', products, '2026-10-20T10:00');
-    expect(result.ok && result.value.price).toBe(9900);
+    const result = sellPass([], { email: 'sam@example.com', kind: 'monthly' }, products, '2026-10-20T10:00', newId);
+    expect(result.ok && result.value.price).toBe(4900);
+    expect(result.ok && result.value.pass.player).toBe('sam@example.com');
   });
 });
 
-describe('monthly pass', () => {
-  it('resets its allowance on the 1st', () => {
-    let pass = sold('monthly');
-    for (const at of ['2026-10-25T09:00', '2026-10-31T18:00']) {
-      const r = redeemBucket(pass, at);
-      if (!r.ok) throw new Error(r.errors.join());
-      pass = r.value;
+describe('ball credit', () => {
+  it('tops up one balance per player, which never expires', () => {
+    const passes = sold(sold([], 'credits'), 'credits', '2027-03-01T09:00', ' GRACE@example.com ');
+    expect(passes).toHaveLength(1);
+    expect(passes[0]).toMatchObject({ kind: 'credits', ballsLeft: 1000, validUntil: null, player: 'Grace Tan' });
+    expect(passBalance(passes[0]!, '2030-01-01')).toEqual({ active: true, reason: null, summary: '1000 balls of credit', usedUp: false });
+  });
+
+  it("hands out buckets until the balls run out, and doesn't change the credit it was given", () => {
+    let [credit] = sold([], 'credits');
+    const before = credit!;
+    for (const balls of [150, 150, 150]) {
+      const result = redeemBucket(credit!, balls);
+      if (!result.ok) throw new Error(result.errors.join());
+      credit = result.value;
     }
-    expect(passBalance(pass, '2026-10-31').bucketsLeft).toBe(0);
-    expect(redeemBucket(pass, '2026-10-31T19:00')).toEqual({ ok: false, errors: ["Grace Tan has used this month's buckets."] });
-    expect(passBalance(pass, '2026-11-01')).toMatchObject({ active: true, reason: null, bucketsLeft: 2, bayHoursLeft: 4, summary: '2 buckets and 4 bay-hours left this month' });
-    expect(redeemBucket(pass, '2026-11-01T08:00').ok).toBe(true);
+    expect(credit!.ballsLeft).toBe(50);
+    expect(before.ballsLeft).toBe(500);
+    expect(redeemBucket(credit!, 100)).toEqual({ ok: false, errors: ['Grace Tan has 50 balls of credit, not enough for a 100-ball bucket.'] });
+    const last = redeemBucket(credit!, 50);
+    expect(last.ok && passBalance(last.value, '2026-10-20')).toMatchObject({ summary: '0 balls of credit', usedUp: true });
   });
 
-  it('refuses after its last day', () => {
-    const pass = sold('monthly');
-    expect(passBalance(pass, '2027-01-19').active).toBe(true);
-    expect(passBalance(pass, '2027-01-20')).toMatchObject({ active: false, reason: 'Ended on 2027-01-19.' });
-    expect(redeemBucket(pass, '2027-01-20T10:00')).toEqual({ ok: false, errors: ["Grace Tan's pass can't be used. Ended on 2027-01-19."] });
-  });
-
-  it('counts bay-hours separately from buckets', () => {
-    const pass = { ...sold('monthly'), redemptions: [{ at: '2026-10-21T10:00', what: 'bay-hour' as const }] };
-    expect(passBalance(pass, '2026-10-21')).toMatchObject({ bucketsLeft: 2, bayHoursLeft: 3 });
-  });
-});
-
-describe('credit pack', () => {
-  it('never expires and refuses when empty', () => {
-    let pass = sold('credits');
-    for (const at of ['2026-10-21T10:00', '2028-05-01T10:00']) {
-      const r = redeemBucket(pass, at);
-      if (!r.ok) throw new Error(r.errors.join());
-      pass = r.value;
-    }
-    expect(passBalance(pass, '2030-01-01')).toMatchObject({ active: true, reason: null, bucketsLeft: 0, bayHoursLeft: 0, summary: '0 bucket credits left', usedUp: true });
-    expect(redeemBucket(pass, '2030-01-01T10:00')).toEqual({ ok: false, errors: ['Grace Tan has no ball credits left.'] });
-  });
-
-  it('does not change the pass it was given', () => {
-    const pass = sold('credits');
-    redeemBucket(pass, '2026-10-21T10:00');
-    expect(pass.redemptions).toEqual([]);
-  });
-});
-
-describe('addMonths', () => {
-  it('clamps to the end of a shorter month', () => {
-    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
-    expect(addMonths('2026-11-19', 2)).toBe('2027-01-19');
-  });
-});
-
-describe('passes from a source that counts differently', () => {
-  it('describes a discount pass and ball credit, and never offers a bucket against them', () => {
-    const discount = { ...sold('monthly'), bucketsPerMonth: 0, bayHoursPerMonth: 0, discountPercent: 10 };
-    expect(passBalance(discount, '2026-10-21')).toMatchObject({ active: true, bucketsLeft: 0, summary: '10% off bay-hours and buckets', usedUp: false });
-    const balls = { ...sold('credits'), creditsBought: 0, ballsLeft: 350 };
-    expect(passBalance(balls, '2026-10-21')).toMatchObject({ active: true, bucketsLeft: 0, summary: '350 balls of credit', usedUp: false });
-    expect(passBalance({ ...balls, ballsLeft: 0 }, '2026-10-21').usedUp).toBe(true);
+  it('has nothing to hand out from a monthly pass', () => {
+    const [pass] = sold([], 'monthly');
+    expect(redeemBucket(pass!, 50).ok).toBe(false);
   });
 });

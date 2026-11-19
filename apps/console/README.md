@@ -35,4 +35,4 @@ Where the API's model differs from the console's (passes, price bands, product p
 
 Add `?now=2026-11-19T17:10` before the `#` to start the demo clock at a given local time, for demos out of hours: `http://localhost:5174/?now=2026-11-19T17:10#/live`. The smoke test uses this.
 
-Playwright is pinned to the same version as `apps/player` so both use the browsers already installed. `.npmrc` sets `legacy-peer-deps`, because npm 10 crashes resolving vitest's optional peers here.
+Playwright is pinned to the same version as `apps/player` so both use the browsers already installed.

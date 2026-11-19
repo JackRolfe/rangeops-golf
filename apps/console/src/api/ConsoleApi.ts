@@ -2,7 +2,8 @@
 // Today: FakeConsoleApi (in memory). Later: an HTTP adapter for apps/api, or a partner's portal.
 // Every method is async and returns copies, so screens never hold live references into the store.
 import type { HandoverResult } from '../domain/buckets';
-import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Result, Robot } from '../domain/types';
+import type { CounterSale } from '../domain/passes';
+import type { Booking, BucketSize, IsoDate, Order, Pass, Payment, RangeSetup, Result, Robot } from '../domain/types';
 
 export type Clock = () => Date;
 
@@ -38,10 +39,13 @@ export interface ConsoleApi {
 
   /** Every pass, newest first. */
   listPasses(): Promise<Pass[]>;
-  /** Sell a monthly pass or a credit pack at the counter, at today's price. Records the payment. */
-  sellPass(player: string, kind: PassKind): Promise<Result<Pass>>;
-  /** Hand over one bucket against a pass: a ball credit, or this month's allowance. */
-  redeemPassBucket(passId: string): Promise<Result<{ pass: Pass; order: Order }>>;
+  /**
+   * Sell a monthly pass or ball credit at the counter, at today's price, to the account with that email.
+   * Records the payment, so it shows in takings.
+   */
+  sellPass(sale: CounterSale): Promise<Result<Pass>>;
+  /** Hand over a bucket of that size out of a player's ball credit. */
+  redeemBallCredit(passId: string, bucket: BucketSize): Promise<Result<{ pass: Pass; order: Order }>>;
 
   /** The fleet: every robot with its latest telemetry and hire. */
   listRobots(): Promise<Robot[]>;

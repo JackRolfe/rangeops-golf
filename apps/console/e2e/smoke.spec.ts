@@ -37,16 +37,17 @@ test('Handover hands a code over once', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('Already handed over');
 });
 
-test('Passes sells a credit pack and redeems a credit', async ({ page }) => {
+test('Passes sells ball credit and hands out a bucket from it', async ({ page }) => {
   await open(page, 'passes');
   await expect(page.getByRole('heading', { name: 'Passes', level: 1 })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Passes' }).getByText('Grace Tan')).toBeVisible();
-  await page.getByLabel('Player', { exact: true }).fill('Smoke Test');
+  await page.getByLabel("Player's email").fill('smoke@example.com');
+  await page.getByLabel('Name (optional)').fill('Smoke Test');
   await page.getByRole('button', { name: 'Sell' }).click();
-  await expect(page.getByRole('status')).toContainText('Sold a credit pack to Smoke Test');
-  await page.getByRole('button', { name: 'Redeem a bucket for Smoke Test' }).click();
-  await expect(page.getByRole('status')).toContainText('Hand Smoke Test a medium bucket');
-  await expect(page.getByRole('row', { name: /Smoke Test/ }).getByRole('cell').nth(4)).toHaveText('4 bucket credits left');
+  await expect(page.getByRole('status')).toContainText('Sold ball credit to Smoke Test: 500 balls now.');
+  await page.getByRole('button', { name: 'Hand Smoke Test a medium bucket from their credit' }).click();
+  await expect(page.getByRole('status')).toContainText('Hand Smoke Test a medium bucket (80 balls). 420 balls of credit left.');
+  await expect(page.getByRole('row', { name: /Smoke Test/ }).getByRole('cell').nth(4)).toHaveText('420 balls of credit');
 });
 
 test('Check-in QR shows a code per bay and prints a sheet', async ({ page }) => {

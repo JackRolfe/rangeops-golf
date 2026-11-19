@@ -25,9 +25,9 @@ Needs: the OpenAPI file merged into this branch, and a decision on how staff sig
 | Console spec | API | What the console does now |
 | --- | --- | --- |
 | Two price bands, each with a floor | A range price, optional per-bay prices, one floor | A bay with its own prices shows as premium; saving gives premium bays the premium band's prices. Two different band floors are refused. |
-| Monthly pass = buckets and bay-hours each month | Monthly pass = a percent off for N days | Passes show what they give in words. Allowance fields are hidden for API passes. |
-| Credit pack = prepaid buckets | Ball credit = balls | Shown as balls of credit. |
-| Staff sell passes and redeem credit at the counter | Passes are bought by the player in the app only | `capabilities.sellPasses/redeemPasses` are false; the screen says so. Needs an API counter-sale endpoint to switch on. |
+| Monthly pass = buckets and bay-hours each month | Monthly pass = a percent off for N days | Settled by ADR 0021: everything uses the API's model. |
+| Credit pack = prepaid buckets | Ball credit = balls | Settled by ADR 0021: balls. |
+| Staff sell passes and redeem credit at the counter | Was app-only | Done: `POST /ranges/{id}/counter/passes` and `/counter/ball-credit/redeem`; the capabilities are on. |
 | Staff set robot, bucket and pass prices | No endpoint to change products | Shown read-only (`capabilities.editProducts`). |
 | Bucket sizes small/medium/large, 6-character codes | Named bucket products, 8-character codes (`ABCD-EFGH`) | Sizes by ball count order; the API normalises and checks codes. |
 | Booking source app / counter / partner | `rangeops` / `external` | `external` shows as partner. |

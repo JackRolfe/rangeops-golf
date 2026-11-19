@@ -127,6 +127,19 @@ export interface ApiStaffPasses {
   ballCredit: { account: ApiPassHolder; balls: number }[];
 }
 
+export interface ApiCounterSale {
+  order: ApiOrder;
+  account: ApiPassHolder;
+  pass: ApiStaffPasses['passes'][number] | null;
+  ballCredit: number | null;
+}
+
+export interface ApiCreditRedemption {
+  order: ApiOrder;
+  bucketCode: ApiBucketCode;
+  ballCredit: number;
+}
+
 export interface ApiSession {
   sessionToken: string;
   expiresAt: string;
@@ -153,6 +166,8 @@ export const PATHS_USED = [
   'GET /ranges/{rangeId}/bucket-codes/{code}',
   'POST /ranges/{rangeId}/bucket-codes/{code}/redeem',
   'GET /ranges/{rangeId}/passes',
+  'POST /ranges/{rangeId}/counter/passes',
+  'POST /ranges/{rangeId}/counter/ball-credit/redeem',
   'GET /ranges/{rangeId}/fleet',
   'POST /auth/email-link',
   'POST /auth/verify',

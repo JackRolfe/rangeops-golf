@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { signIn, tokenFromLink } from './session';
+import { checkSession, signIn, tokenFromLink } from './session';
 
 describe('tokenFromLink', () => {
   it('takes the token from a pasted link, or a bare token', () => {
@@ -30,5 +30,24 @@ describe('signIn', () => {
 
   it('refuses an account that runs no range', async () => {
     await expect(signIn('http://api.test', 't', undefined, fakeFetch([]))).rejects.toThrow("staff@rangeops.test isn't staff at any range.");
+  });
+});
+
+describe('checkSession', () => {
+  const session = { baseUrl: 'http://api.test', token: 'sess', rangeId: 'r2', rangeName: 'Old name', email: 'staff@rangeops.test' };
+  const answer = (status: number, staffAt: { id: string; name: string }[] = []) =>
+    vi.fn(async () =>
+      status === 200
+        ? Response.json({ account: { id: 'a', email: 'staff@rangeops.test', name: null }, staffAt })
+        : Response.json({ error: { code: 'unauthorized', message: 'Sign in first.' } }, { status }),
+    ) as unknown as typeof fetch;
+
+  it('keeps a good session, with the range name as it is now', async () => {
+    expect(await checkSession(session, answer(200, [{ id: 'r2', name: 'Harbourside' }]))).toEqual({ ...session, rangeName: 'Harbourside' });
+  });
+
+  it('drops a session the API no longer knows, or for a range the account no longer runs', async () => {
+    expect(await checkSession(session, answer(401))).toBeNull();
+    expect(await checkSession(session, answer(200, [{ id: 'r9', name: 'Another range' }]))).toBeNull();
   });
 });
