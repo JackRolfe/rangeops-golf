@@ -1,6 +1,6 @@
 # 02 ConsoleApi interface and in-memory fake
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 01, 03
 
