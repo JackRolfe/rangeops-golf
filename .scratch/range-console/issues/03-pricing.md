@@ -1,8 +1,8 @@
 # 03 Pricing by bay-hour, peak and off-peak, floor
 
-Status: ready-for-agent
+Status: resolved
 Type: task
-Blocked by: 02
+Blocked by: 01
 
 Pure functions in `src/domain/pricing.ts`: whether an hour is peak, the price of one bay-hour for a band, a quote for a booking (per-hour lines and total, plus robot hire), validation of a price list against floors and opening hours, and `clampToFloor` for later demand pricing.
 
