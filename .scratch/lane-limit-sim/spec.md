@@ -96,3 +96,11 @@ Results go in `robot/sim/RESULTS.md` with PNG plots.
 
 - The `/to-spec`, `/to-tickets` and `/implement` skills were not installed in this session; this spec and the tickets follow `docs/agents/issue-tracker.md` by hand.
 - Every number that R0 will measure is marked "assumed" in `RESULTS.md` so it can be replaced.
+
+## Addendum, 2026-11-19: RTK GNSS
+
+The research note `docs/research/positioning-lane-limit.md` found that a fixed outdoor UWB beacon is not authorised under Australia's LIPD Class Licence 2025 (clause 67(3)), and recommends RTK GNSS (u-blox ZED-F9P with AUSCORS or own-base corrections) for R2. Tickets 07-09 add a gyro + RTK GNSS estimator and re-run the comparison so the choice between odometry + gyro alone, RTK and UWB can be made with numbers.
+
+- RTK receiver model: fixed / float / no solution, with the note's figures (1-2 cm fixed, 0.2-1 m float, no fix under the bay roof, a fix within seconds once outside, float dropouts from multipath near the roof edge, poles and nets) and everything else marked assumed.
+- Estimator: the same EKF, fusing RTK positions instead of UWB ranges; the firmware rule from the note (trust only "fixed", fall back to odometry and gyro otherwise) is how float and no-fix are handled.
+- UWB stays in the tables for reference, flagged as not licensable at an outdoor bay in Australia.
