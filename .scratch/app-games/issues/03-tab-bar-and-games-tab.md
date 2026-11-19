@@ -1,6 +1,6 @@
 # 03. Tab bar and the Games tab
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: none
 
@@ -15,5 +15,9 @@ Blocked by: none
 
 ## Acceptance
 
-- [ ] Component test: tab bar marks the current tab and switches tabs.
-- [ ] Typecheck and existing tests pass; Playwright core flow updated.
+- [x] Component test: tab bar marks the current tab and switches tabs.
+- [x] Typecheck and existing tests pass; Playwright core flow updated.
+
+## Comments
+
+Done. `BottomNav` became `TabBar` (tabs from a list, `--tab-count` sets the grid). Home became `GamesScreen`, History became `ProgressScreen` with a back button. 'View all' now shows once there is one completed session, so Progress is always reachable. Playwright run is in ticket 04.

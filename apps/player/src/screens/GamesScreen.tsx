@@ -1,15 +1,15 @@
-import { Clock3, Flag, Play, Settings, Target } from 'lucide-react';
+import { Clock3, Flag, Play, Target } from 'lucide-react';
 import type { PracticeSession, RangeMap } from '../domain/types';
 import { getLastNAccuracy, getSessionTrend } from '../domain/metrics';
 import { formatChartDate, formatPercent } from '../domain/format';
 import { AccuracyChart } from '../components/AccuracyChart';
 import { AccuracyRing } from '../components/AccuracyRing';
 import { AppShell } from '../components/AppShell';
-import { BottomNav } from '../components/BottomNav';
+import { TabBar, type TabId } from '../components/TabBar';
 import { Brand } from '../components/Brand';
 import { SessionRow } from '../components/SessionRow';
 
-interface HomeScreenProps {
+interface GamesScreenProps {
   range: RangeMap;
   ranges: RangeMap[];
   sessions: PracticeSession[];
@@ -17,12 +17,13 @@ interface HomeScreenProps {
   onStart: () => void;
   onResume: () => void;
   onDiscardDraft: () => void;
-  onSettings: () => void;
-  onHistory: () => void;
+  onProgress: () => void;
   onSession: (session: PracticeSession) => void;
+  onTab: (tab: TabId) => void;
 }
 
-export function HomeScreen({
+/** The Games tab: start or resume a game, recent accuracy and recent sessions. */
+export function GamesScreen({
   range,
   ranges,
   sessions,
@@ -30,10 +31,10 @@ export function HomeScreen({
   onStart,
   onResume,
   onDiscardDraft,
-  onSettings,
-  onHistory,
+  onProgress,
   onSession,
-}: HomeScreenProps) {
+  onTab,
+}: GamesScreenProps) {
   const completed = sessions
     .filter((session) => session.status === 'completed')
     .sort((a, b) => (b.completedAt ?? b.updatedAt).localeCompare(a.completedAt ?? a.updatedAt));
@@ -46,9 +47,6 @@ export function HomeScreen({
     <AppShell>
       <header className="topbar">
         <Brand />
-        <button className="icon-button" type="button" aria-label="Settings" onClick={onSettings}>
-          <Settings aria-hidden="true" />
-        </button>
       </header>
 
       <div className="screen-scroll home-screen">
@@ -106,7 +104,7 @@ export function HomeScreen({
         <section className="home-section home-section--sessions">
           <div className="section-title-row">
             <h2 className="section-heading">Recent sessions</h2>
-            {completed.length > 2 ? <button className="text-button" type="button" onClick={onHistory}>View all</button> : null}
+            {completed.length > 0 ? <button className="text-button" type="button" onClick={onProgress}>View all</button> : null}
           </div>
           {recent.length ? (
             <div className="session-list">
@@ -125,7 +123,7 @@ export function HomeScreen({
         </section>
       </div>
 
-      <BottomNav active="home" onNavigate={(view) => view === 'history' && onHistory()} onPractice={onStart} />
+      <TabBar active="games" onSelect={onTab} />
     </AppShell>
   );
 }

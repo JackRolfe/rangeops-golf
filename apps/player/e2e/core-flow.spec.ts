@@ -143,7 +143,7 @@ test('records a session, restores it after reload, and starts offline', async ({
   await expect(page.getByRole('heading', { name: 'Harbour Practice Range' })).toBeVisible();
   await expect(page.getByText('Tempo drill')).toBeVisible();
 
-  await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'View all' }).click();
   await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
   await expect(page.getByText('50%', { exact: true }).first()).toBeVisible();
   await page.screenshot({ path: '/tmp/rangeops-history.png' });

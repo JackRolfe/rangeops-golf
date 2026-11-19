@@ -5,19 +5,21 @@ import { filterSessionsByClub, getOverallAccuracy, getSessionTrend } from '../do
 import { formatChartDate, formatPercent } from '../domain/format';
 import { AccuracyChart } from '../components/AccuracyChart';
 import { AppShell } from '../components/AppShell';
-import { BottomNav } from '../components/BottomNav';
+import { PageHeader } from '../components/PageHeader';
+import { TabBar, type TabId } from '../components/TabBar';
 import { SessionRow } from '../components/SessionRow';
 
-interface HistoryScreenProps {
+interface ProgressScreenProps {
   range: RangeMap;
   ranges: RangeMap[];
   sessions: PracticeSession[];
-  onHome: () => void;
-  onStart: () => void;
+  onBack: () => void;
   onSession: (session: PracticeSession) => void;
+  onTab: (tab: TabId) => void;
 }
 
-export function HistoryScreen({ range, ranges, sessions, onHome, onStart, onSession }: HistoryScreenProps) {
+/** History and the accuracy chart, inside the Games tab. */
+export function ProgressScreen({ range, ranges, sessions, onBack, onSession, onTab }: ProgressScreenProps) {
   const completed = useMemo(() => sessions.filter((session) => session.status === 'completed'), [sessions]);
   const clubs = useMemo(() => [...new Set(completed.map((session) => session.club))].sort(), [completed]);
   const [club, setClub] = useState('all');
@@ -31,9 +33,7 @@ export function HistoryScreen({ range, ranges, sessions, onHome, onStart, onSess
 
   return (
     <AppShell>
-      <header className="history-header">
-        <h1>Progress</h1>
-      </header>
+      <PageHeader title="Progress" onBack={onBack} />
       <div className="screen-scroll history-screen">
         <section className="history-summary">
           <div>
@@ -75,7 +75,7 @@ export function HistoryScreen({ range, ranges, sessions, onHome, onStart, onSess
         </section>
       </div>
 
-      <BottomNav active="history" onNavigate={(view) => view === 'home' && onHome()} onPractice={onStart} />
+      <TabBar active="games" onSelect={onTab} />
     </AppShell>
   );
 }

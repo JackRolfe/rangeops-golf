@@ -104,7 +104,7 @@ export function PracticeScreen({
           onLeave();
         }}
       >
-        Your draft is already saved. You can resume it from the home screen.
+        Your draft is already saved. You can resume it from Games.
       </ConfirmDialog>
     </AppShell>
   );

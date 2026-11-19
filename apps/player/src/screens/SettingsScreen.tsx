@@ -4,12 +4,13 @@ import type { RangeMap } from '../domain/types';
 import { AppShell } from '../components/AppShell';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
+import { TabBar, type TabId } from '../components/TabBar';
 
 interface SettingsScreenProps {
   range: RangeMap;
   busy: boolean;
   error: string | null;
-  onBack: () => void;
+  onTab: (tab: TabId) => void;
   onRename: (name: string) => Promise<void>;
   onReplaceImage: (file: File) => Promise<void>;
   onDeleteAll: () => Promise<void>;
@@ -19,7 +20,7 @@ export function SettingsScreen({
   range,
   busy,
   error,
-  onBack,
+  onTab,
   onRename,
   onReplaceImage,
   onDeleteAll,
@@ -36,7 +37,7 @@ export function SettingsScreen({
 
   return (
     <AppShell>
-      <PageHeader title="Settings" onBack={onBack} />
+      <PageHeader title="Settings" />
       <div className="screen-scroll settings-screen">
         <section>
           <h2 className="section-heading">Range</h2>
@@ -104,6 +105,7 @@ export function SettingsScreen({
       >
         This permanently removes the range image, drafts, and every completed session from this browser.
       </ConfirmDialog>
+      <TabBar active="settings" onSelect={onTab} />
     </AppShell>
   );
 }
