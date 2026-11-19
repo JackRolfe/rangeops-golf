@@ -115,6 +115,13 @@ class ServerCallbacks : public BLEServerCallbacks {
     pending.connected = true;
     portEXIT_CRITICAL(&pendingLock);
   }
+  // The library calls both onConnect overloads; this one has the address
+  // needed to ask the phone for a shorter connection interval. The phone may
+  // refuse or offer something else; nothing depends on getting it.
+  void onConnect(BLEServer* server, esp_ble_gatts_cb_param_t* param) override {
+    server->updateConnParams(param->connect.remote_bda, board::kConnIntervalMin, board::kConnIntervalMax,
+                             board::kConnLatency, board::kSupervisionTimeout);
+  }
   void onDisconnect(BLEServer*) override {
     portENTER_CRITICAL(&pendingLock);
     pending.connected = false;
