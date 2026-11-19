@@ -145,3 +145,136 @@ class Uwb:
             r = self.true_range(world, i) + self.slow[i] + white + (extra if outlier else 0.0)
             out.append((i, max(0.0, r)))
         return out
+
+
+# --- RTK GNSS --------------------------------------------------------------------------
+
+GNSS_NONE, GNSS_FLOAT, GNSS_FIXED = 0, 1, 2
+
+
+@dataclass(frozen=True)
+class GnssSpec:
+    """A u-blox ZED-F9P-like RTK receiver on the robot's roof, reporting in the lane frame.
+
+    From docs/research/positioning-lane-limit.md (section 3):
+      - fixed: about 1-2 cm (ZED-F9P 0.010 m horizontal, plus about 1 ppm of base distance);
+      - float: 0.2 to 1 m out;
+      - no fix under the bay roof; a fix within seconds once outside (SparkFun: under 10 s
+        for the F9P);
+      - multipath from the roof edge, steel net poles and fences causes float dropouts;
+        how often is unknown until measured at the pilot range.
+    ASSUMED:
+      - fixed: 1 cm white plus 1.5 cm slowly wandering multipath per axis (2 cm in all);
+      - float: 0.4 m slow error (15 s correlation) plus 0.1 m white, per axis;
+      - the dock sits 1 m under the roof, so there is no solution for x < 1 m;
+      - after rolling out, float for 3 to 10 s, then fixed;
+      - one float episode every 2 minutes in the open, one every 15 s within 4 m of the
+        roof edge, each lasting 2 to 8 s;
+      - 1% of fixes are wrong (a bad integer ambiguity fix), 0.1 to 0.4 m out, lasting
+        until the next float episode or 30 s;
+      - 5 Hz, no latency; antenna above the robot's centre;
+      - the lane is surveyed once by driving to its corners, leaving 2 cm of offset and
+        0.05 deg of rotation between the surveyed and the true lane.
+    """
+
+    period_s: float = 0.2
+    fixed_white_sd_m: float = 0.01
+    fixed_slow_sd_m: float = 0.015
+    fixed_slow_tau_s: float = 10.0
+    float_slow_sd_m: float = 0.4
+    float_slow_tau_s: float = 15.0
+    float_white_sd_m: float = 0.1
+    roof_x_m: float = 1.0
+    first_fix_s: tuple = (3.0, 10.0)
+    edge_zone_x_m: float = 4.0
+    float_rate_open_per_s: float = 1.0 / 120.0
+    float_rate_edge_per_s: float = 1.0 / 15.0
+    float_episode_s: tuple = (2.0, 8.0)
+    wrong_fix_p: float = 0.01
+    wrong_fix_m: tuple = (0.1, 0.4)
+    wrong_fix_max_s: float = 30.0
+    survey_sd_m: float = 0.02
+    survey_rot_sd_rad: float = 0.05 * DEG
+    corrections: bool = True  # False: no RTK corrections reach the robot (Wi-Fi or caster down)
+
+
+PERFECT_GNSS = GnssSpec(
+    fixed_white_sd_m=0.0, fixed_slow_sd_m=0.0, float_slow_sd_m=0.0, float_white_sd_m=0.0,
+    first_fix_s=(0.0, 0.0), float_rate_open_per_s=0.0, float_rate_edge_per_s=0.0,
+    wrong_fix_p=0.0, survey_sd_m=0.0, survey_rot_sd_rad=0.0,
+)
+
+
+class Gnss:
+    """Reports (x, y, quality) in the surveyed lane frame, or None with no solution."""
+
+    def __init__(self, spec: GnssSpec, rng: random.Random) -> None:
+        self.spec = spec
+        self.rng = rng
+        self.offset_x = spec.survey_sd_m * rng.gauss(0.0, 1.0)
+        self.offset_y = spec.survey_sd_m * rng.gauss(0.0, 1.0)
+        self.rot = spec.survey_rot_sd_rad * rng.gauss(0.0, 1.0)
+        self.state = GNSS_NONE
+        self.timer = 0.0  # time left in the current float spell
+        self.wrong_x = 0.0
+        self.wrong_y = 0.0
+        self.wrong_t = 0.0
+        self.slow = [0.0, 0.0]  # fixed multipath wander, x and y
+        self.float_err = [0.0, 0.0]
+
+    def _start_float(self, duration: float) -> None:
+        self.state = GNSS_FLOAT
+        self.timer = duration
+        self.wrong_x = self.wrong_y = 0.0
+
+    def _get_fix(self) -> None:
+        s, rng = self.spec, self.rng
+        self.state = GNSS_FIXED
+        self.wrong_x = self.wrong_y = 0.0
+        if rng.random() < s.wrong_fix_p:
+            size = rng.uniform(*s.wrong_fix_m)
+            angle = rng.uniform(-math.pi, math.pi)
+            self.wrong_x, self.wrong_y = size * math.cos(angle), size * math.sin(angle)
+            self.wrong_t = s.wrong_fix_max_s
+
+    def read(self, world) -> tuple[float, float, int] | None:
+        s, rng, dt = self.spec, self.rng, self.spec.period_s
+        # Advance error processes every read, so the random stream doesn't depend on state.
+        a_fix = min(1.0, dt / s.fixed_slow_tau_s)
+        a_flt = min(1.0, dt / s.float_slow_tau_s)
+        for i in range(2):
+            self.slow[i] = self.slow[i] * (1.0 - a_fix) + s.fixed_slow_sd_m * math.sqrt(a_fix * (2.0 - a_fix)) * rng.gauss(0.0, 1.0)
+            self.float_err[i] = self.float_err[i] * (1.0 - a_flt) + s.float_slow_sd_m * math.sqrt(a_flt * (2.0 - a_flt)) * rng.gauss(0.0, 1.0)
+        white = (rng.gauss(0.0, 1.0), rng.gauss(0.0, 1.0))
+        u_event = rng.random()
+        u_duration = rng.random()
+
+        if world.x < s.roof_x_m:
+            self.state = GNSS_NONE
+            return None
+        if self.state == GNSS_NONE:
+            # Just rolled out from under the roof.
+            self._start_float(s.first_fix_s[0] + (s.first_fix_s[1] - s.first_fix_s[0]) * u_duration)
+        elif self.state == GNSS_FLOAT:
+            self.timer -= dt
+            if self.timer <= 0.0 and s.corrections:
+                self._get_fix()
+        else:
+            rate = s.float_rate_edge_per_s if world.x < s.edge_zone_x_m else s.float_rate_open_per_s
+            if self.wrong_x or self.wrong_y:
+                self.wrong_t -= dt
+                if self.wrong_t <= 0.0:
+                    rate = 1.0 / dt  # the receiver catches its bad fix and drops to float
+            if u_event < rate * dt:
+                lo, hi = s.float_episode_s
+                self._start_float(lo + (hi - lo) * u_duration)
+
+        # True position in the surveyed lane frame.
+        c, sn = math.cos(self.rot), math.sin(self.rot)
+        x = c * world.x - sn * world.y + self.offset_x
+        y = sn * world.x + c * world.y + self.offset_y
+        if self.state == GNSS_FIXED:
+            return (x + self.slow[0] + s.fixed_white_sd_m * white[0] + self.wrong_x,
+                    y + self.slow[1] + s.fixed_white_sd_m * white[1] + self.wrong_y, GNSS_FIXED)
+        return (x + self.float_err[0] + s.float_white_sd_m * white[0],
+                y + self.float_err[1] + s.float_white_sd_m * white[1], GNSS_FLOAT)
