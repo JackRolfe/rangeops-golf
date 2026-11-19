@@ -1,6 +1,6 @@
 # 05. Balls
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 03
 
@@ -10,4 +10,8 @@ Balls tab: bucket sizes, pay by card or with ball credit when the balance covers
 
 ## Acceptance
 
-- [ ] Component tests against the fake: buy a bucket and see its code; buy credit and pay a bucket with it; buy a pass.
+- [x] Component tests against the fake: buy a bucket and see its code; buy credit and pay a bucket with it; buy a pass.
+
+## Comments
+
+Done in `apps/player/src/balls/BallsScreen.tsx`. The API offers passes and ball credit to players (`POST /orders/passes`, `GET /me/wallet`), so both are in. Ball credit pays only when the balance covers the bucket; the button says how much there is.

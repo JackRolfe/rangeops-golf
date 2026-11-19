@@ -25,11 +25,11 @@ import { DriveScreen } from './screens/DriveScreen';
 import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
-import { TabScreen } from './screens/TabScreen';
 import { TabBar } from './components/TabBar';
 import { parseLink, type AppLink } from './routes';
 import { AccountSection } from './account/AccountSection';
 import { BookScreen } from './book/BookScreen';
+import { BallsScreen } from './balls/BallsScreen';
 import { apiErrorMessage, useAccount } from './account/AccountContext';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
@@ -432,7 +432,7 @@ export default function App() {
   } else if (view === 'book') {
     screen = <BookScreen onTab={selectTab} onDrive={openDrive} />;
   } else if (view === 'balls') {
-    screen = <TabScreen tab="balls" title="Balls" onTab={selectTab}><p>Balls come next.</p></TabScreen>;
+    screen = <BallsScreen onTab={selectTab} />;
   } else if (view === 'settings') {
     screen = (
       <SettingsScreen
