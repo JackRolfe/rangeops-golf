@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { Deps } from './deps.js';
 import { ApiError } from './errors.js';
 import { authRoutes } from './auth/routes.js';
+import { ballRoutes } from './balls/routes.js';
 import { bookingRoutes } from './bookings/routes.js';
 import { healthRoutes } from './health.js';
 import { hireRoutes } from './hires/routes.js';
@@ -53,6 +54,7 @@ export function createApp(deps: Deps): Api {
   authRoutes(app, deps);
   bookingRoutes(app, deps);
   hireRoutes(app, deps);
+  ballRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;
