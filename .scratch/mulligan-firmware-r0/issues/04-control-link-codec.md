@@ -1,6 +1,6 @@
 # 04. Control link messages: Drive, Telemetry, Info
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 01
 Spec: [spec.md](../spec.md#drive-messages)
@@ -17,4 +17,8 @@ Plain C++ in `lib/mulligan_core/`:
 
 ## Acceptance
 
-- [ ] Tests for bad lengths, out-of-range sticks, wrap at 255, duplicates and late messages, telemetry byte layout (distance low byte first).
+- [x] Tests for bad lengths, out-of-range sticks, wrap at 255, duplicates and late messages, telemetry byte layout (distance low byte first).
+
+## Comments
+
+Done in lib/mulligan_core/src/link.{h,cpp}, tests in test/test_link. A message exactly 128 ahead counts as old.
