@@ -1,6 +1,6 @@
 # 04. Drive controller: the app-side link rules
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 03
 
@@ -10,5 +10,9 @@ Blocked by: 03
 
 ## Acceptance
 
-- [ ] Fake-timer tests for rate, wrap, values rounded and clamped to -100..100, release, and that nothing is sent after release.
-- [ ] With `SimulatedRobot`, the robot stops on release and never reports link lost.
+- [x] Fake-timer tests for rate, wrap, values rounded and clamped to -100..100, release, and that nothing is sent after release.
+- [x] With `SimulatedRobot`, the robot stops on release and never reports link lost.
+
+## Comments
+
+Done in `apps/player/src/robot/DriveController.ts`. Holding the stick again cancels a release in progress. The simulator test checks the robot stops on release and never reports link lost.
