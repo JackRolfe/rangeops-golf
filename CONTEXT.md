@@ -36,3 +36,14 @@ The words this repository uses, and what they mean. Code, specs and tickets use 
 - **Board layer.** The firmware that reads pins and sensors, feeds the safety core and writes its outputs. It makes no decisions of its own.
 - **Fault.** A latched stop for a stall, a tilt or a sensor that stopped answering. It stays until the cause is gone and the app clears it ([ADR 0003](docs/adr/0003-drive-flag-to-clear-a-fault.md)) or the robot restarts.
 - **Robot terms.** Stick up is forward and sideways is turn, whatever way the robot faces. R0 steers this way. *Range terms*, where up is up the range, come once heading is trustworthy.
+
+## The app
+
+- **Game.** How a practice session is played: `bullseye` (one fixed ring) or `shrink`, **Shrink the Ring** (three on-target shots in a row shrink the ring by a fifth, down to a third of where it started). Sessions from before games are `bullseye`.
+- **Ring.** The target circle a shot is judged against. Each shot stores the ring it was played at, because Shrink the Ring changes it during a session.
+- **Beat Your Best.** The best accuracy so far for one club and one game, over sessions of at least five shots: the score to beat. No new data, only the practice history.
+- **Practice data.** The range map and sessions, kept on the phone in IndexedDB. Needs no account, and signing in never moves it.
+- **PlayerApi.** The app's one client for the backend. `HttpPlayerApi` talks to the API at `VITE_API_URL`; `FakePlayerApi` keeps everything in memory. Both pass one contract test.
+- **Demo mode.** The app with no `VITE_API_URL`: it uses `FakePlayerApi`, says so, and books and charges nothing.
+- **Simulated robot.** `SimulatedRobot`, a pretend Mulligan behind `RobotLink` that follows the R0 firmware's safety rules. With a hire key it poses as the hired robot and checks the key against the backend's public key.
+- **Bench key.** A hire key the app signs for the simulated robot with a checksum that is *not* cryptographic, so no signing secret is in the app.
