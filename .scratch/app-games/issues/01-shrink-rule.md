@@ -1,6 +1,6 @@
 # 01. Shrink the Ring rule in the domain
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: none
 
@@ -15,4 +15,8 @@ Port the rule in `replay()` (`apps/site/index.html`) into `apps/player/src/domai
 
 ## Acceptance
 
-- [ ] Unit tests cover: bullseye never shrinks; 3, 6 and 9 hits in a row shrink once, twice, three times; a miss resets the streak; the floor holds after many hits; the demo's numbers (36 to 12) come out the same.
+- [x] Unit tests cover: bullseye never shrinks; 3, 6 and 9 hits in a row shrink once, twice, three times; a miss resets the streak; the floor holds after many hits; the demo's numbers (36 to 12) come out the same.
+
+## Comments
+
+Done in `apps/player/src/domain/games.ts` with tests in `games.test.ts`. Also added `shotTarget`, which ticket 02 uses for metrics.
