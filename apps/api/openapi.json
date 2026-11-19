@@ -2078,29 +2078,61 @@
           "externalRef"
         ]
       },
-      "StaffPasses": {
+      "CounterPassSaleResult": {
         "type": "object",
         "properties": {
-          "passes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StaffPass"
-            }
+          "order": {
+            "$ref": "#/components/schemas/Order"
+          },
+          "account": {
+            "$ref": "#/components/schemas/PassHolder"
+          },
+          "pass": {
+            "$ref": "#/components/schemas/StaffPass"
           },
           "ballCredit": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StaffBallCredit"
-            }
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The new ball credit at this range, for a credit pack"
           }
         },
         "required": [
-          "passes",
+          "order",
+          "account",
+          "pass",
           "ballCredit"
         ]
       },
-      "StaffPass": {
+      "PassHolder": {
         "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ]
+      },
+      "StaffPass": {
+        "type": [
+          "object",
+          "null"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -2139,29 +2171,89 @@
           "validFrom",
           "validTo",
           "createdAt"
-        ]
+        ],
+        "description": "For a monthly pass"
       },
-      "PassHolder": {
+      "CounterPassSale": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
           "email": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "format": "email"
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The player's name, if the account has none yet"
+          },
+          "passProductId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
-          "id",
           "email",
-          "name"
+          "passProductId"
+        ]
+      },
+      "CounterCreditRedemptionResult": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/Order"
+          },
+          "bucketCode": {
+            "$ref": "#/components/schemas/BucketCode"
+          },
+          "ballCredit": {
+            "type": "integer",
+            "description": "Balls left at this range"
+          }
+        },
+        "required": [
+          "order",
+          "bucketCode",
+          "ballCredit"
+        ]
+      },
+      "CounterCreditRedemption": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bucketProductId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "accountId",
+          "bucketProductId"
+        ]
+      },
+      "StaffPasses": {
+        "type": "object",
+        "properties": {
+          "passes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffPass"
+            }
+          },
+          "ballCredit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffBallCredit"
+            }
+          }
+        },
+        "required": [
+          "passes",
+          "ballCredit"
         ]
       },
       "StaffBallCredit": {
@@ -4713,6 +4805,214 @@
           },
           "409": {
             "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/counter/passes": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Sell a monthly pass or ball credit at the counter (staff)",
+        "description": "Paid at the counter, so recorded as a paid order with payment provider \"counter\", which shows in the day's takings. Passes are held on an account: one is made for the email if it has none, so the player can sign in later and find it. A second monthly pass starts when the current one ends.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterPassSale"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sold",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterPassSaleResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/counter/ball-credit/redeem": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Hand over a bucket from a player's ball credit (staff)",
+        "description": "Takes the bucket's balls off the account's credit at this range and hands it over: the bucket code comes back already redeemed, and the bucket order (paid by ball credit, 0 cents) shows in the day's orders. 409 not_enough_credit changes nothing.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterCreditRedemption"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Handed over",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterCreditRedemptionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {

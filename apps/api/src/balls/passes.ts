@@ -70,9 +70,7 @@ export async function creditBalance(deps: Deps, accountId: string, rangeId: stri
 /** Buys a monthly pass (extending any current one) or a ball credit pack. */
 export async function buyPass(deps: Deps, accountId: string, rangeIdOrSlug: string, productId: string, paymentMethod: string) {
   const range = await findRange(deps.db, rangeIdOrSlug);
-  const product = await deps.db.maybeOne<PassProductRow>('select * from pass_products where id = $1 and range_id = $2', [productId, range.id]);
-  if (!product) throw notFound('No such pass at this range.');
-  if (!product.active) throw unprocessable(`${product.name} is not on sale.`, 'not_on_sale');
+  const product = await findPassProduct(deps, range, productId);
 
   const order = await createOrder(deps, {
     accountId,
@@ -83,13 +81,38 @@ export async function buyPass(deps: Deps, accountId: string, rangeIdOrSlug: stri
   });
   const paid = await chargeOrder(deps, order, paymentMethod, `${range.name}: ${product.name}`);
   if (paid.status !== 'paid') throw paymentDeclined(paid.failure_reason ?? 'The payment did not go through.');
+  return { order: paid, pass: await grantPass(deps, accountId, range, product, paid) };
+}
 
+/** Sells a pass or ball credit at the counter: paid there, so recorded as a paid order with no charge. */
+export async function sellPassAtCounter(deps: Deps, accountId: string, range: RangeRow, productId: string) {
+  const product = await findPassProduct(deps, range, productId);
+  const order = await createOrder(deps, {
+    accountId,
+    rangeId: range.id,
+    kind: product.kind === 'monthly_pass' ? 'pass' : 'ball_credit',
+    currency: range.currency,
+    lines: [{ description: `${product.name}, sold at the counter`, quantity: 1, unit_cents: product.cents }],
+  });
+  const paid = await markPaid(deps, order.id, 'counter');
+  return { order: paid, pass: await grantPass(deps, accountId, range, product, paid) };
+}
+
+async function findPassProduct(deps: Deps, range: RangeRow, productId: string) {
+  const product = await deps.db.maybeOne<PassProductRow>('select * from pass_products where id = $1 and range_id = $2', [productId, range.id]);
+  if (!product) throw notFound('No such pass at this range.');
+  if (!product.active) throw unprocessable(`${product.name} is not on sale.`, 'not_on_sale');
+  return product;
+}
+
+/** Gives a paid-for pass product to the account: ball credit, or a monthly pass that extends any current one. */
+async function grantPass(deps: Deps, accountId: string, range: RangeRow, product: PassProductRow, paid: OrderRow): Promise<PassRow | undefined> {
   if (product.kind === 'ball_credit') {
     await deps.db.many(
       "insert into ball_credit_entries (account_id, range_id, balls, reason, order_id, created_at) values ($1, $2, $3, 'purchase', $4, $5)",
       [accountId, range.id, product.balls, paid.id, deps.now()],
     );
-    return { order: paid, pass: undefined };
+    return undefined;
   }
 
   const now = deps.now();
@@ -99,12 +122,11 @@ export async function buyPass(deps: Deps, accountId: string, rangeIdOrSlug: stri
   );
   const from = latest?.valid_to ?? now;
   const to = new Date(from.getTime() + product.days! * 86_400_000);
-  const pass = await deps.db.one<PassRow>(
+  return deps.db.one<PassRow>(
     `insert into passes (account_id, range_id, pass_product_id, order_id, name, discount_pct, valid_from, valid_to, created_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *`,
     [accountId, range.id, product.id, paid.id, product.name, product.discount_pct, from, to, now],
   );
-  return { order: paid, pass };
 }
 
 /** Pays for a bucket from the account's ball credit at the range. 409, changing nothing, if there isn't enough. */
