@@ -1,6 +1,6 @@
 # 06: Margin study, plots and RESULTS.md
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 04, 05
 
 ## Parent
@@ -13,12 +13,18 @@ With the lane limit enforced from each estimator and a driver who chases balls i
 
 ## Acceptance criteria
 
-- [ ] A margin-versus-inside-rate plot per estimator.
-- [ ] Required margin per estimator, or "not achievable" with the reason.
-- [ ] `RESULTS.md` written with every assumption marked as cited or assumed.
-- [ ] A single command regenerates the results and plots.
+- [x] A margin-versus-inside-rate plot per estimator.
+- [x] Required margin per estimator, or "not achievable" with the reason.
+- [x] `RESULTS.md` written with every assumption marked as cited or assumed.
+- [x] A single command regenerates the results and plots.
 
 ## Blocked by
 
 - `04-ten-runs-accuracy.md`
 - `05-lane-limit-rule.md`
+
+## Comments
+
+- The chasing child also goes after one ball on the way home, after the turn; without it the margin study never tested the return leg, where the gyro estimators are worst.
+- Added "in-lane balls reached", so an estimator can't look safe just by freezing the robot. Odometry alone reaches 19 in 20 inside only at a 1.4 m margin, with 5% of in-lane balls reachable.
+- Result: two UWB anchors, margin 0.5 m, anchors as wide apart as possible. See `robot/sim/RESULTS.md`.

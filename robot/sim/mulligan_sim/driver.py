@@ -55,6 +55,7 @@ class Driver:
         self.t = 0.0
         self.done = False
         self.abandoned = 0
+        self.reached: list[int] = []  # indices of goals reached
 
     def _next_goal(self) -> None:
         self.index += 1
@@ -92,6 +93,7 @@ class Driver:
         if dist < self.best_dist - 0.2:
             self.best_dist, self.best_t = dist, self.t
         if dist < TOLERANCE_M[goal.kind]:
+            self.reached.append(self.index)
             if goal.kind == "ball":
                 self.phase, self.phase_t = "pause", 0.0
                 return 0.0, 0.0

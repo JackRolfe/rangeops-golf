@@ -41,12 +41,14 @@ def out_and_back(seed: int = 0, ground: Ground = DRY, far_y: float = 0.0,
 
 
 def generate(seed: int, ground: Ground | None = None, chase_p: float = 0.3,
-             chase_y: tuple[float, float] = (1.8, 3.0), **overrides) -> Scenario:
+             chase_y: tuple[float, float] = (1.8, 3.0), return_balls: int = 0,
+             **overrides) -> Scenario:
     """A 30 m out-and-back run with two or three pickups on the way out.
 
     Each ball is in the robot's own lane, or with probability `chase_p` in a neighbouring
     bay (|y| in `chase_y`), which a child will drive after. Half the children turn on the
     spot, half in a tight arc. If `ground` is None it is dry or wet with equal odds.
+    `return_balls` more balls are picked up on the way home, after the turn.
     """
     from .world import WET
 
@@ -55,14 +57,15 @@ def generate(seed: int, ground: Ground | None = None, chase_p: float = 0.3,
         ground = WET if rng.random() < 0.5 else DRY
     n_balls = rng.choice((2, 3))
     xs = sorted(rng.uniform(5.0, 27.0) for _ in range(n_balls))
-    goals = []
-    for x in xs:
+    def ball(x: float) -> Goal:
         if rng.random() < chase_p:
-            y = rng.choice((-1.0, 1.0)) * rng.uniform(*chase_y)
-        else:
-            y = rng.uniform(-1.2, 1.2)
-        goals.append(Goal(x, y, "ball"))
+            return Goal(x, rng.choice((-1.0, 1.0)) * rng.uniform(*chase_y), "ball")
+        return Goal(x, rng.uniform(-1.2, 1.2), "ball")
+
+    goals = [ball(x) for x in xs]
     goals.append(Goal(P.REACH_M, rng.uniform(-1.0, 1.0), "far"))
+    back = sorted((rng.uniform(5.0, 25.0) for _ in range(return_balls)), reverse=True)
+    goals.extend(ball(x) for x in back)
     goals.append(Goal(0.0, 0.0, "home"))
     style = Style(
         spin_turner=rng.random() < 0.5,

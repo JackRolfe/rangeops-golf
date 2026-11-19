@@ -8,6 +8,7 @@ Writes results/*.json, results/summary.md (the tables) and plots/*.png.
 
 import argparse
 import json
+import math
 import os
 from multiprocessing import Pool
 from pathlib import Path
@@ -224,6 +225,155 @@ def accuracy_tables(acc: dict) -> str:
     return "\n".join(lines)
 
 
+# --- Margin study: the lane limit enforced from each estimator -----------------------
+
+MARGINS = [round(0.1 * i, 1) for i in range(15)]  # 0.0 to 1.4 m
+MARGIN_SEED0 = 5000
+TARGET = 0.95  # nineteen runs in twenty
+
+
+def chaser(seed: int):
+    """A child who goes after balls in the neighbouring bays more often than not."""
+    return generate(seed, chase_p=0.6, chase_y=(2.0, 3.5), return_balls=1)
+
+
+def _margin_run(args) -> tuple:
+    name, margin, seed = args
+    sc = chaser(seed)
+    log = simulate(sc, [name], enforce=name, margin=margin)
+    in_lane = [i for i, g in enumerate(sc.goals) if g.kind == "ball" and abs(g.y) <= P.LANE_HALF_WIDTH_M]
+    got = sum(1 for i in in_lane if i in log.reached)
+    return name, margin, float(np.max(np.abs(log.y))), log.completed, got, len(in_lane)
+
+
+def margins(pool: Pool, quick: bool) -> str:
+    n = 60 if quick else 400
+    jobs = [(name, m, seed) for name in ALL for m in MARGINS for seed in range(MARGIN_SEED0, MARGIN_SEED0 + n)]
+    rows = pool.map(_margin_run, jobs, chunksize=8)
+    worst, done, got, avail = {}, {}, {}, {}
+    for name, m, max_y, completed, n_got, n_avail in rows:
+        worst.setdefault((name, m), []).append(max_y)
+        done.setdefault((name, m), []).append(completed)
+        got[(name, m)] = got.get((name, m), 0) + n_got
+        avail[(name, m)] = avail.get((name, m), 0) + n_avail
+    table = {}
+    for name in ALL:
+        for m in MARGINS:
+            ys = np.array(worst[(name, m)])
+            table[(name, m)] = {
+                "inside": float(np.mean(ys <= P.LANE_HALF_WIDTH_M)),
+                "body_inside": float(np.mean(ys + P.BODY_HALF_WIDTH_M <= P.LANE_HALF_WIDTH_M)),
+                "home": float(np.mean(done[(name, m)])),
+                "balls": got[(name, m)] / max(1, avail[(name, m)]),
+                "worst95": float(np.percentile(ys, 95)),
+            }
+    (RESULTS / "margins.json").write_text(json.dumps(
+        {"n_per_point": n, "margins": MARGINS,
+         "points": [{"estimator": k[0], "margin": k[1], **v} for k, v in table.items()]}, indent=1))
+    plot_margins(table, n)
+
+    def required(key: str):
+        for m in MARGINS:
+            if table[(name, m)][key] >= TARGET:
+                return m
+        return None
+
+    lines = [f"### Lane limit enforced: margin needed for nineteen runs in twenty ({n} runs per point)", ""]
+    lines.append("A child who chases balls into the neighbouring bays (60% of balls) drives against the lane limit, "
+                 "which acts on the estimator's pose. *Inside* means the robot's true centre never left |y| <= 1.5 m "
+                 "during the run; *body inside* means no part of the robot did (centre plus 0.21 m). *In-lane balls "
+                 "reached*: of the balls inside the robot's own lane, the share the child could still drive to.")
+    lines.append("")
+    lines.append("| Estimator | Margin, centre inside 19 in 20 | Lane left to drive in | Inside at that margin | In-lane balls reached | Got home | Margin, whole body inside 19 in 20 |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
+    for name in ALL:
+        m = required("inside")
+        mb = required("body_inside")
+        if m is None:
+            lines.append(f"| {LABELS[name]} | not reached by 1.4 m | - | best {max(table[(name, x)]['inside'] for x in MARGINS):.0%} | - | - | "
+                         f"{'not reached' if mb is None else f'{mb:.1f} m'} |")
+            continue
+        t = table[(name, m)]
+        lines.append(f"| {LABELS[name]} | {m:.1f} m | {2 * (P.LANE_HALF_WIDTH_M - m):.1f} m wide | {t['inside']:.1%} | "
+                     f"{t['balls']:.0%} | {t['home']:.0%} | {'not reached' if mb is None else f'{mb:.1f} m'} |")
+    lines.append("")
+    lines.append("Share of runs with the centre inside, by margin:")
+    lines.append("")
+    lines.append("| Margin (m) | " + " | ".join(LABELS[n] for n in ALL) + " |")
+    lines.append("| ---: | " + " | ".join("---:" for _ in ALL) + " |")
+    for m in MARGINS:
+        lines.append(f"| {m:.1f} | " + " | ".join(f"{table[(n, m)]['inside']:.1%}" for n in ALL) + " |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def plot_margins(table: dict, n: int) -> None:
+    plt, fig, ax = _figure(8, 4.2)
+    for name in ALL:
+        ax.plot(MARGINS, [100 * table[(name, m)]["inside"] for m in MARGINS], STYLES[name],
+                color=COLOURS[name], linewidth=2, marker="o", markersize=4, label=LABELS[name])
+    ax.axhline(100 * TARGET, color=INK2, linewidth=1, linestyle=(0, (4, 3)))
+    ax.text(0.75, 100 * TARGET - 4.5, "19 runs in 20", fontsize=8, color=INK2)
+    ax.set_ylim(0, 102)
+    ax.set_xlim(-0.03, 1.43)
+    ax.set_xlabel("Lane-limit margin: how far inside the lane edge the stop line sits (m)", fontsize=9, color=INK)
+    ax.set_ylabel("Runs that stayed inside the lane (%)", fontsize=9, color=INK)
+    ax.set_title(f"Lane limit enforced, child chasing balls into the next bays ({n} runs per point)",
+                 fontsize=10, color=INK, loc="left")
+    ax.legend(fontsize=8.5, frameon=False, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(PLOTS / "margin_vs_inside.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
+# --- Sensitivity: how the answer moves with the assumed numbers ----------------------
+
+def _variants():
+    from .sensors import GyroSpec, UwbSpec
+    from .world import WET
+    return {
+        "Baseline": {},
+        "Gyro 3x drift, 1% scale error": {"gyro": GyroSpec(bias_sd_rads=1.5 * math.pi / 180 / 60, scale_sd=0.01)},
+        "Dock heading 1.5 deg (1 sd)": {"dock_sd_theta_rad": math.radians(1.5)},
+        "UWB 15 cm white, 5% outliers": {"uwb": UwbSpec(white_sd_m=0.15, outlier_p=0.05)},
+        "All wet grass": {"ground": WET},
+    }
+
+
+SENS_EST = ["odo_gyro", "uwb1", "uwb2", "uwb2_wide"]
+
+
+def _sens_run(args) -> tuple:
+    label, seed = args
+    over = dict(_variants()[label])
+    ground = over.pop("ground", None)
+    log = simulate(generate(seed, ground, **over), SENS_EST)
+    out = []
+    for n in SENS_EST:
+        m = lateral_metrics(log, n)
+        out.append((abs(m.far_error_m), m.max_error_m))
+    return label, out
+
+
+def sensitivity(pool: Pool, quick: bool) -> str:
+    n = 40 if quick else 300
+    labels = list(_variants())
+    rows = pool.map(_sens_run, [(lab, s) for lab in labels for s in range(MC_SEED0, MC_SEED0 + n)], chunksize=4)
+    lines = [f"### Sensitivity to the assumed numbers ({n} runs each, no lane limit)", ""]
+    lines.append("95th percentile sideways error at 30 m / worst at any time in the run (m).")
+    lines.append("")
+    lines.append("| Case | " + " | ".join(LABELS[n] for n in SENS_EST) + " |")
+    lines.append("| --- | " + " | ".join("---:" for _ in SENS_EST) + " |")
+    data = {}
+    for lab in labels:
+        res = np.array([r for l, r in rows if l == lab])  # runs x estimators x 2
+        data[lab] = res
+        cells = [f"{np.percentile(res[:, i, 0], 95):.2f} / {np.percentile(res[:, i, 1], 95):.2f}" for i in range(len(SENS_EST))]
+        lines.append(f"| {lab} | " + " | ".join(cells) + " |")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="small samples for a smoke test")
@@ -244,8 +394,9 @@ def main() -> None:
         plot_example_run()
         summary = ["# Simulation tables", "", "Generated by `uv run python -m mulligan_sim.study`. Do not edit by hand.", "",
                    accuracy_tables(acc)]
-        if not args.skip_margins and "margins" in globals():
-            summary.append(globals()["margins"](pool, args.quick))
+        summary.append(sensitivity(pool, args.quick))
+        if not args.skip_margins:
+            summary.append(margins(pool, args.quick))
     (RESULTS / "summary.md").write_text("\n".join(summary))
     print("\n".join(summary))
 

@@ -47,6 +47,7 @@ class RunLog:
     est: dict = field(default_factory=dict)  # name -> (x, y, theta) arrays
     completed: bool = False
     abandoned: int = 0
+    reached: tuple = ()  # indices of the scenario's goals that were reached
 
     def far_index(self) -> int:
         """The sample where the robot is furthest out."""
@@ -113,4 +114,5 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
         est={k: (np.array(v[0]), np.array(v[1]), np.array(v[2])) for k, v in est_log.items()},
         completed=driver.done and driver.index >= len(scenario.goals),
         abandoned=driver.abandoned,
+        reached=tuple(driver.reached),
     )

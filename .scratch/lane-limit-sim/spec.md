@@ -1,6 +1,6 @@
 # Spec: can Mulligan hold its lane? (simulation)
 
-Status: ready-for-agent
+Status: resolved
 
 ## Problem statement
 
