@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit --pretty false && tsc --noEmit --pretty false -p tsconfig.node.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test -c playwright.api.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

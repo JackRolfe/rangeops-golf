@@ -1,6 +1,6 @@
 # Spec: App stage 4, Book, Balls and links
 
-Status: ready-for-agent
+Status: resolved
 Source: `docs/PLAN.md`, "The app", stage 4; the API in `apps/api` (`openapi.json`); ADR 0021 (passes and ball credit).
 
 ## Problem
