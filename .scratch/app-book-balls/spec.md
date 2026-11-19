@@ -32,24 +32,13 @@ The app plays games and drives a simulated robot, but it can't book a bay, sell 
 | Link paths | The router strips Vite's base (`/app/` when built for the site) and also accepts a leading `app/`, so the API's default `APP_URL` (`http://localhost:5173/app`) works with `npm run dev`. After handling a link the app puts the base URL back in the address bar. | One router for dev and the deployed app. |
 | Check-in signed out | The code is kept for the session; after signing in, the check-in goes ahead. | A QR scan is often the first thing a player does. |
 
-## What the deploy needs (not changed here)
+## What the deploy needs
 
-The site's Static Web App serves `dist/`, with the app under `dist/app/`. Static Web Apps read `staticwebapp.config.json` only from the root of what is deployed, so a file in `apps/player/public` would end up at `dist/app/` and be ignored. Two changes outside `apps/player` are needed, which the deploy owner should make:
+The site's Static Web App serves `dist/`, with the app under `dist/app/`. Static Web Apps read `staticwebapp.config.json` only from the root of what is deployed, which `scripts/build.mjs` copies from `apps/site/`.
 
-1. A `staticwebapp.config.json` at the root of `dist/` (for example `apps/site/staticwebapp.config.json`, which `scripts/build.mjs` copies there) with a fallback for app routes:
-
-   ```json
-   {
-     "navigationFallback": {
-       "rewrite": "/app/index.html",
-       "exclude": ["/*.{css,js,svg,png,jpg,jpeg,webp,ico,json,txt,webmanifest,woff,woff2}"]
-     },
-     "routes": [{ "route": "/", "rewrite": "/index.html" }]
-   }
-   ```
-
-   A fallback this broad sends any unknown path to the app, which shows Games. If the site gains more pages, narrow it with a route `{"route": "/app/*", "rewrite": "/app/index.html"}` instead.
-2. `deploy/azure/deploy.sh` builds the site and app with `npm run build`; set `VITE_API_URL="$api_url"` on that line so the app talks to the API instead of the fake. The API's `APP_URL` must be the app's public address (`https://<site>/app`).
+1. **Done here:** `apps/site/staticwebapp.config.json` rewrites exactly the app's link paths (`/app/signin`, `/app/drive`, `/app/check-in/*`) to `/app/index.html`. It names only those paths, so the app's scripts, styles, service worker and manifest, and the site's own pages and 404s, are served as before. `src/staticWebApp.test.ts` fails if a link the router reads isn't rewritten, or if a rewrite would catch an asset. Once installed, the PWA's service worker also serves `index.html` for navigations under `/app/`.
+2. **Still to do in `deploy/azure/deploy.sh`:** build the site and app with `VITE_API_URL="$api_url" npm run build`, or the deployed app runs in demo mode.
+3. **Still to check on the Container App:** `APP_URL` must be the site's `/app` address, so links open the app.
 
 ## Out of scope
 

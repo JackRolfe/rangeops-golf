@@ -1,4 +1,9 @@
 {
+  "routes": [
+    { "route": "/app/signin", "rewrite": "/app/index.html" },
+    { "route": "/app/drive", "rewrite": "/app/index.html" },
+    { "route": "/app/check-in/*", "rewrite": "/app/index.html" }
+  ],
   "mimeTypes": {
     ".mp4": "video/mp4",
     ".glb": "model/gltf-binary",
