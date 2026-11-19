@@ -98,6 +98,7 @@ void motorsOff() {
 portMUX_TYPE pendingLock = portMUX_INITIALIZER_UNLOCKED;
 struct {
   bool connected = false;
+  bool connectedEvent = false;
   bool disconnected = false;
   bool drive = false;
   uint8_t driveBytes[kDriveLength] = {};
@@ -113,6 +114,7 @@ class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer*) override {
     portENTER_CRITICAL(&pendingLock);
     pending.connected = true;
+    pending.connectedEvent = true;
     portEXIT_CRITICAL(&pendingLock);
   }
   // The library calls both onConnect overloads; this one has the address
@@ -300,30 +302,36 @@ void startBluetooth() {
 
 // Everything that arrived over Bluetooth since the last tick.
 void takeBluetooth(uint32_t nowMs, SafetyInputs& in) {
-  bool disconnected, drive, unlock;
+  bool connectedEvent, disconnected, drive, unlock;
   uint8_t driveBytes[kDriveLength];
   uint8_t unlockBytes[kHireKeyLength + 1];
   size_t unlockLength;
   portENTER_CRITICAL(&pendingLock);
   connected = pending.connected;
+  connectedEvent = pending.connectedEvent;
   disconnected = pending.disconnected;
   drive = pending.drive;
   unlock = pending.unlock;
   memcpy(driveBytes, pending.driveBytes, sizeof driveBytes);
   unlockLength = pending.unlockLength;
   memcpy(unlockBytes, pending.unlockBytes, unlockLength);
-  pending.disconnected = pending.drive = pending.unlock = false;
+  pending.connectedEvent = pending.disconnected = pending.drive = pending.unlock = false;
   portEXIT_CRITICAL(&pendingLock);
 
+  // In order: a phone that left, then one that arrived (both can land in one
+  // tick), then its key. A disconnect forgets the key (HireLock).
   if (disconnected) {
-    hireLock->lock();
-    BLEDevice::startAdvertising();  // one connection at a time: only now
+    hireLock->disconnected();
+    if (!connected) BLEDevice::startAdvertising();  // one connection at a time: only now
   }
-  if (unlock) {
-    const KeyCheck result = hireLock->unlock(unlockBytes, unlockLength, nowMs);
-    uint8_t code = static_cast<uint8_t>(result);
+  if (connectedEvent && connected) hireLock->connected();
+  if (unlock) log_i("unlock: %s", keyCheckName(hireLock->unlock(unlockBytes, unlockLength, nowMs)));
+
+  static KeyCheck shown = KeyCheck::BadLength;  // what reading Unlock gives
+  if (hireLock->lastResult() != shown) {
+    shown = hireLock->lastResult();
+    uint8_t code = static_cast<uint8_t>(shown);
     unlockChar->setValue(&code, 1);
-    log_i("unlock: %s", keyCheckName(result));
   }
   in.driveReceived = drive && parseDrive(driveBytes, sizeof driveBytes, in.drive);
 }
@@ -332,7 +340,7 @@ void controlTick(uint32_t nowMs) {
   SafetyInputs in;
   in.nowMs = nowMs;
   takeBluetooth(nowMs, in);
-  in.unlocked = connected && hireLock->unlocked(nowMs);
+  in.unlocked = hireLock->unlocked(nowMs);
   in.stopSwitchPressed = readStopSwitch();
 
   // Wheels, in metres, forward positive on both sides.
