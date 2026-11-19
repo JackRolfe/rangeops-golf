@@ -1,5 +1,6 @@
 import type { Deps } from '../deps.js';
 import { conflict, paymentDeclined, unprocessable } from '../errors.js';
+import { passDiscountLine } from '../balls/passes.js';
 import { activateHire, cancelHire, reserveRobot } from '../hires/service.js';
 import { chargeOrder, createOrder, markPaid, refundOrder, type OrderLineRow, type OrderRow } from '../orders/service.js';
 import { hourSlot } from '../pricing.js';
@@ -85,6 +86,8 @@ export async function quoteBooking(deps: Deps, req: BookingRequest) {
     quantity: 1,
     unit_cents: s.priceCents,
   }));
+  const bayHoursCents = slots.reduce((sum, s) => sum + s.priceCents, 0);
+  lines.push(...(await passDiscountLine(deps, req.accountId, data.range.id, req.startsAt, bayHoursCents, 'bay-hours')));
   lines.push(...addOns.map((a) => a.line));
   return { data, bay, slots, addOns, lines };
 }

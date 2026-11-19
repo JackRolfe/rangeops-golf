@@ -4,9 +4,10 @@ import { conflict, notFound, paymentDeclined, unprocessable } from '../errors.js
 import { chargeOrder, createOrder, type OrderRow } from '../orders/service.js';
 import { findRange, type BucketProductRow } from '../ranges/repo.js';
 import { newBucketCode, normaliseCode } from './codes.js';
+import { buyBucketWithCredit, passDiscountLine } from './passes.js';
 import type { BucketCodeRow } from './schemas.js';
 
-export type PayWith = { method: 'card'; paymentMethod: string };
+export type PayWith = { method: 'card'; paymentMethod: string } | { method: 'ball_credit' };
 
 /** Inserts a code for a paid order, retrying on the rare clash with an existing code. */
 export async function issueBucketCode(deps: Deps, order: OrderRow, product: BucketProductRow, q?: Queryable): Promise<BucketCodeRow> {
@@ -34,10 +35,14 @@ export async function findBucketProduct(deps: Deps, rangeIdOrSlug: string, produ
   return { range, product };
 }
 
-/** Buys a bucket with a card and returns the paid order and its code. */
+/** Buys a bucket by card (less any pass discount) or from ball credit, and returns the paid order and its code. */
 export async function buyBucket(deps: Deps, accountId: string, rangeIdOrSlug: string, productId: string, payWith: PayWith) {
   const { range, product } = await findBucketProduct(deps, rangeIdOrSlug, productId);
-  const lines = [{ description: `${product.name}, ${product.balls} balls`, quantity: 1, unit_cents: product.cents }];
+  if (payWith.method === 'ball_credit') return buyBucketWithCredit(deps, accountId, range, product);
+  const lines = [
+    { description: `${product.name}, ${product.balls} balls`, quantity: 1, unit_cents: product.cents },
+    ...(await passDiscountLine(deps, accountId, range.id, deps.now(), product.cents, 'buckets')),
+  ];
   const order = await createOrder(deps, { accountId, rangeId: range.id, kind: 'bucket', currency: range.currency, lines });
   const paid = await chargeOrder(deps, order, payWith.paymentMethod, `${range.name}: ${product.name}`);
   if (paid.status !== 'paid') throw paymentDeclined(paid.failure_reason ?? 'The payment did not go through.');

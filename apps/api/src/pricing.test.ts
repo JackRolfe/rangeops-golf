@@ -13,6 +13,7 @@ const data: RangeData = {
   peaks: [{ weekday: 2, from_min: 960, to_min: 1260 }],
   addOns: [],
   buckets: [],
+  passProducts: [],
 };
 
 describe('pricing', () => {

@@ -38,6 +38,12 @@ export async function seedDemo(db: Db): Promise<boolean> {
       [rangeId],
     );
     await tx.query(
+      `insert into pass_products (range_id, kind, name, cents, days, discount_pct, balls) values
+         ($1, 'monthly_pass', 'Monthly pass', 4900, 30, 10, null),
+         ($1, 'ball_credit', '500 balls of credit', 8000, null, null, 500)`,
+      [rangeId],
+    );
+    await tx.query(
       `insert into robots (range_id, serial, name, home_bay_id)
        select $1, 'A1B2', 'Mulligan A1B2', id from bays where range_id = $1 and number = 1
        union all

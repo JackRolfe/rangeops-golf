@@ -1,4 +1,5 @@
 import type { Db, Queryable } from '../db/db.js';
+import type { PassProductRow } from '../balls/passes.js';
 import { notFound } from '../errors.js';
 
 export interface RangeRow {
@@ -58,6 +59,7 @@ export interface RangeData {
   peaks: PeakRow[];
   addOns: AddOnRow[];
   buckets: BucketProductRow[];
+  passProducts: PassProductRow[];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -76,14 +78,15 @@ export async function findRange(db: Db, idOrSlug: string, q?: Queryable): Promis
 export async function loadRange(db: Db, idOrSlug: string, q?: Queryable): Promise<RangeData> {
   const range = await findRange(db, idOrSlug, q);
   const id = range.id;
-  const [bays, hours, peaks, addOns, buckets] = await Promise.all([
+  const [bays, hours, peaks, addOns, buckets, passProducts] = await Promise.all([
     db.many<BayRow>('select * from bays where range_id = $1 order by number', [id], q),
     db.many<HoursRow>('select weekday, opens_min, closes_min from opening_hours where range_id = $1 order by weekday', [id], q),
     db.many<PeakRow>('select weekday, from_min, to_min from peak_windows where range_id = $1 order by weekday, from_min', [id], q),
     db.many<AddOnRow>('select kind, cents, unit from addon_prices where range_id = $1 order by kind', [id], q),
     db.many<BucketProductRow>('select * from bucket_products where range_id = $1 order by balls', [id], q),
+    db.many<PassProductRow>('select * from pass_products where range_id = $1 order by kind, cents', [id], q),
   ]);
-  return { range, bays, hours, peaks, addOns, buckets };
+  return { range, bays, hours, peaks, addOns, buckets, passProducts };
 }
 
 export async function findBay(db: Db, bayId: string, q?: Queryable): Promise<BayRow> {

@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import type { PassProductRow } from '../balls/passes.js';
 import { minutesToHhmm } from '../time.js';
 import type { AddOnRow, BayRow, BucketProductRow, HoursRow, PeakRow, RangeData, RangeRow } from './repo.js';
 
@@ -47,6 +48,19 @@ export const BucketProductSchema = z
   .object({ id: z.string().uuid(), name: z.string(), balls: z.number().int(), priceCents: Cents, active: z.boolean() })
   .openapi('BucketProduct');
 
+export const PassProductSchema = z
+  .object({
+    id: z.string().uuid(),
+    kind: z.enum(['monthly_pass', 'ball_credit']),
+    name: z.string(),
+    priceCents: Cents,
+    days: z.number().int().nullable().openapi({ description: 'monthly_pass: days it lasts' }),
+    discountPercent: z.number().int().nullable().openapi({ description: 'monthly_pass: percent off bay-hours and card-paid buckets' }),
+    balls: z.number().int().nullable().openapi({ description: 'ball_credit: balls added to your credit at this range' }),
+    active: z.boolean(),
+  })
+  .openapi('PassProduct');
+
 export const RangeSchema = RangeSummarySchema.extend({
   prices: z.object({ offPeakCentsPerHour: Cents, peakCentsPerHour: Cents }),
   openingHours: z.array(OpeningHoursSchema),
@@ -54,6 +68,7 @@ export const RangeSchema = RangeSummarySchema.extend({
   bays: z.array(BaySchema),
   addOns: z.array(AddOnPriceSchema),
   bucketProducts: z.array(BucketProductSchema),
+  passProducts: z.array(PassProductSchema),
 }).openapi('Range');
 
 export const rangeSummary = (r: RangeRow): z.infer<typeof RangeSummarySchema> => ({
@@ -79,6 +94,17 @@ export const peakOut = (p: PeakRow) => ({ weekday: p.weekday, from: minutesToHhm
 export const addOnOut = (a: AddOnRow) => ({ kind: a.kind, priceCents: a.cents, unit: a.unit });
 export const bucketProductOut = (b: BucketProductRow) => ({ id: b.id, name: b.name, balls: b.balls, priceCents: b.cents, active: b.active });
 
+export const passProductOut = (p: PassProductRow): z.infer<typeof PassProductSchema> => ({
+  id: p.id,
+  kind: p.kind,
+  name: p.name,
+  priceCents: p.cents,
+  days: p.days,
+  discountPercent: p.discount_pct,
+  balls: p.balls,
+  active: p.active,
+});
+
 export function rangeOut(d: RangeData): z.infer<typeof RangeSchema> {
   return {
     ...rangeSummary(d.range),
@@ -88,6 +114,7 @@ export function rangeOut(d: RangeData): z.infer<typeof RangeSchema> {
     bays: d.bays.map(bayOut),
     addOns: d.addOns.map(addOnOut),
     bucketProducts: d.buckets.map(bucketProductOut),
+    passProducts: d.passProducts.map(passProductOut),
   };
 }
 

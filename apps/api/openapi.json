@@ -126,6 +126,12 @@
                 "items": {
                   "$ref": "#/components/schemas/BucketProduct"
                 }
+              },
+              "passProducts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PassProduct"
+                }
               }
             },
             "required": [
@@ -134,7 +140,8 @@
               "peakWindows",
               "bays",
               "addOns",
-              "bucketProducts"
+              "bucketProducts",
+              "passProducts"
             ]
           }
         ]
@@ -301,6 +308,64 @@
           "name",
           "balls",
           "priceCents",
+          "active"
+        ]
+      },
+      "PassProduct": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "monthly_pass",
+              "ball_credit"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "monthly_pass: days it lasts"
+          },
+          "discountPercent": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "monthly_pass: percent off bay-hours and card-paid buckets"
+          },
+          "balls": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "ball_credit: balls added to your credit at this range"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "priceCents",
+          "days",
+          "discountPercent",
+          "balls",
           "active"
         ]
       },
@@ -975,19 +1040,140 @@
           "keyVersion"
         ]
       },
-      "BucketPurchase": {
+      "PassPurchase": {
         "type": "object",
         "properties": {
           "order": {
             "$ref": "#/components/schemas/Order"
           },
-          "bucketCode": {
-            "$ref": "#/components/schemas/BucketCode"
+          "pass": {
+            "$ref": "#/components/schemas/Pass"
+          },
+          "ballCredit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Your new ball credit at this range, for a credit pack"
           }
         },
         "required": [
           "order",
-          "bucketCode"
+          "pass",
+          "ballCredit"
+        ]
+      },
+      "Pass": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeSummary"
+          },
+          "name": {
+            "type": "string"
+          },
+          "discountPercent": {
+            "type": "integer"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "range",
+          "name",
+          "discountPercent",
+          "validFrom",
+          "validTo",
+          "orderId"
+        ],
+        "description": "The pass, for a monthly pass"
+      },
+      "PassOrderRequest": {
+        "type": "object",
+        "properties": {
+          "rangeId": {
+            "type": "string",
+            "description": "Range id or slug",
+            "example": "demo"
+          },
+          "passProductId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A payment method from the provider's card form. With the local fake provider: pm_fake_ok succeeds, pm_fake_declined declines.",
+            "example": "pm_fake_ok"
+          }
+        },
+        "required": [
+          "rangeId",
+          "passProductId",
+          "paymentMethod"
+        ]
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "passes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pass"
+            },
+            "description": "Passes valid now or starting later"
+          },
+          "ballCredit": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "range": {
+                  "$ref": "#/components/schemas/RangeSummary"
+                },
+                "balls": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "range",
+                "balls"
+              ]
+            },
+            "description": "Ball credit per range, where non-zero"
+          },
+          "bucketCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BucketCode"
+            },
+            "description": "Bucket codes not yet handed over"
+          }
+        },
+        "required": [
+          "passes",
+          "ballCredit",
+          "bucketCodes"
         ]
       },
       "BucketCode": {
@@ -1071,6 +1257,21 @@
           "redeemedBy"
         ]
       },
+      "BucketPurchase": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/Order"
+          },
+          "bucketCode": {
+            "$ref": "#/components/schemas/BucketCode"
+          }
+        },
+        "required": [
+          "order",
+          "bucketCode"
+        ]
+      },
       "BucketOrderRequest": {
         "type": "object",
         "properties": {
@@ -1084,7 +1285,7 @@
             "format": "uuid"
           },
           "payWith": {
-            "$ref": "#/components/schemas/PayWithCard"
+            "$ref": "#/components/schemas/PayWith"
           }
         },
         "required": [
@@ -1092,6 +1293,23 @@
           "bucketProductId",
           "payWith"
         ]
+      },
+      "PayWith": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PayWithCard"
+          },
+          {
+            "$ref": "#/components/schemas/PayWithBallCredit"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "method",
+          "mapping": {
+            "card": "#/components/schemas/PayWithCard",
+            "ball_credit": "#/components/schemas/PayWithBallCredit"
+          }
+        }
       },
       "PayWithCard": {
         "type": "object",
@@ -1113,6 +1331,21 @@
           "method",
           "paymentMethod"
         ]
+      },
+      "PayWithBallCredit": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "ball_credit"
+            ]
+          }
+        },
+        "required": [
+          "method"
+        ],
+        "description": "Spend the bucket's balls from your ball credit at this range"
       }
     },
     "parameters": {}
@@ -1823,12 +2056,134 @@
         }
       }
     },
+    "/orders/passes": {
+      "post": {
+        "tags": [
+          "Balls"
+        ],
+        "summary": "Buy a monthly pass or a ball credit pack",
+        "description": "A second monthly pass at the same range starts when the current one ends.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassPurchase"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The payment was declined",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/wallet": {
+      "get": {
+        "tags": [
+          "Balls"
+        ],
+        "summary": "Your passes, ball credit and unused bucket codes, at every range",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The wallet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wallet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orders/buckets": {
       "post": {
         "tags": [
           "Balls"
         ],
         "summary": "Buy a bucket and get its code",
+        "description": "Pay by card (less an active pass's discount) or from ball credit at the range.",
         "security": [
           {
             "bearerAuth": []
