@@ -1,6 +1,6 @@
 # 01. PlatformIO project with native tests and the ESP32-S3 build
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: none
 Spec: [spec.md](../spec.md)
@@ -16,6 +16,10 @@ Vendor Monocypher 4 (with its optional Ed25519 file) in `lib/monocypher/` with i
 
 ## Acceptance
 
-- [ ] `pio test -e native` runs and passes the smoke test.
-- [ ] `pio run -e esp32s3` compiles.
-- [ ] Build output is git-ignored.
+- [x] `pio test -e native` runs and passes the smoke test.
+- [x] `pio run -e esp32s3` compiles.
+- [x] Build output is git-ignored.
+
+## Comments
+
+Done. espressif32 6.9.0 (Arduino core 2.0.17) with C++17; native 1.2.1 with -Werror. Monocypher 4.0.2 from monocypher.org, tarball SHA-256 38d07179738c0c90677dba3ceb7a7b8496bcfea758ba1a53e803fed30ae0879c, files unchanged.
