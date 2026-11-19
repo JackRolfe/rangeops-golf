@@ -145,6 +145,13 @@ class DriveCallbacks : public BLECharacteristicCallbacks {
   }
 };
 
+// The 78-byte key arrives as a long write (Prepare, then Execute Write)
+// whenever the MTU is too small for one packet, as it can be on an iPhone.
+// The library (BLECharacteristic.cpp, ESP_GATTS_WRITE_EVT with is_prep, then
+// ESP_GATTS_EXEC_WRITE_EVT) appends each prepared part and calls onWrite once,
+// with the whole value, on Execute. It appends parts in arrival order and
+// ignores their offsets, which is what phones send; anything else garbles the
+// key and its signature fails. See ticket 10 for what a board must confirm.
 class UnlockCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* c) override {
     // Keep one byte more than a key, so a too-long write is still seen as

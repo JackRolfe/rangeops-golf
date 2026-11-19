@@ -68,7 +68,8 @@ The robot has no trusted clock: the first good key after a restart sets its time
 
 ## How it behaves
 
-- Locked (telemetry state 7) at power-on and after a disconnect, until a valid key is written to Unlock. Read Unlock back for one byte saying why a key was refused ([ADR 0005](../../docs/adr/0005-unlock-result-read-back.md)).
+- Locked (telemetry state 7) at power-on and after a disconnect, until a valid key is written to Unlock. A disconnect forgets the key, so every connection writes its own. Read Unlock back for one byte saying why a key was refused ([ADR 0005](../../docs/adr/0005-unlock-result-read-back.md)); it reads 1 again after a disconnect.
+- After connecting, the robot asks the phone for a 15–30 ms connection interval with no latency and a 6 s supervision timeout. The phone may say no; the 300 ms Drive timeout is what stops the robot either way.
 - Stick in robot terms: up is forward at up to 1.11 m/s, sideways is a turn at up to 85°/s. Speeds up at 1 m/s², brakes at 2.5 m/s².
 - Stops for: the stop switch (motor power cut at once), no Drive message for 300 ms while the stick was held, tilt beyond 35°, a wheel that is driven but not turning for half a second, a sensor that stops answering, the battery below 16.5 V (and powers down below 15 V), and the end of the hire.
 - A fault (tilt, stall, sensor) stays until the app sends a Drive message with flag bit 1 set and the thumb flag clear, once the cause is gone, or until a restart ([ADR 0003](../../docs/adr/0003-drive-flag-to-clear-a-fault.md)). After the stop switch or a fault, the stick must be released before the robot moves again.
@@ -82,6 +83,7 @@ With the wheels off the ground and the battery in:
 2. **Stop switch on pin 2.** [BUILD.md](../BUILD.md#wiring) does not wire it yet. The firmware expects pin 2 pulled to ground while the button is released, through a second contact on the button, and reads open (pressed, or a broken wire) as stop. Until that is wired, the robot always reports state 4.
 3. **Sensors.** Without the BNO085 or the INA228 answering, it reports a sensor fault and will not drive. That is deliberate.
 4. **Directions.** Push the stick forward gently: both sides should turn forward, and telemetry distance should rise. If a side runs backwards or its distance falls, flip its sign in `src/board.h` (`kLeftSign`, `kRightSign`).
-5. **Speed controller.** The gains in `lib/mulligan_core/src/motion.h` are first guesses. Expect to tune them on grass.
+5. **A long Unlock write.** Connect from something that keeps the MTU at 23 bytes, such as nRF Connect with its MTU left at 23, so the 78-byte key has to go as a long write (Prepare and Execute Write), as it can from an iPhone. Write a key, read Unlock back and expect `00`. Then check the robot asks for the shorter connection interval: nRF Connect's log shows the connection parameters update to 15–30 ms.
+6. **Speed controller.** The gains in `lib/mulligan_core/src/motion.h` are first guesses. Expect to tune them on grass.
 
 What the host tests cannot cover: pin polarity, interrupt timing, the Bluetooth stack, the sensors' mounting and orientation (gravity is taken as +z when level) and the stopping distances on real grass.
