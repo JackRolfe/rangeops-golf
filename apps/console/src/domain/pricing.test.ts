@@ -24,8 +24,9 @@ const prices: PriceList = {
   ],
   robotHirePerHour: 1500,
   buckets: { small: 800, medium: 1400, large: 1900 },
-  monthlyPass: { price: 9900, bucketsPerMonth: 8, bayHoursPerMonth: 4, months: 1 },
-  creditPack: { price: 6000, credits: 5 },
+  bucketBalls: { small: 40, medium: 80, large: 120 },
+  monthlyPass: { price: 4900, days: 30, discountPercent: 10 },
+  creditPack: { price: 8000, balls: 500 },
 };
 
 const bay: Bay = { id: 'bay-7', number: 7, name: 'Bay 7', band: 'standard', inService: true };
@@ -120,7 +121,10 @@ describe('validatePrices', () => {
 
   it('refuses negative or fractional amounts', () => {
     expect(validatePrices({ ...prices, robotHirePerHour: -1 }, hours)).toEqual(['Robot hire per hour must be a whole number of cents, zero or more.']);
-    expect(validatePrices({ ...prices, creditPack: { price: 6000, credits: 0 } }, hours)).toEqual(['A credit pack must hold at least one bucket.']);
+    expect(validatePrices({ ...prices, creditPack: { price: 6000, balls: 0 } }, hours)).toEqual(['Ball credit must be at least one ball.']);
+    expect(validatePrices({ ...prices, monthlyPass: { price: 4900, days: 30, discountPercent: 120 } }, hours)).toEqual([
+      'A monthly pass discount is a whole percent from 0 to 100.',
+    ]);
   });
 });
 

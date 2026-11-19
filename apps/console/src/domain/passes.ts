@@ -1,64 +1,40 @@
-// Passes and ball credits, held on a player's account.
-// A monthly pass gives an allowance of buckets and bay-hours each calendar month until its last day.
-// A credit pack is prepaid buckets that never expire.
-import { addDays, dateOf, monthOf } from './time';
+// Passes and ball credit, held on a player's account (ADR 0021).
+// A monthly pass is a percent off bay-hours and buckets until its last day; buying another extends it.
+// Ball credit is a balance of balls at the range that never expires; staff hand buckets out of it.
+import { addDays, dateOf } from './time';
 import type { CreditPackProduct, IsoDate, LocalDateTime, MonthlyPassProduct, Pass, PassKind, Result } from './types';
 
 export interface PassBalance {
   active: boolean;
   /** Why the pass can't be used today, when it can't. */
   reason: string | null;
-  /** Buckets that can be handed over against it now. */
-  bucketsLeft: number;
-  bayHoursLeft: number;
-  /** What the pass gives now, in words, whichever model it follows. */
+  /** What the pass gives now, in words. */
   summary: string;
-  /** Nothing left to use, though the pass hasn't ended. */
+  /** Ball credit with nothing left. */
   usedUp: boolean;
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export function passBalance(pass: Pass, date: IsoDate): PassBalance {
-  const used = (what: 'bucket' | 'bay-hour', inMonth?: string) =>
-    pass.redemptions.filter((r) => r.what === what && (!inMonth || monthOf(r.at) === inMonth)).length;
-
   if (pass.kind === 'credits') {
-    if (pass.ballsLeft !== undefined) {
-      const balls = Math.max(0, pass.ballsLeft);
-      return { active: true, reason: null, bucketsLeft: 0, bayHoursLeft: 0, summary: `${plural(balls, 'ball')} of credit`, usedUp: balls === 0 };
-    }
-    const bucketsLeft = Math.max(0, pass.creditsBought - used('bucket'));
-    return { active: true, reason: null, bucketsLeft, bayHoursLeft: 0, summary: `${plural(bucketsLeft, 'bucket credit')} left`, usedUp: bucketsLeft === 0 };
+    const balls = Math.max(0, pass.ballsLeft);
+    return { active: true, reason: null, summary: `${plural(balls, 'ball')} of credit`, usedUp: balls === 0 };
   }
-
-  const month = monthOf(date);
-  const bucketsLeft = Math.max(0, pass.bucketsPerMonth - used('bucket', month));
-  const bayHoursLeft = Math.max(0, pass.bayHoursPerMonth - used('bay-hour', month));
-  const discount = pass.discountPercent ?? 0;
-  const summary =
-    discount > 0 && pass.bucketsPerMonth === 0 && pass.bayHoursPerMonth === 0
-      ? `${discount}% off bay-hours and buckets`
-      : `${plural(bucketsLeft, 'bucket')} and ${plural(bayHoursLeft, 'bay-hour')} left this month`;
-  const usedUp = discount === 0 && bucketsLeft === 0 && bayHoursLeft === 0;
-  if (date < dateOf(pass.soldAt)) return { active: false, reason: 'Not started yet.', bucketsLeft, bayHoursLeft, summary: 'Not started yet', usedUp: false };
+  if (pass.soldAt && date < dateOf(pass.soldAt)) return { active: false, reason: 'Not started yet.', summary: 'Not started yet', usedUp: false };
   if (pass.validUntil && date > pass.validUntil) {
-    return { active: false, reason: `Ended on ${pass.validUntil}.`, bucketsLeft: 0, bayHoursLeft: 0, summary: `Ended on ${pass.validUntil}`, usedUp: false };
+    return { active: false, reason: `Ended on ${pass.validUntil}.`, summary: `Ended on ${pass.validUntil}`, usedUp: false };
   }
-  return { active: true, reason: null, bucketsLeft, bayHoursLeft, summary, usedUp };
+  return { active: true, reason: null, summary: `${pass.discountPercent}% off bay-hours and buckets`, usedUp: false };
 }
 
-/** Use one bucket from a pass. Returns the pass as it should be afterwards. */
-export function redeemBucket(pass: Pass, at: LocalDateTime): Result<Pass> {
-  const balance = passBalance(pass, dateOf(at));
-  if (!balance.active) return { ok: false, errors: [`${pass.player}'s pass can't be used. ${balance.reason}`] };
-  if (balance.bucketsLeft < 1) {
-    return {
-      ok: false,
-      errors: [pass.kind === 'monthly' ? `${pass.player} has used this month's buckets.` : `${pass.player} has no ball credits left.`],
-    };
+/** Take one bucket's balls off a player's ball credit. Returns the credit as it should be afterwards. */
+export function redeemBucket(pass: Pass, balls: number): Result<Pass> {
+  if (pass.kind !== 'credits') return { ok: false, errors: ['A monthly pass is a discount; it has no balls to hand out.'] };
+  if (pass.ballsLeft < balls) {
+    return { ok: false, errors: [`${pass.player} has ${plural(pass.ballsLeft, 'ball')} of credit, not enough for a ${balls}-ball bucket.`] };
   }
-  return { ok: true, value: { ...pass, redemptions: [...pass.redemptions, { at, what: 'bucket' }] } };
+  return { ok: true, value: { ...pass, ballsLeft: pass.ballsLeft - balls } };
 }
 
 export interface PassProducts {
@@ -66,35 +42,59 @@ export interface PassProducts {
   creditPack: CreditPackProduct;
 }
 
-/** A new pass sold now, from the range's current products. */
-export function newPass(id: string, player: string, kind: PassKind, products: PassProducts, soldAt: LocalDateTime): Result<{ pass: Pass; price: number }> {
-  const name = player.trim();
-  if (!name) return { ok: false, errors: ['A pass needs the player’s name.'] };
-  if (kind === 'monthly') {
-    const { months, bucketsPerMonth, bayHoursPerMonth, price } = products.monthlyPass;
-    const pass: Pass = {
-      id,
-      player: name,
-      kind,
-      soldAt,
-      validUntil: addDays(addMonths(dateOf(soldAt), months), -1),
-      bucketsPerMonth,
-      bayHoursPerMonth,
-      creditsBought: 0,
-      redemptions: [],
-    };
-    return { ok: true, value: { pass, price } };
-  }
-  const { credits, price } = products.creditPack;
-  const pass: Pass = { id, player: name, kind, soldAt, validUntil: null, bucketsPerMonth: 0, bayHoursPerMonth: 0, creditsBought: credits, redemptions: [] };
-  return { ok: true, value: { pass, price } };
+export interface CounterSale {
+  email: string;
+  name?: string;
+  kind: PassKind;
 }
 
-/** Same day of the month, `months` later; clamps to the month's last day (31 Jan + 1 is 28 Feb). */
-export function addMonths(date: IsoDate, months: number): IsoDate {
-  const [y, m, d] = date.split('-').map(Number);
-  const target = new Date(y, m - 1 + months, 1);
-  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
-  const day = Math.min(d, lastDay);
-  return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Sell a pass or ball credit at the counter, against the passes the range already holds.
+ * A monthly pass starts today, or the day after the player's current one ends. Ball credit tops up the
+ * player's existing balance. Returns the pass as it is after the sale, whether it replaces an existing
+ * one, and the price.
+ */
+export function sellPass(
+  passes: readonly Pass[],
+  sale: CounterSale,
+  products: PassProducts,
+  soldAt: LocalDateTime,
+  newId: () => string,
+): Result<{ pass: Pass; replaces: string | null; price: number }> {
+  const email = sale.email.trim().toLowerCase();
+  if (!EMAIL.test(email)) return { ok: false, errors: ['Passes are held on an account: enter the player’s email.'] };
+  const mine = passes.filter((p) => p.email === email);
+  const accountId = mine[0]?.accountId ?? `acct-${email}`;
+  const player = mine[0]?.player ?? (sale.name?.trim() || email);
+
+  if (sale.kind === 'credits') {
+    const { balls, price } = products.creditPack;
+    const existing = mine.find((p) => p.kind === 'credits');
+    const pass: Pass = existing
+      ? { ...existing, ballsLeft: existing.ballsLeft + balls }
+      : { id: newId(), accountId, player, email, kind: 'credits', soldAt: null, validUntil: null, discountPercent: 0, ballsLeft: balls };
+    return { ok: true, value: { pass, replaces: existing?.id ?? null, price } };
+  }
+
+  const { days, discountPercent, price } = products.monthlyPass;
+  const today = dateOf(soldAt);
+  const current = mine
+    .filter((p) => p.kind === 'monthly' && p.validUntil && p.validUntil >= today)
+    .map((p) => p.validUntil!)
+    .sort()
+    .at(-1);
+  const pass: Pass = {
+    id: newId(),
+    accountId,
+    player,
+    email,
+    kind: 'monthly',
+    soldAt,
+    validUntil: addDays(current ?? today, days),
+    discountPercent,
+    ballsLeft: 0,
+  };
+  return { ok: true, value: { pass, replaces: null, price } };
 }

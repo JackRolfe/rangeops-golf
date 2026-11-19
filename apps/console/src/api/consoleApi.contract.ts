@@ -66,21 +66,41 @@ export function consoleApiContract(name: string, make: () => { api: ConsoleApi; 
       expect((await api.handOverBucket('ZZZZ22')).outcome).toBe('not-found');
     });
 
-    it.skipIf(!capabilities.sellPasses || !capabilities.redeemPasses)('sells a credit pack, takes the money, and redeems its credits until none are left', async () => {
+    it.skipIf(!capabilities.sellPasses)('sells a monthly pass at the counter and takes the money', async () => {
       const { api, clock } = make();
       const today = toIsoDate(clock());
       const { prices } = await api.getSetup();
-      const takenBefore = (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
-      const sold = await api.sellPass('Contract Tester', 'credits');
+      const taken = async () => (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
+      const before = await taken();
+      const email = `contract-${Date.now()}@example.com`;
+      const sold = await api.sellPass({ email, name: 'Contract Tester', kind: 'monthly' });
       if (!sold.ok) throw new Error(sold.errors.join());
-      const takenAfter = (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
-      expect(takenAfter - takenBefore).toBe(prices.creditPack.price);
-      for (let i = 0; i < prices.creditPack.credits; i += 1) {
-        const redeemed = await api.redeemPassBucket(sold.value.id);
-        expect(redeemed.ok).toBe(true);
+      expect(sold.value).toMatchObject({ kind: 'monthly', email, discountPercent: prices.monthlyPass.discountPercent });
+      expect(sold.value.validUntil! > today).toBe(true);
+      expect((await taken()) - before).toBe(prices.monthlyPass.price);
+      expect((await api.sellPass({ email: 'not an email', kind: 'monthly' })).ok).toBe(false);
+    });
+
+    it.skipIf(!capabilities.sellPasses || !capabilities.redeemPasses)('sells ball credit and hands out buckets until the balls run out', async () => {
+      const { api } = make();
+      const { prices } = await api.getSetup();
+      const email = `contract-credit-${Date.now()}@example.com`;
+      const sold = await api.sellPass({ email, name: 'Contract Tester', kind: 'credits' });
+      if (!sold.ok) throw new Error(sold.errors.join());
+      expect(sold.value).toMatchObject({ kind: 'credits', ballsLeft: prices.creditPack.balls });
+      const size = (['large', 'medium', 'small'] as const).find((s) => prices.bucketBalls[s] <= prices.creditPack.balls)!;
+      let left = prices.creditPack.balls;
+      let id = sold.value.id;
+      while (left >= prices.bucketBalls[size]) {
+        const redeemed = await api.redeemBallCredit(id, size);
+        if (!redeemed.ok) throw new Error(redeemed.errors.join());
+        left -= prices.bucketBalls[size];
+        expect(redeemed.value.pass.ballsLeft).toBe(left);
+        expect(redeemed.value.order).toMatchObject({ status: 'handed-over', balls: prices.bucketBalls[size] });
+        id = redeemed.value.pass.id;
       }
-      expect((await api.redeemPassBucket(sold.value.id)).ok).toBe(false);
-      expect((await api.listPasses()).find((p) => p.id === sold.value.id)?.redemptions).toHaveLength(prices.creditPack.credits);
+      expect((await api.redeemBallCredit(id, size)).ok).toBe(false);
+      expect((await api.listPasses()).find((p) => p.id === id)?.ballsLeft).toBe(left);
     });
   });
 }

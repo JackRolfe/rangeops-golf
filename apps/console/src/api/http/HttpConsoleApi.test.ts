@@ -117,8 +117,8 @@ describe('setupFromApi', () => {
     expect(setup.prices.buckets).toEqual({ small: 1000, medium: 1800, large: 2400 });
     expect(setup.prices.bucketBalls).toEqual({ small: 50, medium: 100, large: 150 });
     expect(setup.prices.robotHirePerHour).toBe(1500);
-    expect(setup.prices.monthlyPass).toMatchObject({ price: 4900, months: 1, discountPercent: 10 });
-    expect(setup.prices.creditPack).toMatchObject({ price: 8000, balls: 500 });
+    expect(setup.prices.monthlyPass).toEqual({ price: 4900, days: 30, discountPercent: 10 });
+    expect(setup.prices.creditPack).toEqual({ price: 8000, balls: 500 });
   });
 
   it('groups weekdays that share peak hours, and marks closed days', () => {
@@ -347,10 +347,10 @@ describe('fleet and passes', () => {
       }),
     });
     const passes = await api.listPasses();
-    expect(passes[0]).toMatchObject({ player: 'parent@example.com', kind: 'monthly', discountPercent: 10, soldAt: '2026-11-24T09:00', validUntil: '2026-12-23' });
-    expect(passes[1]).toMatchObject({ player: 'Grace Tan', kind: 'credits', ballsLeft: 350, validUntil: null });
+    expect(passes[0]).toMatchObject({ accountId: 'a1', player: 'parent@example.com', email: 'parent@example.com', kind: 'monthly', discountPercent: 10, soldAt: '2026-11-24T09:00', validUntil: '2026-12-23' });
+    expect(passes[1]).toMatchObject({ id: 'credit-a1', player: 'Grace Tan', kind: 'credits', ballsLeft: 350, validUntil: null, soldAt: null });
     expect(api.capabilities.sellPasses).toBe(false);
-    expect((await api.sellPass('Sam', 'credits')).ok).toBe(false);
+    expect((await api.sellPass({ email: 'sam@example.com', kind: 'credits' })).ok).toBe(false);
   });
 });
 

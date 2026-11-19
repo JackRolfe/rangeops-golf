@@ -4,6 +4,7 @@
 // Where the two models differ, the API wins: it is what the app sells against. See the comments on
 // ticket 11 for each difference and what the console does about it.
 import type { HandoverResult } from '../../domain/buckets';
+import type { CounterSale } from '../../domain/passes';
 import { validateSetup } from '../../domain/setup';
 import type {
   Bay,
@@ -14,7 +15,6 @@ import type {
   OpeningHours,
   Order,
   Pass,
-  PassKind,
   Payment,
   PeakWindow,
   RangeSetup,
@@ -29,6 +29,7 @@ import type {
   ApiBooking,
   ApiBucketCode,
   ApiFleetRobot,
+  ApiPassHolder,
   ApiRange,
   ApiStaffBay,
   ApiStaffOrder,
@@ -280,39 +281,29 @@ export class HttpConsoleApi implements ConsoleApi {
   async listPasses(): Promise<Pass[]> {
     await this.knownRange();
     const { passes, ballCredit } = await this.call<ApiStaffPasses>('GET', this.rangePath('/passes'));
-    const monthly: Pass[] = passes.map((p) => ({
+    return [...passes.map((p) => this.monthlyPass(p)), ...ballCredit.map((c) => creditPass(c.account, c.balls))];
+  }
+
+  private monthlyPass(p: ApiStaffPasses['passes'][number]): Pass {
+    return {
       id: p.id,
+      accountId: p.account.id,
       player: p.account.name ?? p.account.email,
+      email: p.account.email,
       kind: 'monthly',
       soldAt: this.local(p.createdAt),
       // validTo is the instant it stops working, so the last whole day is the minute before.
       validUntil: this.local(new Date(Date.parse(p.validTo) - 60_000).toISOString()).slice(0, 10),
-      bucketsPerMonth: 0,
-      bayHoursPerMonth: 0,
-      creditsBought: 0,
-      redemptions: [],
       discountPercent: p.discountPercent,
-    }));
-    const credit: Pass[] = ballCredit.map((c) => ({
-      id: `credit-${c.account.id}`,
-      player: c.account.name ?? c.account.email,
-      kind: 'credits',
-      soldAt: '',
-      validUntil: null,
-      bucketsPerMonth: 0,
-      bayHoursPerMonth: 0,
-      creditsBought: 0,
-      redemptions: [],
-      ballsLeft: c.balls,
-    }));
-    return [...monthly, ...credit];
+      ballsLeft: 0,
+    };
   }
 
-  async sellPass(_player: string, _kind: PassKind): Promise<Result<Pass>> {
+  async sellPass(_sale: CounterSale): Promise<Result<Pass>> {
     return { ok: false, errors: ['Passes are bought in the RangeOps app for now. The API has no counter sale yet.'] };
   }
 
-  async redeemPassBucket(_passId: string): Promise<Result<{ pass: Pass; order: Order }>> {
+  async redeemBallCredit(_passId: string, _bucket: BucketSize): Promise<Result<{ pass: Pass; order: Order }>> {
     return { ok: false, errors: ['Players spend ball credit in the app for now. The API has no staff redemption yet.'] };
   }
 
@@ -366,6 +357,21 @@ export class HttpConsoleApi implements ConsoleApi {
 
 type ApiOrder = ApiStaffOrder;
 
+/** Ball credit is one balance per account at the range, so its id is the account's. */
+function creditPass(account: ApiPassHolder, balls: number): Pass {
+  return {
+    id: `credit-${account.id}`,
+    accountId: account.id,
+    player: account.name ?? account.email,
+    email: account.email,
+    kind: 'credits',
+    soldAt: null,
+    validUntil: null,
+    discountPercent: 0,
+    ballsLeft: balls,
+  };
+}
+
 // ---- Mapping helpers, exported for tests ----
 
 export function setupFromApi(range: ApiRange, bays: ApiStaffBay[]): RangeSetup {
@@ -395,14 +401,8 @@ export function setupFromApi(range: ApiRange, bays: ApiStaffBay[]): RangeSetup {
       robotHirePerHour: range.addOns.find((a) => a.kind === 'robot')?.priceCents ?? 0,
       buckets: Object.fromEntries(BUCKET_SIZES.map((size, i) => [size, bySize(i)?.priceCents ?? 0])) as Record<BucketSize, number>,
       bucketBalls: Object.fromEntries(BUCKET_SIZES.map((size, i) => [size, bySize(i)?.balls ?? 0])) as Record<BucketSize, number>,
-      monthlyPass: {
-        price: monthly?.priceCents ?? 0,
-        bucketsPerMonth: 0,
-        bayHoursPerMonth: 0,
-        months: Math.max(1, Math.round((monthly?.days ?? 30) / 30)),
-        discountPercent: monthly?.discountPercent ?? 0,
-      },
-      creditPack: { price: credit?.priceCents ?? 0, credits: 0, balls: credit?.balls ?? 0 },
+      monthlyPass: { price: monthly?.priceCents ?? 0, days: monthly?.days ?? 30, discountPercent: monthly?.discountPercent ?? 0 },
+      creditPack: { price: credit?.priceCents ?? 0, balls: credit?.balls ?? 0 },
     },
   };
 }

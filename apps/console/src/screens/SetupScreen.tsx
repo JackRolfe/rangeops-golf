@@ -8,7 +8,7 @@ import { quoteBooking } from '../domain/pricing';
 import { nextBay, validateSetup } from '../domain/setup';
 import { hourLabel, toIsoDate, WEEKDAY_NAMES } from '../domain/time';
 import type { PriceBand, RangeSetup, Weekday } from '../domain/types';
-import { BUCKET_BALLS, BUCKET_SIZES, PRICE_BANDS } from '../domain/types';
+import { BUCKET_SIZES, PRICE_BANDS } from '../domain/types';
 
 export function SetupScreen() {
   const { state, reload } = useLoad((api) => api.getSetup(), []);
@@ -148,7 +148,7 @@ function SetupEditor({ initial, onSaved }: { initial: RangeSetup; onSaved: () =>
               {BUCKET_SIZES.map((size) => (
                 <MoneyInput
                   key={size}
-                  label={`${size[0].toUpperCase()}${size.slice(1)} bucket (${draft.prices.bucketBalls?.[size] ?? BUCKET_BALLS[size]})`}
+                  label={`${size[0].toUpperCase()}${size.slice(1)} bucket (${draft.prices.bucketBalls[size]})`}
                   value={draft.prices.buckets[size]}
                   onChange={(c) => edit((s) => { s.prices.buckets[size] = c; })}
                 />
@@ -156,23 +156,12 @@ function SetupEditor({ initial, onSaved }: { initial: RangeSetup; onSaved: () =>
             </div>
             <div className="row">
               <MoneyInput label="Monthly pass" value={draft.prices.monthlyPass.price} onChange={(c) => edit((s) => { s.prices.monthlyPass.price = c; })} />
-              {draft.prices.monthlyPass.discountPercent !== undefined ? (
-                <NumberInput label="Discount %" value={draft.prices.monthlyPass.discountPercent} max={100} onChange={(n) => edit((s) => { s.prices.monthlyPass.discountPercent = n; })} />
-              ) : (
-                <>
-                  <NumberInput label="Buckets a month" value={draft.prices.monthlyPass.bucketsPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bucketsPerMonth = n; })} />
-                  <NumberInput label="Bay-hours a month" value={draft.prices.monthlyPass.bayHoursPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bayHoursPerMonth = n; })} />
-                </>
-              )}
-              <NumberInput label="Months" min={1} value={draft.prices.monthlyPass.months} onChange={(n) => edit((s) => { s.prices.monthlyPass.months = n; })} />
+              <NumberInput label="Days" min={1} value={draft.prices.monthlyPass.days} onChange={(n) => edit((s) => { s.prices.monthlyPass.days = n; })} />
+              <NumberInput label="Discount %" max={100} value={draft.prices.monthlyPass.discountPercent} onChange={(n) => edit((s) => { s.prices.monthlyPass.discountPercent = n; })} />
             </div>
             <div className="row">
-              <MoneyInput label={draft.prices.creditPack.balls !== undefined ? 'Ball credit' : 'Credit pack'} value={draft.prices.creditPack.price} onChange={(c) => edit((s) => { s.prices.creditPack.price = c; })} />
-              {draft.prices.creditPack.balls !== undefined ? (
-                <NumberInput label="Balls of credit" min={1} value={draft.prices.creditPack.balls} onChange={(n) => edit((s) => { s.prices.creditPack.balls = n; })} />
-              ) : (
-                <NumberInput label="Buckets in a pack" min={1} value={draft.prices.creditPack.credits} onChange={(n) => edit((s) => { s.prices.creditPack.credits = n; })} />
-              )}
+              <MoneyInput label="Ball credit" value={draft.prices.creditPack.price} onChange={(c) => edit((s) => { s.prices.creditPack.price = c; })} />
+              <NumberInput label="Balls of credit" min={1} value={draft.prices.creditPack.balls} onChange={(n) => edit((s) => { s.prices.creditPack.balls = n; })} />
             </div>
             </fieldset>
           </section>

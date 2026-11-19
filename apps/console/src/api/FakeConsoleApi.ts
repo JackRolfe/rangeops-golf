@@ -1,11 +1,10 @@
 import { generateCode, handOver, type HandoverResult } from '../domain/buckets';
 import { advanceRobot, assignHires } from '../domain/fleet';
-import { newPass, redeemBucket } from '../domain/passes';
+import { redeemBucket, sellPass, type CounterSale } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { validateSetup } from '../domain/setup';
 import { dateOf, hourOf, toIsoDate, toLocalDateTime } from '../domain/time';
-import { BUCKET_BALLS } from '../domain/types';
-import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Result, Robot } from '../domain/types';
+import type { Booking, BucketSize, IsoDate, Order, Pass, Payment, RangeSetup, Result, Robot } from '../domain/types';
 import type { Clock, ConsoleApi, ConsoleCapabilities } from './ConsoleApi';
 import { seedDemoRange } from './seed';
 
@@ -97,32 +96,35 @@ export class FakeConsoleApi implements ConsoleApi {
   }
 
   async listPasses(): Promise<Pass[]> {
-    return copy([...this.state.passes].sort((a, b) => b.soldAt.localeCompare(a.soldAt)));
+    // Monthly passes newest first, then ball credit by player.
+    const rank = (p: Pass) => (p.kind === 'monthly' ? `0${p.soldAt}` : `1${p.player}`);
+    return copy([...this.state.passes].sort((a, b) => (a.kind === b.kind && a.kind === 'monthly' ? (b.soldAt ?? '').localeCompare(a.soldAt ?? '') : rank(a).localeCompare(rank(b)))));
   }
 
-  async sellPass(player: string, kind: PassKind): Promise<Result<Pass>> {
+  async sellPass(sale: CounterSale): Promise<Result<Pass>> {
     const at = this.now();
-    const result = newPass(this.id('pass'), player, kind, this.state.setup.prices, at);
+    const result = sellPass(this.state.passes, sale, this.state.setup.prices, at, () => this.id('pass'));
     if (!result.ok) return result;
-    const { pass, price } = result.value;
-    this.state.passes.push(pass);
+    const { pass, replaces, price } = result.value;
+    this.state.passes = [...this.state.passes.filter((p) => p.id !== replaces), pass];
     this.state.payments.push({ id: this.id('pay'), at, kind: 'pass', amount: price, ref: pass.id });
     return { ok: true, value: copy(pass) };
   }
 
-  async redeemPassBucket(passId: string): Promise<Result<{ pass: Pass; order: Order }>> {
+  async redeemBallCredit(passId: string, bucket: BucketSize): Promise<Result<{ pass: Pass; order: Order }>> {
     const index = this.state.passes.findIndex((p) => p.id === passId);
     if (index < 0) return { ok: false, errors: ['No such pass.'] };
     const at = this.now();
-    const result = redeemBucket(this.state.passes[index], at);
+    const balls = this.state.setup.prices.bucketBalls[bucket];
+    const result = redeemBucket(this.state.passes[index]!, balls);
     if (!result.ok) return result;
     this.state.passes[index] = result.value;
-    // A pass bucket is a medium bucket, handed over on the spot, with nothing to pay.
+    // Handed over on the spot, paid for by the credit.
     const order: Order = {
       id: this.id('ord'),
       code: generateCode(Math.random, new Set(this.state.orders.map((o) => o.code))),
-      bucket: 'medium',
-      balls: BUCKET_BALLS.medium,
+      bucket,
+      balls,
       status: 'handed-over',
       source: 'counter',
       amount: 0,

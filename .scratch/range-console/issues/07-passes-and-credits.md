@@ -10,3 +10,5 @@ Blocked by: 02
 
 - Vitest: monthly reset, expired pass refused, credit pack never expires, no credits left refused.
 - Screen: sell a credit pack, redeem a credit, counts update.
+
+- 2026-11-19: superseded by ADR 0021. Passes are now percent-off discounts and ball credit is counted in balls, the same as the API. The fake, the screen and the tests follow it.
