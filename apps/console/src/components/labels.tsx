@@ -3,8 +3,8 @@ import { BUCKET_BALLS } from '../domain/types';
 
 export const SOURCE_LABEL: Record<Source, string> = { app: 'App', counter: 'Counter', partner: 'Partner' };
 
-export function bucketLabel(size: BucketSize): string {
-  return `${size[0].toUpperCase()}${size.slice(1)} (${BUCKET_BALLS[size]})`;
+export function bucketLabel(size: BucketSize, balls: number = BUCKET_BALLS[size]): string {
+  return `${size[0].toUpperCase()}${size.slice(1)} (${balls})`;
 }
 
 export function BookingStatusPill({ status }: { status: BookingStatus }) {

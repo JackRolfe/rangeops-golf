@@ -4,8 +4,9 @@ import { newPass, redeemBucket } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { validateSetup } from '../domain/setup';
 import { dateOf, hourOf, toIsoDate, toLocalDateTime } from '../domain/time';
+import { BUCKET_BALLS } from '../domain/types';
 import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Result, Robot } from '../domain/types';
-import type { Clock, ConsoleApi } from './ConsoleApi';
+import type { Clock, ConsoleApi, ConsoleCapabilities } from './ConsoleApi';
 import { seedDemoRange } from './seed';
 
 /** Everything the fake holds. Exported so tests can build a store by hand. */
@@ -25,6 +26,7 @@ export interface FakeState {
  * domain functions, so the screens see realistic refusals.
  */
 export class FakeConsoleApi implements ConsoleApi {
+  readonly capabilities: ConsoleCapabilities = { sellPasses: true, redeemPasses: true, editProducts: true, editPublicAppUrl: true };
   protected state: FakeState;
   protected readonly clock: Clock;
 
@@ -120,6 +122,7 @@ export class FakeConsoleApi implements ConsoleApi {
       id: this.id('ord'),
       code: generateCode(Math.random, new Set(this.state.orders.map((o) => o.code))),
       bucket: 'medium',
+      balls: BUCKET_BALLS.medium,
       status: 'handed-over',
       source: 'counter',
       amount: 0,

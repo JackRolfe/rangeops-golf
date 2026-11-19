@@ -131,7 +131,7 @@ export function TodayScreen() {
                           <tr key={order.id}>
                             <td>{timeLabel(order.paidAt)}</td>
                             <td className="code">{order.code}</td>
-                            <td>{bucketLabel(order.bucket)}</td>
+                            <td>{bucketLabel(order.bucket, order.balls)}</td>
                             <td>{order.passId ? 'Pass' : SOURCE_LABEL[order.source]}</td>
                             <td><OrderStatusPill status={order.status} /></td>
                             <td>{order.handedOverAt ? timeLabel(order.handedOverAt) : ''}</td>

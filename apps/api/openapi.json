@@ -90,11 +90,17 @@
                     "type": "integer",
                     "description": "Money in cents of the range currency",
                     "example": 1800
+                  },
+                  "floorCentsPerHour": {
+                    "type": "integer",
+                    "description": "The least a bay-hour may cost. No price can be set below it; 0 is no floor.",
+                    "example": 1800
                   }
                 },
                 "required": [
                   "offPeakCentsPerHour",
-                  "peakCentsPerHour"
+                  "peakCentsPerHour",
+                  "floorCentsPerHour"
                 ]
               },
               "openingHours": {
@@ -1701,6 +1707,12 @@
             "minimum": 0,
             "description": "Money in cents of the range currency",
             "example": 1800
+          },
+          "floorCentsPerHour": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
           }
         }
       },
@@ -1983,7 +1995,7 @@
           "orders": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Order"
+              "$ref": "#/components/schemas/StaffOrder"
             }
           }
         },
@@ -1991,6 +2003,35 @@
           "date",
           "totals",
           "orders"
+        ]
+      },
+      "StaffOrder": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Order"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "bucketCode": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BucketCode"
+                  },
+                  {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "description": "For a bucket order, its code and whether it was handed over"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "bucketCode"
+            ]
+          }
         ]
       },
       "ExternalBookingRequest": {
@@ -2035,6 +2076,107 @@
           "bayId",
           "startsAt",
           "externalRef"
+        ]
+      },
+      "StaffPasses": {
+        "type": "object",
+        "properties": {
+          "passes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffPass"
+            }
+          },
+          "ballCredit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffBallCredit"
+            }
+          }
+        },
+        "required": [
+          "passes",
+          "ballCredit"
+        ]
+      },
+      "StaffPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account": {
+            "$ref": "#/components/schemas/PassHolder"
+          },
+          "name": {
+            "type": "string"
+          },
+          "discountPercent": {
+            "type": "integer"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "name",
+          "discountPercent",
+          "validFrom",
+          "validTo",
+          "createdAt"
+        ]
+      },
+      "PassHolder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ]
+      },
+      "StaffBallCredit": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/PassHolder"
+          },
+          "balls": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "account",
+          "balls"
         ]
       }
     },
@@ -2138,8 +2280,8 @@
         "tags": [
           "Console"
         ],
-        "summary": "Rename a range or change its bay-hour prices (staff)",
-        "description": "Prices apply to new bookings; existing ones keep what they paid.",
+        "summary": "Rename a range or change its bay-hour prices and floor (staff)",
+        "description": "Prices apply to new bookings; existing ones keep what they paid. No range or bay price may be below the floor (422 below_floor).",
         "security": [
           {
             "bearerAuth": []
@@ -2211,6 +2353,16 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {
@@ -4032,6 +4184,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4112,6 +4274,16 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {
@@ -4464,6 +4636,152 @@
           },
           "422": {
             "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{bookingId}/check-in": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Check a player in at the counter (staff)",
+        "description": "For players who can't scan the bay's QR code. Marks the booking checked in now. Refused for a cancelled booking or one already checked in, so the console can say so.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "bookingId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/passes": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Passes and ball credit held at a range (staff)",
+        "description": "Monthly passes, newest first, and every account with ball credit left at the range.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Passes and ball credit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPasses"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {

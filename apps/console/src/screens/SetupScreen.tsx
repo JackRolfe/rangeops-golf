@@ -140,13 +140,15 @@ function SetupEditor({ initial, onSaved }: { initial: RangeSetup; onSaved: () =>
           <section className="panel" aria-labelledby="extras-heading">
             <div className="panel__head">
               <h2 id="extras-heading">Robot, buckets and passes</h2>
+              {!api.capabilities.editProducts && <p>Set in the backend for now; shown here read-only.</p>}
             </div>
+            <fieldset className="plain" disabled={!api.capabilities.editProducts}>
             <div className="row">
               <MoneyInput label="Robot hire per hour" value={draft.prices.robotHirePerHour} onChange={(c) => edit((s) => { s.prices.robotHirePerHour = c; })} />
               {BUCKET_SIZES.map((size) => (
                 <MoneyInput
                   key={size}
-                  label={`${size[0].toUpperCase()}${size.slice(1)} bucket (${BUCKET_BALLS[size]})`}
+                  label={`${size[0].toUpperCase()}${size.slice(1)} bucket (${draft.prices.bucketBalls?.[size] ?? BUCKET_BALLS[size]})`}
                   value={draft.prices.buckets[size]}
                   onChange={(c) => edit((s) => { s.prices.buckets[size] = c; })}
                 />
@@ -154,14 +156,25 @@ function SetupEditor({ initial, onSaved }: { initial: RangeSetup; onSaved: () =>
             </div>
             <div className="row">
               <MoneyInput label="Monthly pass" value={draft.prices.monthlyPass.price} onChange={(c) => edit((s) => { s.prices.monthlyPass.price = c; })} />
-              <NumberInput label="Buckets a month" value={draft.prices.monthlyPass.bucketsPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bucketsPerMonth = n; })} />
-              <NumberInput label="Bay-hours a month" value={draft.prices.monthlyPass.bayHoursPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bayHoursPerMonth = n; })} />
+              {draft.prices.monthlyPass.discountPercent !== undefined ? (
+                <NumberInput label="Discount %" value={draft.prices.monthlyPass.discountPercent} max={100} onChange={(n) => edit((s) => { s.prices.monthlyPass.discountPercent = n; })} />
+              ) : (
+                <>
+                  <NumberInput label="Buckets a month" value={draft.prices.monthlyPass.bucketsPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bucketsPerMonth = n; })} />
+                  <NumberInput label="Bay-hours a month" value={draft.prices.monthlyPass.bayHoursPerMonth} onChange={(n) => edit((s) => { s.prices.monthlyPass.bayHoursPerMonth = n; })} />
+                </>
+              )}
               <NumberInput label="Months" min={1} value={draft.prices.monthlyPass.months} onChange={(n) => edit((s) => { s.prices.monthlyPass.months = n; })} />
             </div>
             <div className="row">
-              <MoneyInput label="Credit pack" value={draft.prices.creditPack.price} onChange={(c) => edit((s) => { s.prices.creditPack.price = c; })} />
-              <NumberInput label="Buckets in a pack" min={1} value={draft.prices.creditPack.credits} onChange={(n) => edit((s) => { s.prices.creditPack.credits = n; })} />
+              <MoneyInput label={draft.prices.creditPack.balls !== undefined ? 'Ball credit' : 'Credit pack'} value={draft.prices.creditPack.price} onChange={(c) => edit((s) => { s.prices.creditPack.price = c; })} />
+              {draft.prices.creditPack.balls !== undefined ? (
+                <NumberInput label="Balls of credit" min={1} value={draft.prices.creditPack.balls} onChange={(n) => edit((s) => { s.prices.creditPack.balls = n; })} />
+              ) : (
+                <NumberInput label="Buckets in a pack" min={1} value={draft.prices.creditPack.credits} onChange={(n) => edit((s) => { s.prices.creditPack.credits = n; })} />
+              )}
             </div>
+            </fieldset>
           </section>
 
           <PricePreview setup={draft} />
@@ -218,7 +231,12 @@ function SetupEditor({ initial, onSaved }: { initial: RangeSetup; onSaved: () =>
               </label>
               <label className="field grow">
                 <span>Public app URL (for check-in codes)</span>
-                <input className="input" value={draft.range.publicAppUrl} onChange={(e) => edit((s) => { s.range.publicAppUrl = e.target.value; })} />
+                <input
+                  className="input"
+                  value={draft.range.publicAppUrl}
+                  readOnly={!api.capabilities.editPublicAppUrl}
+                  onChange={(e) => edit((s) => { s.range.publicAppUrl = e.target.value; })}
+                />
               </label>
             </div>
           </section>

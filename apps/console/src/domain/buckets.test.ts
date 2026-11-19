@@ -7,6 +7,7 @@ const order = (code: string, status: Order['status'] = 'paid'): Order => ({
   id: `ord-${code}`,
   code,
   bucket: 'medium',
+  balls: 80,
   status,
   source: 'app',
   amount: 1400,

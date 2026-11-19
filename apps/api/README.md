@@ -6,6 +6,7 @@ The backend for bookings, payments, bucket codes, passes, robot hires and the fl
 cd apps/api
 npm install
 npm run dev        # http://localhost:8787, OpenAPI at /openapi.json
+npm run dev:demo   # the same, and fills today at the demo range with bookings, buckets and passes
 npm test           # Vitest, each test on a fresh in-memory database
 npm run openapi    # rewrite openapi.json after changing a route
 ```
@@ -19,7 +20,7 @@ npm run openapi    # rewrite openapi.json after changing a route
 | Database | `.data/pglite/` (`DATA_DIR`) | PGlite, Postgres in-process. Delete the folder to start again. |
 | Hire signing key | `.keys/hire-signing-key.pem` (`HIRE_SIGNING_KEY_PATH`) | Ed25519, made on first start. Robots need `GET /hire-keys/public-key`. |
 
-Both folders are gitignored. Other settings: `PORT` (8787), `APP_URL` (`http://localhost:5173/app`, where sign-in, hire and check-in links point), `FAKE_PAYMENTS=decline` (every charge declines).
+Both folders are gitignored. Other settings: `SEED_DEMO_DAY=1` (fill today with demo bookings, buckets and passes, once a day), `PORT` (8787), `APP_URL` (`http://localhost:5173/app`, where sign-in, hire and check-in links point), `FAKE_PAYMENTS=decline` (every charge declines).
 
 ## Trying it
 

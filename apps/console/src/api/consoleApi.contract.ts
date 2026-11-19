@@ -6,6 +6,7 @@ import { toIsoDate } from '../domain/time';
 
 export function consoleApiContract(name: string, make: () => { api: ConsoleApi; clock: Clock }) {
   describe(`${name} meets the ConsoleApi contract`, () => {
+    const { capabilities } = make().api;
     it('returns a range with uniquely numbered bays and seven days of hours', async () => {
       const { api } = make();
       const setup = await api.getSetup();
@@ -65,7 +66,7 @@ export function consoleApiContract(name: string, make: () => { api: ConsoleApi; 
       expect((await api.handOverBucket('ZZZZ22')).outcome).toBe('not-found');
     });
 
-    it('sells a credit pack, takes the money, and redeems its credits until none are left', async () => {
+    it.skipIf(!capabilities.sellPasses || !capabilities.redeemPasses)('sells a credit pack, takes the money, and redeems its credits until none are left', async () => {
       const { api, clock } = make();
       const today = toIsoDate(clock());
       const { prices } = await api.getSetup();

@@ -76,7 +76,7 @@ describe('the fake fleet', () => {
     const before = (await api.listRobots()).find((r) => r.hire)!;
     now = new Date('2026-11-19T17:30:00');
     const after = (await api.listRobots()).find((r) => r.id === before.id)!;
-    expect(after.battery).toBe(before.battery - 10);
+    expect(after.battery).toBe(before.battery! - 10);
   });
 
   it('sends a robot when staff check in a booking that hired one', async () => {

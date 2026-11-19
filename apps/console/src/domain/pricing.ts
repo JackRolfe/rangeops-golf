@@ -106,7 +106,7 @@ export function validatePrices(prices: PriceList, openingHours: OpeningHours): s
   for (const size of ['small', 'medium', 'large'] as const) amount(`A ${size} bucket`, prices.buckets[size]);
   amount('The monthly pass', prices.monthlyPass.price);
   amount('The credit pack', prices.creditPack.price);
-  if (!Number.isInteger(prices.creditPack.credits) || prices.creditPack.credits < 1) {
+  if (prices.creditPack.balls === undefined && (!Number.isInteger(prices.creditPack.credits) || prices.creditPack.credits < 1)) {
     errors.push('A credit pack must hold at least one bucket.');
   }
   const { bucketsPerMonth, bayHoursPerMonth, months } = prices.monthlyPass;

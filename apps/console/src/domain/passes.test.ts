@@ -42,7 +42,7 @@ describe('monthly pass', () => {
     }
     expect(passBalance(pass, '2026-10-31').bucketsLeft).toBe(0);
     expect(redeemBucket(pass, '2026-10-31T19:00')).toEqual({ ok: false, errors: ["Grace Tan has used this month's buckets."] });
-    expect(passBalance(pass, '2026-11-01')).toEqual({ active: true, reason: null, bucketsLeft: 2, bayHoursLeft: 4 });
+    expect(passBalance(pass, '2026-11-01')).toMatchObject({ active: true, reason: null, bucketsLeft: 2, bayHoursLeft: 4, summary: '2 buckets and 4 bay-hours left this month' });
     expect(redeemBucket(pass, '2026-11-01T08:00').ok).toBe(true);
   });
 
@@ -67,7 +67,7 @@ describe('credit pack', () => {
       if (!r.ok) throw new Error(r.errors.join());
       pass = r.value;
     }
-    expect(passBalance(pass, '2030-01-01')).toEqual({ active: true, reason: null, bucketsLeft: 0, bayHoursLeft: 0 });
+    expect(passBalance(pass, '2030-01-01')).toMatchObject({ active: true, reason: null, bucketsLeft: 0, bayHoursLeft: 0, summary: '0 bucket credits left', usedUp: true });
     expect(redeemBucket(pass, '2030-01-01T10:00')).toEqual({ ok: false, errors: ['Grace Tan has no ball credits left.'] });
   });
 
@@ -82,5 +82,15 @@ describe('addMonths', () => {
   it('clamps to the end of a shorter month', () => {
     expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
     expect(addMonths('2026-11-19', 2)).toBe('2027-01-19');
+  });
+});
+
+describe('passes from a source that counts differently', () => {
+  it('describes a discount pass and ball credit, and never offers a bucket against them', () => {
+    const discount = { ...sold('monthly'), bucketsPerMonth: 0, bayHoursPerMonth: 0, discountPercent: 10 };
+    expect(passBalance(discount, '2026-10-21')).toMatchObject({ active: true, bucketsLeft: 0, summary: '10% off bay-hours and buckets', usedUp: false });
+    const balls = { ...sold('credits'), creditsBought: 0, ballsLeft: 350 };
+    expect(passBalance(balls, '2026-10-21')).toMatchObject({ active: true, bucketsLeft: 0, summary: '350 balls of credit', usedUp: false });
+    expect(passBalance({ ...balls, ballsLeft: 0 }, '2026-10-21').usedUp).toBe(true);
   });
 });

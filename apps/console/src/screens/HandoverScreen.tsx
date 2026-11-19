@@ -6,7 +6,6 @@ import { Status } from '../components/Status';
 import type { HandoverResult } from '../domain/buckets';
 import { formatMoney } from '../domain/money';
 import { timeLabel, toIsoDate } from '../domain/time';
-import { BUCKET_BALLS } from '../domain/types';
 
 export function HandoverScreen() {
   const { api, clock } = useConsole();
@@ -88,7 +87,7 @@ export function HandoverScreen() {
                           <tr key={o.id}>
                             <td>{timeLabel(o.handedOverAt!)}</td>
                             <td className="code">{o.code}</td>
-                            <td>{bucketLabel(o.bucket)}</td>
+                            <td>{bucketLabel(o.bucket, o.balls)}</td>
                             <td>{o.passId ? 'Pass' : SOURCE_LABEL[o.source]}</td>
                           </tr>
                         ))}
@@ -113,8 +112,8 @@ function HandoverCard({ result }: { result: HandoverResult }) {
           <CheckCircle2 size={36} aria-hidden="true" />
           <div>
             <h2>Hand over a {result.order.bucket} bucket</h2>
-            <p className="result__big">{BUCKET_BALLS[result.order.bucket]} balls</p>
-            <p>Code {result.order.code}, paid {formatMoney(result.order.amount)} at {timeLabel(result.order.paidAt)}.</p>
+            <p className="result__big">{result.order.balls} balls</p>
+            <p>Code {result.order.code}{result.order.amount > 0 ? `, paid ${formatMoney(result.order.amount)}` : ''} at {timeLabel(result.order.paidAt)}.</p>
           </div>
         </div>
       );
@@ -154,7 +153,7 @@ function HandoverCard({ result }: { result: HandoverResult }) {
           <CircleX size={36} aria-hidden="true" />
           <div>
             <h2>That isn't a bucket code</h2>
-            <p>Codes are six letters and numbers, like ABC-234.</p>
+            <p>Check the code with the player and try again.</p>
           </div>
         </div>
       );

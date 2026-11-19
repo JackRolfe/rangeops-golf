@@ -20,7 +20,7 @@ describe('console set-up', () => {
   it('changes range prices, and availability follows', async () => {
     const res = await t.call('PATCH', '/ranges/demo', { token: staff, body: { offPeakCentsPerHour: 2000, peakCentsPerHour: 3200 } });
     expect(res.status).toBe(200);
-    expect(res.body.prices).toEqual({ offPeakCentsPerHour: 2000, peakCentsPerHour: 3200 });
+    expect(res.body.prices).toEqual({ offPeakCentsPerHour: 2000, peakCentsPerHour: 3200, floorCentsPerHour: 0 });
     const slots = (await day()).bays[0].slots;
     expect(slots.find((s: any) => s.localTime === '10:00').priceCents).toBe(2000);
     expect(slots.find((s: any) => s.localTime === '16:00').priceCents).toBe(3200);
@@ -129,6 +129,9 @@ describe('day views', () => {
     const res = await t.call('GET', '/ranges/demo/orders', { token: staff });
     expect(res.body.totals).toEqual({ paidCents: 1000, refundedCents: 2800, orders: 3 });
     expect(res.body.orders.map((o: any) => o.status)).toEqual(['failed', 'paid', 'refunded']);
+    expect(res.body.orders[0].bucketCode).toBeNull();
+    expect(res.body.orders[1].bucketCode).toMatchObject({ bucket: { balls: 50 }, redeemedAt: null });
+    expect(res.body.orders[2].bucketCode).toBeNull();
   });
 });
 

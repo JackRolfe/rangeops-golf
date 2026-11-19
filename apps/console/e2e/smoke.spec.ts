@@ -46,7 +46,7 @@ test('Passes sells a credit pack and redeems a credit', async ({ page }) => {
   await expect(page.getByRole('status')).toContainText('Sold a credit pack to Smoke Test');
   await page.getByRole('button', { name: 'Redeem a bucket for Smoke Test' }).click();
   await expect(page.getByRole('status')).toContainText('Hand Smoke Test a medium bucket');
-  await expect(page.getByRole('row', { name: /Smoke Test/ }).getByRole('cell').nth(4)).toHaveText('4');
+  await expect(page.getByRole('row', { name: /Smoke Test/ }).getByRole('cell').nth(4)).toHaveText('4 bucket credits left');
 });
 
 test('Check-in QR shows a code per bay and prints a sheet', async ({ page }) => {

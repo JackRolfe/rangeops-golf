@@ -6,7 +6,21 @@ import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Resu
 
 export type Clock = () => Date;
 
+/** What a data source can do. Screens hide what it can't, rather than offering it and failing. */
+export interface ConsoleCapabilities {
+  /** Sell passes and credit packs at the counter. */
+  sellPasses: boolean;
+  /** Hand over a bucket against a pass or ball credit. */
+  redeemPasses: boolean;
+  /** Change robot hire, bucket and pass prices. */
+  editProducts: boolean;
+  /** Change the public app URL that check-in codes point to. */
+  editPublicAppUrl: boolean;
+}
+
 export interface ConsoleApi {
+  readonly capabilities: ConsoleCapabilities;
+
   /** The range, its bays, opening hours and price list. */
   getSetup(): Promise<RangeSetup>;
   /** Replaces the setup. Refused, with reasons, if it doesn't validate. */

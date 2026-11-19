@@ -18,11 +18,10 @@ export function isPeak(peaks: PeakRow[], weekday: number, minutes: number): bool
   return peaks.some((w) => w.weekday === weekday && w.from_min <= minutes && minutes < w.to_min);
 }
 
-/** Price of one bay-hour: the bay's own price if set, else the range's; peak or off-peak by its start. */
+/** Price of one bay-hour: the bay's own price if set, else the range's; peak or off-peak by its start; never under the floor. */
 export function bayHourCents(data: RangeData, bay: BayRow, peak: boolean): number {
-  return peak
-    ? (bay.peak_cents ?? data.range.peak_cents)
-    : (bay.off_peak_cents ?? data.range.off_peak_cents);
+  const price = peak ? (bay.peak_cents ?? data.range.peak_cents) : (bay.off_peak_cents ?? data.range.off_peak_cents);
+  return Math.max(price, data.range.floor_cents);
 }
 
 /** Everything about the bay-hour that starts at an instant. */
