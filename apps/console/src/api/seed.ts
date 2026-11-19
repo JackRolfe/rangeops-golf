@@ -1,6 +1,7 @@
 // The demo range the fake starts with: 20 bays, three robots, and a believable week of bookings,
 // bucket orders and passes around "now". Seeded by date, so a day looks the same on every reload.
 import { generateCode } from '../domain/buckets';
+import { addMonths } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { addDays, addMinutes, dateTimeAt, hourOf, toIsoDate, toLocalDateTime, weekdayOf } from '../domain/time';
 import type {
@@ -248,9 +249,4 @@ export function seedDemoRange(nowDate: Date): FakeState {
   }
 
   return { setup, bookings, orders, passes, payments, robots, nextId };
-}
-
-function addMonths(date: string, months: number): string {
-  const [y, m, d] = date.split('-').map(Number);
-  return toIsoDate(new Date(y, m - 1 + months, d));
 }

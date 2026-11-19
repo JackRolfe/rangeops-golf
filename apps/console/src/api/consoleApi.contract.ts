@@ -64,5 +64,22 @@ export function consoleApiContract(name: string, make: () => { api: ConsoleApi; 
       expect(listed?.status).toBe('handed-over');
       expect((await api.handOverBucket('ZZZZ22')).outcome).toBe('not-found');
     });
+
+    it('sells a credit pack, takes the money, and redeems its credits until none are left', async () => {
+      const { api, clock } = make();
+      const today = toIsoDate(clock());
+      const { prices } = await api.getSetup();
+      const takenBefore = (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
+      const sold = await api.sellPass('Contract Tester', 'credits');
+      if (!sold.ok) throw new Error(sold.errors.join());
+      const takenAfter = (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
+      expect(takenAfter - takenBefore).toBe(prices.creditPack.price);
+      for (let i = 0; i < prices.creditPack.credits; i += 1) {
+        const redeemed = await api.redeemPassBucket(sold.value.id);
+        expect(redeemed.ok).toBe(true);
+      }
+      expect((await api.redeemPassBucket(sold.value.id)).ok).toBe(false);
+      expect((await api.listPasses()).find((p) => p.id === sold.value.id)?.redemptions).toHaveLength(prices.creditPack.credits);
+    });
   });
 }

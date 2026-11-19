@@ -239,3 +239,8 @@ h3 { font-size: 16px; font-weight: 700; }
 .result--bad { border-color: var(--clay); background: var(--clay-soft); color: #8f2a16; }
 .result__big { font-family: var(--ro-font-sign); font-size: 40px; font-weight: 700; line-height: 1; }
 .input::placeholder { color: var(--line-strong); }
+
+.choice { display: grid; gap: 2px; margin: 0; padding: 0; border: 0; }
+.choice legend { padding: 0; margin-bottom: 4px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.choice .check { min-height: 30px; font-weight: 500; }
+.search { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }

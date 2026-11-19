@@ -1,8 +1,9 @@
-import { handOver, type HandoverResult } from '../domain/buckets';
+import { generateCode, handOver, type HandoverResult } from '../domain/buckets';
+import { newPass, redeemBucket } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { validateSetup } from '../domain/setup';
 import { toIsoDate, toLocalDateTime, dateOf } from '../domain/time';
-import type { Booking, IsoDate, Order, Pass, Payment, RangeSetup, Result, Robot } from '../domain/types';
+import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Result, Robot } from '../domain/types';
 import type { Clock, ConsoleApi } from './ConsoleApi';
 import { seedDemoRange } from './seed';
 
@@ -94,6 +95,39 @@ export class FakeConsoleApi implements ConsoleApi {
 
   async listPasses(): Promise<Pass[]> {
     return copy([...this.state.passes].sort((a, b) => b.soldAt.localeCompare(a.soldAt)));
+  }
+
+  async sellPass(player: string, kind: PassKind): Promise<Result<Pass>> {
+    const at = this.now();
+    const result = newPass(this.id('pass'), player, kind, this.state.setup.prices, at);
+    if (!result.ok) return result;
+    const { pass, price } = result.value;
+    this.state.passes.push(pass);
+    this.state.payments.push({ id: this.id('pay'), at, kind: 'pass', amount: price, ref: pass.id });
+    return { ok: true, value: copy(pass) };
+  }
+
+  async redeemPassBucket(passId: string): Promise<Result<{ pass: Pass; order: Order }>> {
+    const index = this.state.passes.findIndex((p) => p.id === passId);
+    if (index < 0) return { ok: false, errors: ['No such pass.'] };
+    const at = this.now();
+    const result = redeemBucket(this.state.passes[index], at);
+    if (!result.ok) return result;
+    this.state.passes[index] = result.value;
+    // A pass bucket is a medium bucket, handed over on the spot, with nothing to pay.
+    const order: Order = {
+      id: this.id('ord'),
+      code: generateCode(Math.random, new Set(this.state.orders.map((o) => o.code))),
+      bucket: 'medium',
+      status: 'handed-over',
+      source: 'counter',
+      amount: 0,
+      paidAt: at,
+      handedOverAt: at,
+      passId,
+    };
+    this.state.orders.push(order);
+    return { ok: true, value: copy({ pass: result.value, order }) };
   }
 
   async listRobots(): Promise<Robot[]> {
