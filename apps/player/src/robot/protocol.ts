@@ -250,3 +250,25 @@ export function parseInfo(text: string): RobotInfo | null {
 export function formatInfo(info: Omit<RobotInfo, 'name'>): string {
   return `${advertisedName(info.serial)};${info.firmware};${info.hardware}`
 }
+
+/** Hire keys travel in links as base64url, without padding. */
+export function bytesToBase64url(bytes: Uint8Array): string {
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/** Null if it isn't base64url. */
+export function base64urlToBytes(text: string): Uint8Array | null {
+  if (!/^[A-Za-z0-9_-]*$/.test(text)) return null
+  try {
+    const binary = atob(text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (text.length % 4)) % 4))
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  } catch {
+    return null
+  }
+}
+
+export function hexToBytes(hex: string): Uint8Array {
+  return new Uint8Array((hex.match(/../g) ?? []).map((pair) => parseInt(pair, 16)))
+}

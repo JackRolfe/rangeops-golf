@@ -1,6 +1,6 @@
 # 01. PlayerApi: one client, HTTP and fake
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: none
 
@@ -10,5 +10,9 @@ Blocked by: none
 
 ## Acceptance
 
-- [ ] The contract passes on the fake, and on a live API when `RANGEOPS_API_URL` is set.
-- [ ] A test checks every field in `types.ts` exists in the matching `openapi.json` schema.
+- [x] The contract passes on the fake, and on a live API when `RANGEOPS_API_URL` is set.
+- [x] A test checks every field in `types.ts` exists in the matching `openapi.json` schema.
+
+## Comments
+
+Done in `apps/player/src/api/`. The contract passed against a local API (fresh data folder) with `RANGEOPS_API_URL` and `RANGEOPS_API_LOG` set. Running it there showed the API keeps a declined booking as cancelled with a failed order, and activates the hire on payment; the fake now does the same.
