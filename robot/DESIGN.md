@@ -4,6 +4,8 @@ This is the design of the robot: what it is made of, how big it is, and why it i
 
 Nothing here has been built or tested. The dimensions and sizing come from [design/params.mjs](design/params.mjs), which is the one place the numbers live. Running `npm run robot:design` checks them ([design/calcs.md](design/calcs.md)) and redraws the drawings, and the [3D model](cad/README.md) reads the same file. Several inputs are assumptions, marked as such, to be replaced by measurements from the first rover.
 
+The [3D design study and film](README.md#mulligan-in-motion) show a styled concept: a curved fairing, a chassis-mounted bin and a sliding gate. It was drawn on the earlier design's numbers. This document describes the robot to build first, from bought parts with a Corflute shell and a passive pen. The curved fairing would need its own material, mounting and impact tests, and the sliding gate its own safety case.
+
 ## At a glance
 
 ![Mulligan](cad/renders/mulligan.png)

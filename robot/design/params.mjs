@@ -29,6 +29,14 @@ export const P = {
   // sides. It rests on the rails and hinges up at the front to reach the battery.
   shell: { baseZ: 96, topZ: 220, halfLength: 214, halfWidth: 145, endSlopeDeg: 35, sideSlopeDeg: 55, thickness: 4 },
 
+  // Styled CAD concept. Sections are [z, length, width, plan corner radius].
+  // Only the styled concept and its film use this; the bought-parts build uses `shell` above.
+  bodywork: {
+    sections: [[80, 414, 324, 44], [96, 406, 321, 46], [127, 368, 307, 54],
+      [165, 292, 276, 65], [194, 211, 224, 66], [212, 142, 175, 58], [218, 98, 137, 44]],
+    hatchLength: 226, hatchWidth: 153,
+  },
+
   // An 18 V tool pack on its adapter. The adapter adds about 25 mm underneath.
   battery: { length: 130, width: 80, height: 90, adapterHeight: 25 },
 
@@ -43,6 +51,9 @@ export const P = {
     railBottomZ: 12, railTopZ: 60, rail: 48,
     funnelLength: 70, funnelMouth: 420, funnelTopZ: 50,
   },
+
+  // Onboard layout, measured rearward from the gate. The bin seats in the chassis nose.
+  transfer: { binRearX: 165, flatRun: 82, crestRun: 222, lipZ: 70, overtravel: 8 },
 
   // The gate: a row of light flaps hanging from a rod, free to swing in, stopped from swinging out.
   // The rod runs through brackets standing on the pen walls; the stop rod through the walls.

@@ -6,6 +6,12 @@
 <title>RangeOps: the driving range app and its ball-fetching robot</title>
 <meta name="description" content="RangeOps is one app for a trip to the driving range: book a bay, buy a bucket, play target games and track your accuracy. Mulligan, its remote-control robot, fetches the short shots so juniors can hit them again.">
 <meta name="theme-color" content="#1d5a39">
+<meta property="og:type" content="website">
+<meta property="og:title" content="RangeOps: the driving range app and its ball-fetching robot">
+<meta property="og:description" content="Mulligan is a little robot kids drive from a phone to fetch their short shots, so every duffed shot gets a second go.">
+<meta property="og:image" content="https://gray-pond-0a3488900.6.azurestaticapps.net/media/mulligan-concept.jpg">
+<meta property="og:image:alt" content="A design concept of Mulligan: a low red buggy with chunky tyres and a ball bin in its nose">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:wght@400;500;600;700&display=swap">
 <!-- Brand colours and type come from packages/brand/tokens.css; the build copies it next to this page. -->
@@ -58,6 +64,24 @@ h3{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.2}
 .lead{font-size:1.12rem;color:var(--muted);max-width:60ch}
 .label{font-family:var(--sign);font-weight:600;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase}
 
+/* ---------- section links ---------- */
+.sectionbar{position:sticky;top:0;z-index:20;background:var(--turf-deep);color:var(--on-turf);border-bottom:1px solid rgba(255,255,255,.08);transform:translateY(-100%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s ease;margin-bottom:-56px;height:56px}
+.sectionbar.shown,.sectionbar:focus-within{transform:none;opacity:1;pointer-events:auto}
+.sectionbar-in{display:flex;align-items:center;gap:24px;height:100%}
+.sectionbar .brand{font-size:1.1rem;flex:none}
+.sectionbar .brand i{width:14px;height:14px}
+.sectionbar-links{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.sectionbar-links.overflows{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.sectionbar-links::-webkit-scrollbar{display:none}
+.sectionbar-links a{flex:none;font-family:var(--sign);font-weight:600;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--on-turf-muted);padding:8px 12px;border-radius:999px}
+.sectionbar-links a:hover{color:var(--on-turf)}
+.sectionbar-links a[aria-current="true"]{color:var(--turf-deep);background:var(--ball)}
+main section[id]{scroll-margin-top:72px}
+.section-link{text-decoration:none;align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
+.section-link::after{content:"#";opacity:0;transition:opacity .15s ease}
+.section-link:hover::after,.section-link:focus-visible::after{opacity:.7}
+.section-link:hover{text-decoration:underline;text-underline-offset:4px}
+@media (prefers-reduced-motion:reduce){.sectionbar{transition:none}}
 /* ---------- hero ---------- */
 .hero{background:repeating-linear-gradient(90deg,var(--turf) 0 140px,var(--turf-2) 140px 280px);color:var(--on-turf)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
@@ -191,6 +215,13 @@ h3{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.2}
 .steps p{color:var(--muted)}
 .robot{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center}
 .robot svg{width:100%;height:auto;display:block;border-radius:20px;background:var(--surface-2)}
+.film{margin:0;display:flex;flex-direction:column;gap:10px}
+.film video{width:100%;height:auto;aspect-ratio:16/9;display:block;border-radius:20px;background:var(--surface-2);object-fit:cover}
+.film figcaption,.builds figcaption{font-size:.9rem;color:var(--muted)}
+.builds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:40px}
+.builds figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.builds img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:16px;background:var(--surface-2)}
+.builds h3{font-size:1.05rem}
 .spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin-top:8px}
 .spec div{padding:12px 0;border-top:1px solid var(--line)}
 .spec dt{font-size:.9rem;color:var(--muted)}
@@ -223,12 +254,15 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   .nav{display:none}
   .hero-grid{grid-template-columns:1fr;gap:40px;padding-block:20px 56px}
   .robot,.range{grid-template-columns:1fr;gap:32px}
+  .builds{grid-template-columns:1fr}
   .four{grid-template-columns:repeat(2,minmax(0,1fr))}
   .steps,.games{grid-template-columns:1fr;gap:28px}
   .pilot{grid-template-columns:1fr}
 }
 @media (max-width:520px){
   body{font-size:16px}
+  .sectionbar-in{gap:12px}
+  .sectionbar .brand{display:none}
   .four{grid-template-columns:1fr}
   .rows li{grid-template-columns:1fr}
   .spec dd{font-size:1.4rem}
@@ -244,8 +278,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
       <nav class="nav" aria-label="Sections">
         <a href="#how">How it works</a>
         <a href="#games">Games</a>
-        <a href="#robot">The robot</a>
-        <a href="#ranges">For ranges</a>
+        <a href="#robot">Mulligan, the robot</a>
+        <a href="#safety">Safety</a>
+        <a href="#ranges">For range owners</a>
       </nav>
     </div>
 
@@ -368,11 +403,24 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   </div>
 </header>
 
+<nav class="sectionbar" id="sectionbar" aria-label="Jump to a section">
+  <div class="wrap sectionbar-in">
+    <a class="brand" href="#top"><i></i>RangeOps</a>
+    <div class="sectionbar-links">
+      <a href="#how">How it works</a>
+      <a href="#games">Games</a>
+      <a href="#robot">Mulligan, the robot</a>
+      <a href="#safety">Safety</a>
+      <a href="#ranges">For range owners</a>
+    </div>
+  </div>
+</nav>
+
 <main>
   <section class="band" id="how">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">How it works</span>
+        <a class="label section-link" href="#how" style="color:var(--accent-text)">How it works</a>
         <h2>From topped shot back to the tee in a minute.</h2>
         <p class="lead">Juniors top a lot of shots, and most of them stop within twenty metres. Mulligan turns those into extra swings instead of a wasted bucket.</p>
       </div>
@@ -387,7 +435,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   <section class="band games-band" id="games">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">Games</span>
+        <a class="label section-link" href="#games" style="color:var(--accent-text)">Games</a>
         <h2>Turn a bucket of balls into a game.</h2>
         <p class="lead">Pick a club, drop a target ring on a map of the range, and tap where each ball lands. The app keeps score, so every bucket has something to beat.</p>
       </div>
@@ -434,37 +482,14 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 
   <section class="band" id="robot">
     <div class="wrap robot">
-      <svg viewBox="40 0 330 372" role="img" aria-label="Side view of the Mulligan robot: a low red buggy whose shell slopes gently at both ends, with chunky tyres, a tall yellow flag on a whip, and a ball corral at the front with a gate of hanging flaps, holding three range balls">
-        <rect class="r-sky" width="400" height="372"/>
-        <rect class="r-board" x="320" y="226" width="40" height="28" rx="4"/>
-        <text class="r-board-t" x="340" y="248" text-anchor="middle">20</text>
-        <rect class="r-tyre" x="338" y="254" width="4" height="70"/>
-        <rect class="r-grass" y="322" width="400" height="50"/>
-        <rect class="r-grass2" y="322" width="100" height="50"/>
-        <rect class="r-grass2" x="200" y="322" width="100" height="50"/>
-        <path class="r-whip" d="M99 280V20"/>
-        <path class="r-ball" d="M99 18l28 9-28 9z"/>
-        <path class="r-shell" d="M69.6 296.8L137.6 249.2h4.8L210.4 296.8z" stroke-linejoin="round"/>
-        <path class="r-shade" d="M69.6 296.8l8.8-6.1h123.2l8.8 6.1z"/>
-        <rect class="r-lens" x="150" y="258" width="18" height="5" rx="2.5" transform="rotate(35 159 260.5)"/>
-        <rect class="r-tyre" x="72" y="296.8" width="136" height="10.2" rx="2"/>
-        <rect class="r-mesh" x="209.7" y="303.6" width="64.6" height="16.3"/>
-        <circle class="r-ball" cx="222.6" cy="316.7" r="7.3"/>
-        <circle class="r-ball" cx="238.9" cy="316.7" r="7.3"/>
-        <circle class="r-ball" cx="254.6" cy="316.7" r="7.3"/>
-        <path class="r-frame" stroke-width="2.5" d="M209.7 303.6h64.6"/>
-        <path class="r-mesh" d="M274.3 307l27.2 4.1v8.8h-27.2z"/>
-        <path class="r-finger" d="M274.3 303v18.3M270.3 303.6l-7 14.5"/>
-        <path class="r-tyre" d="M258 324l-2.7-4.1h20.4l-1.4 4.1z"/>
-        <circle class="r-tyre" cx="209.7" cy="303.6" r="2.6"/>
-        <circle class="r-tyre" cx="95.8" cy="299" r="25.5"/><circle class="r-hub" cx="95.8" cy="299" r="9"/>
-        <circle class="r-tyre" cx="184.2" cy="299" r="25.5"/><circle class="r-hub" cx="184.2" cy="299" r="9"/>
-        <circle class="r-ball" cx="318" cy="316.7" r="7.3"/>
-      </svg>
+      <figure class="film">
+        <video id="robot-film" src="media/mulligan-film.mp4" poster="media/mulligan-concept.jpg" muted loop playsinline preload="metadata" controls aria-label="Film of the Mulligan concept: a low red buggy drives over a yellow golf ball, which passes under its hanging flaps into the bin in its nose"></video>
+        <figcaption>A design concept of Mulligan collecting a ball. The first robot is being built from bought parts, below.</figcaption>
+      </figure>
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">Mulligan, the robot</span>
+        <a class="label section-link" href="#robot" style="color:var(--accent-text)">Mulligan, the robot</a>
         <h2>Small, low and built to take a hit.</h2>
-        <p class="lead">A knee-high buggy with chunky tyres for range grass, a bright flag so everyone can see it, and a ball corral with no motors in it.</p>
+        <p class="lead">A knee-high buggy with chunky tyres for range grass, a bright flag so everyone can see it, and a ball corral with no rollers or blades in it.</p>
         <dl class="spec">
           <div><dt>Carries</dt><dd>10 <small>balls a trip</small></dd></div>
           <div><dt>Reach</dt><dd>30 m <small>from the bay</small></dd></div>
@@ -476,12 +501,19 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
         <p style="font-size:.9rem;color:var(--muted)">Target spec for the pilot build.</p>
       </div>
     </div>
+    <div class="wrap">
+      <div class="builds">
+        <figure><img src="media/build-assembled.png" alt="3D model of the first Mulligan: an aluminium frame on four black wheels, a red plastic shell with a stop button, a tall yellow flag, and a pen of golf balls behind a row of hanging flaps" loading="lazy" width="1200" height="900"><figcaption><h3>The first build</h3>Every part is bought and bolts together with a hex key. No welding, printing or soldering.</figcaption></figure>
+        <figure><img src="media/build-rover.png" alt="3D model of the Mulligan rover without its shell: aluminium rails and floor plate, four geared motors, the battery and the electronics, with the ball pen at the front" loading="lazy" width="1200" height="900"><figcaption><h3>The rover underneath</h3>Four geared motors, a battery from a cordless drill, and safety rules that live on the robot itself.</figcaption></figure>
+        <figure><img src="media/build-pen.png" alt="3D model of the ball pen on its own: two aluminium side walls, a row of thin hanging flaps across the front and a stop rod" loading="lazy" width="1200" height="900"><figcaption><h3>The pen and gate</h3>Balls push past light hanging flaps and can't roll back out. It's tested by hand on grass first.</figcaption></figure>
+      </div>
+    </div>
   </section>
 
   <section class="band safety" id="safety">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--ball)">Safety</span>
+        <a class="label section-link" href="#safety" style="color:var(--ball)">Safety</a>
         <h2>Made for a range with people hitting on it.</h2>
         <p class="lead">The robot goes out so that children never have to.</p>
       </div>
@@ -498,7 +530,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
     <div class="wrap">
       <div class="range">
         <div class="stack">
-          <span class="label" style="color:var(--accent-text)">For range owners</span>
+          <a class="label section-link" href="#ranges" style="color:var(--accent-text)">For range owners</a>
           <h2>What it does for the range.</h2>
           <p class="lead">RangeOps makes a family hour at the range go further, without changing how the range runs.</p>
         </div>
@@ -527,6 +559,34 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 </footer>
 
 <script>
+(() => {
+  // Show the section bar once the hero has scrolled away, and mark the section in view.
+  const bar = document.getElementById('sectionbar');
+  const hero = document.querySelector('header.hero');
+  if (!bar || !hero || !('IntersectionObserver' in window)) { bar && bar.classList.add('shown'); return; }
+  new IntersectionObserver(([e]) => bar.classList.toggle('shown', !e.isIntersecting), { rootMargin: '-56px 0px 0px 0px' }).observe(hero);
+  const row = bar.querySelector('.sectionbar-links');
+  const fit = () => row.classList.toggle('overflows', row.scrollWidth > row.clientWidth + 1);
+  fit(); window.addEventListener('resize', fit);
+  const links = new Map([...bar.querySelectorAll('.sectionbar-links a')].map(a => [a.getAttribute('href').slice(1), a]));
+  const seen = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of links.values()) a.removeAttribute('aria-current');
+      const a = links.get(e.target.id);
+      if (a) { a.setAttribute('aria-current', 'true'); const row = a.parentElement; row.scrollTo({ left: a.offsetLeft - row.offsetLeft - 12 }); }
+    }
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  for (const id of links.keys()) { const el = document.getElementById(id); if (el) seen.observe(el); }
+})();
+(() => {
+  const film = document.getElementById('robot-film');
+  if (!film || !('IntersectionObserver' in window)) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) film.play().catch(() => {}); else film.pause();
+  }, { threshold: 0.4 }).observe(film);
+})();
 (function(){
   var $ = function(s){ return document.querySelector(s); };
   var CUR = '$';
