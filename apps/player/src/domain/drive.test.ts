@@ -30,18 +30,21 @@ describe('driveMessage', () => {
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.farEnd })).toBe('Far limit. Mulligan goes no further from the bay.')
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.leftEdge })).toBe('Lane limit. Mulligan stays in front of its own bay.')
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.rightEdge | LIMIT.speed })).toMatch(/Lane limit/)
+    expect(at({ state: RobotState.AtLimit, limits: LIMIT.speed })).toBe('Driving at walking pace, as fast as Mulligan goes.')
   })
 
   it('names the fault', () => {
     expect(at({ state: RobotState.Fault, faults: FAULT.tilt })).toMatch(/tipped/)
     expect(at({ state: RobotState.Fault, faults: FAULT.stall })).toMatch(/stuck/)
-    expect(at({ state: RobotState.Fault, faults: FAULT.sensor })).toMatch(/stopped working/)
+    expect(at({ state: RobotState.Fault, faults: FAULT.sensor })).toMatch(/sensor/)
+    expect(at({ state: RobotState.Fault, faults: FAULT.stall })).toMatch(/Clear fault/)
   })
 
   it('explains a refused key', () => {
     expect(refusalMessage('expired')).toMatch(/hire has ended/)
     expect(refusalMessage('not_yet')).toMatch(/hasn’t started/)
     expect(refusalMessage('wrong_serial')).toMatch(/different robot/)
+    expect(refusalMessage('no_clock')).toMatch(/know the time/)
     expect(refusalMessage('unknown')).toMatch(/didn’t accept/)
   })
 })

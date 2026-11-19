@@ -1684,3 +1684,7 @@ button.session-row:hover {
   color: var(--ink);
   font-weight: 650;
 }
+
+.drive-clear {
+  align-self: center;
+}

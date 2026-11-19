@@ -1,18 +1,22 @@
-import { benchVerifier, checkHireKey, type HireKeyCheck, type HireKeyVerifier } from './hireKey'
+import { benchVerifier, checkHireKey, type HireKeyVerifier } from './hireKey'
 import {
+  FAULT,
   LIMIT,
   RobotState,
   decodeDrive,
   decodeHireKey,
   decodeTelemetry,
+  decodeUnlockResult,
   encodeDrive,
   encodeTelemetry,
+  encodeUnlockResult,
   formatInfo,
   isNewerSequence,
   parseInfo,
   type DriveMessage,
   type RobotInfo,
   type Telemetry,
+  type UnlockResult,
 } from './protocol'
 import { HireKeyRefused, type RobotLink } from './RobotLink'
 
@@ -22,6 +26,10 @@ import { HireKeyRefused, type RobotLink } from './RobotLink'
  * a real robot would: Drive and Unlock writes in, Telemetry notifications out.
  * The lane, pickup and lane limit are ported from the site demo
  * (apps/site/index.html, "drive"), in metres instead of pixels.
+ *
+ * The safety rules follow the R0 firmware's safety core (safety.cpp on the
+ * firmware branch), in its order: stop switch, link timeout, faults, battery,
+ * lane limit, speed cap.
  *
  * World: metres, origin at the front of the bay mat on the bay's centre line,
  * x to the right, y up the range. Heading is in radians from +x, so up the
@@ -73,14 +81,15 @@ export interface SimulatedRobotOptions {
 export const SIM_DEFAULTS = {
   serial: 'SIM1',
   lane: { halfWidth: 4.5, far: 30 } as Lane,
-  /** m/s that full stick asks for. */
-  motorMax: 1.5,
-  /** m/s, 4 km/h: walking pace, capped in firmware. */
-  speedCap: 1.1,
-  accel: 2,
-  brake: 6,
-  /** rad/s at full sideways stick, robot terms. */
-  turnRate: 2.5,
+  // Drive figures from the R0 firmware's limits.
+  /** m/s, 4 km/h: full stick, and the cap on either side. */
+  topSpeed: 1.11,
+  accel: 1.0,
+  brake: 2.5,
+  /** rad/s at full sideways stick, robot terms: a pivot at 85°/s. */
+  turnRate: (85 * Math.PI) / 180,
+  /** Half the distance between the left and right wheels, m. */
+  halfTrack: 0.185,
   /** rad/s the robot swings toward the stick, range terms (the demo's 7). */
   rangeTurnRate: 7,
   bodyRadius: 0.25,
@@ -117,9 +126,22 @@ function turnToward(angle: number, target: number, max: number): number {
   return Math.abs(difference) <= max ? target : angle + Math.sign(difference) * max
 }
 
-function approach(value: number, target: number, rate: number): number {
-  return value < target ? Math.min(target, value + rate) : Math.max(target, value - rate)
+/** The firmware's ramp: brake toward zero at the brake rate, speed up at the accel rate. */
+function ramp(current: number, target: number, dt: number): number {
+  const slowing = current !== 0 && (Math.sign(target) !== Math.sign(current) || Math.abs(target) < Math.abs(current))
+  if (slowing) {
+    const stopAt = Math.sign(target) === Math.sign(current) ? target : 0
+    const step = SIM_DEFAULTS.brake * dt
+    if (Math.abs(stopAt - current) <= step) return stopAt
+    return current > stopAt ? current - step : current + step
+  }
+  const step = SIM_DEFAULTS.accel * dt
+  if (Math.abs(target - current) <= step) return target
+  return target > current ? current + step : current - step
 }
+
+/** A tilt or a silent sensor must go away before a fault can clear; a stall needs only the clear. */
+const LASTING_FAULTS = FAULT.tilt | FAULT.sensor
 
 /** The robot's side of the link. Bytes in, bytes out. */
 export class SimulatedFirmware {
@@ -132,18 +154,31 @@ export class SimulatedFirmware {
   private readonly random: () => number
 
   private unlockedUntil: number | null = null
+  /** What reading Unlock gives: the result of the last key on this connection. */
+  private unlockResult: UnlockResult = 'bad_length'
   private lastSeq: number | null = null
-  private command: DriveMessage = { seq: 0, x: 0, y: 0, thumb: false }
+  private command: DriveMessage = { seq: 0, x: 0, y: 0, thumb: false, clearFault: false }
   private sinceDriveMs = 0
   private linkLost = false
   private stopSwitch = false
+  /** Set by the stop switch or a new fault: the stick must be let go before driving again. */
+  private needRelease = false
+  /** Latched faults, and the conditions causing them now. */
   private faults = 0
+  private faultCauses = 0
+  /** Latches until restart, as in the firmware. */
+  private lowBattery = false
   private limits = 0
+  private mayDrive = false
 
   private x: number
   private y: number
   private heading: number
+  /** Range terms: one speed along `moveDirection`. */
   private speed = 0
+  /** Robot terms: the two sides, m/s. */
+  private left = 0
+  private right = 0
   private moveDirection: number
   private battery: number
   private balls: Point[]
@@ -176,25 +211,37 @@ export class SimulatedFirmware {
     return formatInfo({ serial: this.serial, firmware: this.firmware, hardware: 'SIM' })
   }
 
-  /** An Unlock write. Locks on any failure. */
-  async writeUnlock(bytes: Uint8Array): Promise<HireKeyCheck> {
+  /**
+   * An Unlock write. The write always succeeds, as on the R0 firmware; the
+   * result is read back from Unlock (firmware ADR 0005). Locks on any failure.
+   */
+  async writeUnlock(bytes: Uint8Array): Promise<void> {
     const result = await checkHireKey(bytes, { serial: this.serial, nowUnix: this.nowUnix(), verifier: this.verifier })
     if (result === 'ok') {
+      this.lock()
       this.unlockedUntil = decodeHireKey(bytes)!.end
-      this.lastSeq = null
-      this.sinceDriveMs = 0
     } else {
       this.lock()
     }
-    return result
+    this.unlockResult = result
   }
 
-  /** The phone went away: lock, brake, forget the sequence. */
+  readUnlock(): Uint8Array {
+    return encodeUnlockResult(this.unlockResult)
+  }
+
+  /** Lock, brake, and start a fresh sequence with no stick. */
   lock(): void {
     this.unlockedUntil = null
     this.lastSeq = null
-    this.command = { seq: 0, x: 0, y: 0, thumb: false }
+    this.command = { seq: 0, x: 0, y: 0, thumb: false, clearFault: false }
     this.linkLost = false
+  }
+
+  /** The phone went away. The next connection starts with no key result. */
+  disconnected(): void {
+    this.lock()
+    this.unlockResult = 'bad_length'
   }
 
   /** A Drive write. Ignored while locked, if malformed, or if not newer than the last. */
@@ -207,14 +254,29 @@ export class SimulatedFirmware {
     this.command = message
     this.sinceDriveMs = 0
     this.linkLost = false
+    if (!message.thumb) {
+      this.needRelease = false
+      if (message.clearFault && this.faults !== 0 && (this.faultCauses & LASTING_FAULTS) === 0) {
+        this.faults = 0
+        this.faultCauses = 0
+      }
+    }
   }
 
+  /** Nothing moves while it is pressed, nor after, until the stick is let go. */
   setStopSwitch(pressed: boolean): void {
     this.stopSwitch = pressed
+    if (pressed) this.needRelease = true
   }
 
+  /**
+   * What is wrong right now (FAULT bits). Faults latch; setting 0 removes the
+   * cause, after which a clear-fault message clears them.
+   */
   setFaults(bits: number): void {
-    this.faults = bits
+    this.faultCauses = bits
+    if ((this.faults | bits) !== this.faults) this.needRelease = true
+    this.faults |= bits
   }
 
   telemetryBytes(): Uint8Array {
@@ -226,21 +288,26 @@ export class SimulatedFirmware {
       state: this.state(),
       batteryPercent: this.battery,
       ballsOnBoard: this.onBoard,
-      faults: this.faults,
+      faults: this.faults | (this.lowBattery ? FAULT.lowVoltage : 0),
       distanceDm: Math.hypot(this.x, this.y) * 10,
       limits: this.limits,
       lastSeq: this.lastSeq ?? 0,
     }
   }
 
+  /** In the firmware's order. */
   private state(): RobotState {
-    if (this.locked) return RobotState.Locked
     if (this.stopSwitch) return RobotState.StoppedBySwitch
     if (this.faults) return RobotState.Fault
+    if (this.lowBattery) return RobotState.LowBattery
+    if (this.locked) return RobotState.Locked
     if (this.linkLost) return RobotState.LinkLost
-    if (this.limits & ~LIMIT.speed) return RobotState.AtLimit
-    if (this.battery < SIM_DEFAULTS.lowBattery) return RobotState.LowBattery
-    return Math.abs(this.speed) > 0.01 ? RobotState.Driving : RobotState.Idle
+    if (this.mayDrive && this.limits) return RobotState.AtLimit
+    return this.mayDrive || this.moving() ? RobotState.Driving : RobotState.Idle
+  }
+
+  private moving(): boolean {
+    return this.speed !== 0 || this.left !== 0 || this.right !== 0
   }
 
   world(): SimulatedWorld {
@@ -254,47 +321,59 @@ export class SimulatedFirmware {
     }
   }
 
-  /** Advance the world by `ms`, in the firmware's order: stop switch, signal timeout, faults, lane limit, speed cap. */
+  /** Advance the world by `ms`, applying the safety rules in the firmware's order. */
   step(ms: number): void {
     const dt = ms / 1000
     if (this.unlockedUntil !== null && this.nowUnix() >= this.unlockedUntil) this.lock()
+    if (this.battery < SIM_DEFAULTS.lowBattery) this.lowBattery = true
 
     this.sinceDriveMs += ms
-    if (!this.locked && this.command.thumb && this.sinceDriveMs > SIM_DEFAULTS.watchdogMs) {
-      this.linkLost = true
-      this.command = { ...this.command, x: 0, y: 0, thumb: false }
-    }
-
     const stick = this.command
-    const wantsToMove =
-      !this.locked && !this.stopSwitch && !this.faults && !this.linkLost && stick.thumb && (stick.x !== 0 || stick.y !== 0)
-    let limits = 0
-    let cap: number = SIM_DEFAULTS.speedCap
-    if (this.battery < SIM_DEFAULTS.lowBattery) cap /= 2
+    const held = !this.locked && stick.thumb
+    // 1. Stop switch (needRelease is set when it is pressed). 2. Link timeout.
+    if (held && this.sinceDriveMs > SIM_DEFAULTS.watchdogMs) this.linkLost = true
+    // 3. Faults. 4. Battery.
+    const immediateStop = this.stopSwitch || this.faults !== 0
+    this.mayDrive = held && !this.needRelease && !this.linkLost && !immediateStop && !this.lowBattery
 
-    let targetSpeed = 0
-    if (wantsToMove) {
-      if (this.steering === 'robot') {
-        targetSpeed = (stick.y / 100) * SIM_DEFAULTS.motorMax
-        this.heading -= (stick.x / 100) * SIM_DEFAULTS.turnRate * dt
-        this.moveDirection = this.heading
-      } else {
+    let limits = 0
+    if (this.steering === 'robot') {
+      let targetLeft = 0
+      let targetRight = 0
+      if (this.mayDrive) {
+        const forward = (stick.y / 100) * SIM_DEFAULTS.topSpeed
+        const turnRight = (stick.x / 100) * SIM_DEFAULTS.turnRate
+        targetLeft = forward + turnRight * SIM_DEFAULTS.halfTrack
+        targetRight = forward - turnRight * SIM_DEFAULTS.halfTrack
+        // 6. Speed cap: scale both sides together so the turn keeps its shape.
+        const fastest = Math.max(Math.abs(targetLeft), Math.abs(targetRight))
+        if (fastest > SIM_DEFAULTS.topSpeed + 1e-4) {
+          targetLeft *= SIM_DEFAULTS.topSpeed / fastest
+          targetRight *= SIM_DEFAULTS.topSpeed / fastest
+          limits |= LIMIT.speed
+        }
+      }
+      this.left = immediateStop ? 0 : ramp(this.left, targetLeft, dt)
+      this.right = immediateStop ? 0 : ramp(this.right, targetRight, dt)
+      this.heading -= ((this.left - this.right) / (2 * SIM_DEFAULTS.halfTrack)) * dt
+      this.moveDirection = this.heading
+      this.speed = 0
+    } else {
+      let target = 0
+      if (this.mayDrive && (stick.x !== 0 || stick.y !== 0)) {
         const magnitude = Math.min(1, Math.hypot(stick.x, stick.y) / 100)
         const direction = Math.atan2(stick.y, stick.x)
         this.heading = turnToward(this.heading, direction, SIM_DEFAULTS.rangeTurnRate * dt)
         this.moveDirection = direction
-        targetSpeed = magnitude * SIM_DEFAULTS.motorMax
+        target = magnitude * SIM_DEFAULTS.topSpeed
       }
-      if (Math.abs(targetSpeed) > cap) {
-        targetSpeed = Math.sign(targetSpeed) * cap
-        limits |= LIMIT.speed
-      }
+      this.speed = immediateStop ? 0 : ramp(this.speed, target, dt)
     }
-    const braking = Math.abs(targetSpeed) < Math.abs(this.speed) || Math.sign(targetSpeed) !== Math.sign(this.speed)
-    this.speed = approach(this.speed, targetSpeed, (braking ? SIM_DEFAULTS.brake : SIM_DEFAULTS.accel) * dt)
 
-    const nextX = this.x + Math.cos(this.moveDirection) * this.speed * dt
-    const nextY = this.y + Math.sin(this.moveDirection) * this.speed * dt
+    const forwardSpeed = this.steering === 'robot' ? (this.left + this.right) / 2 : this.speed
+    const nextX = this.x + Math.cos(this.moveDirection) * forwardSpeed * dt
+    const nextY = this.y + Math.sin(this.moveDirection) * forwardSpeed * dt
+    // 5. Lane limit.
     const edge = this.lane.halfWidth - SIM_DEFAULTS.bodyRadius
     if (nextX < -edge) limits |= LIMIT.leftEdge
     if (nextX > edge) limits |= LIMIT.rightEdge
@@ -302,7 +381,7 @@ export class SimulatedFirmware {
     this.x = Math.max(-edge, Math.min(edge, nextX))
     // The bay is behind the robot; it stops there without calling it a limit.
     this.y = Math.max(0, Math.min(this.lane.far, nextY))
-    this.limits = this.locked ? 0 : limits
+    this.limits = this.mayDrive ? limits : 0
 
     this.pickUp()
     this.unloadAtBay(ms)
@@ -323,7 +402,7 @@ export class SimulatedFirmware {
   /** Unloading is by hand at the mat: once the robot sits still at the bay for a second, it's empty. */
   private unloadAtBay(ms: number): void {
     const home = Math.abs(this.x) < SIM_DEFAULTS.homeZone && this.y < SIM_DEFAULTS.homeZone
-    if (home && this.onBoard > 0 && Math.abs(this.speed) < 0.01) {
+    if (home && this.onBoard > 0 && !this.moving()) {
       this.homeStillMs += ms
       if (this.homeStillMs >= SIM_DEFAULTS.unloadAfterMs) {
         this.broughtBack += this.onBoard
@@ -344,7 +423,7 @@ export class SimulatedFirmware {
   }
 
   private drain(dt: number): void {
-    const rate = Math.abs(this.speed) > 0.01 ? SIM_DEFAULTS.drainDriving : SIM_DEFAULTS.drainIdle
+    const rate = this.moving() ? SIM_DEFAULTS.drainDriving : SIM_DEFAULTS.drainIdle
     this.battery = Math.max(0, this.battery - rate * dt)
   }
 }
@@ -372,10 +451,13 @@ export class SimulatedRobot implements RobotLink {
   async connect(hireKey: Uint8Array): Promise<RobotInfo> {
     this.isConnected = true
     const info = parseInfo(this.firmware.readInfo())
-    const result = await this.firmware.writeUnlock(hireKey)
+    // Write the key, then read Unlock back for the result, as the app must with
+    // the R0 firmware (ADR 0005). The simulator has checked it by the time the write resolves.
+    await this.firmware.writeUnlock(hireKey)
+    const result = decodeUnlockResult(this.firmware.readUnlock()) ?? 'unknown'
     if (result !== 'ok') {
       this.isConnected = false
-      this.firmware.lock()
+      this.firmware.disconnected()
       throw new HireKeyRefused(result)
     }
     this.sinceTelemetryMs = 0
@@ -397,7 +479,7 @@ export class SimulatedRobot implements RobotLink {
   async disconnect(): Promise<void> {
     this.stopTimer()
     this.isConnected = false
-    this.firmware.lock()
+    this.firmware.disconnected()
   }
 
   /** Advance simulated time. Telemetry goes out every 200 ms while connected. */

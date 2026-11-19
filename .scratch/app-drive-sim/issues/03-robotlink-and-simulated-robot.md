@@ -16,3 +16,5 @@ Blocked by: 01, 02
 ## Comments
 
 Done. `RobotLink.ts` and `SimulatedRobot.ts` (a `SimulatedFirmware` that only sees bytes, wrapped by the `SimulatedRobot` link). Robot terms by default; range terms as an option, as in the site demo. 20 tests in `SimulatedRobot.test.ts`.
+
+Follow-up, 2026-11-19: the simulator now follows the R0 firmware's safety core (state order, skid-steer speed cap, release after the stop switch or a fault, latched low battery), reads Unlock back for the key result (firmware ADR 0005) and clears faults with Drive flag bit 1 (ADR 0003). See the spec's decisions table.

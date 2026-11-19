@@ -81,6 +81,19 @@ describe('DriveScreen', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Far limit. Mulligan goes no further from the bay.');
   });
 
+  it('clears a fault from the Clear fault button once its cause has gone', async () => {
+    const { robot, run } = setup();
+    await connect();
+    robot.firmware.setFaults(2); // tipped over
+    run(200);
+    expect(screen.getByRole('status')).toHaveTextContent('Mulligan has tipped over');
+    robot.firmware.setFaults(0); // set upright
+    fireEvent.click(screen.getByRole('button', { name: 'Clear fault' }));
+    run(200);
+    expect(screen.queryByRole('button', { name: 'Clear fault' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Hold the stick to drive out');
+  });
+
   it('lets go and disconnects when the tab is left', async () => {
     const { robot, pressStick } = setup();
     await connect();

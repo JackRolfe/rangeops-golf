@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bluetooth, Unplug } from 'lucide-react';
+import { Bluetooth, RotateCcw, Unplug } from 'lucide-react';
 import { driveMessage, refusalMessage } from '../domain/drive';
 import { DriveController } from '../robot/DriveController';
 import { issueBenchKey } from '../robot/hireKey';
 import { HireKeyRefused, type RobotLink } from '../robot/RobotLink';
-import type { RobotInfo, Telemetry } from '../robot/protocol';
+import { RobotState, type RobotInfo, type Telemetry } from '../robot/protocol';
 import { SIM_DEFAULTS, SimulatedRobot, type SimulatedWorld } from '../robot/SimulatedRobot';
 import { AppShell } from '../components/AppShell';
 import { Joystick } from '../components/Joystick';
@@ -113,6 +113,11 @@ export function DriveScreen({ onTab, createTarget = createSimulatedTarget, issue
               <span>Out<b data-testid="distance">{telemetry?.distanceDm != null ? `${(telemetry.distanceDm / 10).toFixed(1)} m` : '—'}</b></span>
             </div>
             <p className="drive-message" role="status" aria-live="polite">{driveMessage(telemetry, capacity)}</p>
+            {telemetry?.state === RobotState.Fault ? (
+              <button className="button button--secondary drive-clear" type="button" onClick={() => controller.current?.clearFault()}>
+                <RotateCcw aria-hidden="true" /> Clear fault
+              </button>
+            ) : null}
             <div className="drive-controls">
               <Joystick
                 onMove={(x, y) => controller.current?.hold(x, y)}

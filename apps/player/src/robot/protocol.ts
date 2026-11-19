@@ -24,6 +24,8 @@ export const BALLS_NOT_COUNTED = 255
 export const DISTANCE_UNKNOWN = 0xffff
 
 const DRIVE_FLAG_THUMB = 0x01
+/** Proposed in firmware ADR 0003, implemented in the R0 firmware; not yet in robot/README.md. */
+const DRIVE_FLAG_CLEAR_FAULT = 0x02
 
 /** App to robot, 20 times a second while the stick is held. */
 export interface DriveMessage {
@@ -35,6 +37,11 @@ export interface DriveMessage {
   y: number
   /** Flag bit 0: a thumb is on the stick. */
   thumb: boolean
+  /**
+   * Flag bit 1: clear a latched fault. Sent with `thumb` false while telemetry
+   * says Fault; the robot clears it only once the cause has gone (firmware ADR 0003).
+   */
+  clearFault: boolean
 }
 
 export const RobotState = {
@@ -101,7 +108,7 @@ export function encodeDrive(message: DriveMessage): Uint8Array {
   view.setUint8(0, message.seq)
   view.setInt8(1, message.x)
   view.setInt8(2, message.y)
-  view.setUint8(3, message.thumb ? DRIVE_FLAG_THUMB : 0)
+  view.setUint8(3, (message.thumb ? DRIVE_FLAG_THUMB : 0) | (message.clearFault ? DRIVE_FLAG_CLEAR_FAULT : 0))
   return bytes
 }
 
@@ -112,7 +119,14 @@ export function decodeDrive(bytes: Uint8Array): DriveMessage | null {
   const x = view.getInt8(1)
   const y = view.getInt8(2)
   if (!isStick(x) || !isStick(y)) return null
-  return { seq: view.getUint8(0), x, y, thumb: (view.getUint8(3) & DRIVE_FLAG_THUMB) !== 0 }
+  const flags = view.getUint8(3)
+  return {
+    seq: view.getUint8(0),
+    x,
+    y,
+    thumb: (flags & DRIVE_FLAG_THUMB) !== 0,
+    clearFault: (flags & DRIVE_FLAG_CLEAR_FAULT) !== 0,
+  }
 }
 
 export function encodeTelemetry(telemetry: Telemetry): Uint8Array {
@@ -183,6 +197,34 @@ export function decodeHireKey(bytes: Uint8Array): HireKey | null {
     bay: view.getUint8(13),
     signature: bytes.slice(HIRE_KEY_BODY_LENGTH),
   }
+}
+
+/**
+ * Reading Unlock gives one byte: the result of the last key written on this
+ * connection (firmware ADR 0005). The write itself always succeeds, so the app
+ * writes the key, waits about 100 ms and reads this back. Before any key is
+ * written it reads `bad_length`.
+ */
+export const UNLOCK_RESULTS = [
+  'ok',
+  'bad_length',
+  'bad_version',
+  'bad_signature',
+  'wrong_serial',
+  'not_yet',
+  'expired',
+  'no_clock',
+] as const
+export type UnlockResult = (typeof UNLOCK_RESULTS)[number]
+
+export function encodeUnlockResult(result: UnlockResult): Uint8Array {
+  return new Uint8Array([UNLOCK_RESULTS.indexOf(result)])
+}
+
+/** Null unless one byte with a known value. */
+export function decodeUnlockResult(bytes: Uint8Array): UnlockResult | null {
+  if (bytes.length !== 1) return null
+  return UNLOCK_RESULTS[bytes[0]] ?? null
 }
 
 /** Newer means ahead by 1 to 127, wrapping at 255, as the firmware's SequenceFilter. */

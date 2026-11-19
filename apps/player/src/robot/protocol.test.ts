@@ -7,12 +7,15 @@ import {
   LIMIT,
   RobotState,
   advertisedName,
+  UNLOCK_RESULTS,
   decodeDrive,
+  decodeUnlockResult,
   decodeHireKey,
   decodeTelemetry,
   encodeDrive,
   encodeHireKey,
   encodeTelemetry,
+  encodeUnlockResult,
   hireKeyBody,
   isNewerSequence,
   parseInfo,
@@ -35,13 +38,16 @@ describe('control link UUIDs', () => {
 
 describe('Drive, 4 bytes', () => {
   it('lays out sequence, signed x and y, and the thumb flag', () => {
-    expect([...encodeDrive({ seq: 7, x: -100, y: 100, thumb: true })]).toEqual([7, 0x9c, 100, 1])
-    expect([...encodeDrive({ seq: 255, x: 0, y: -1, thumb: false })]).toEqual([255, 0, 0xff, 0])
+    expect([...encodeDrive({ seq: 7, x: -100, y: 100, thumb: true, clearFault: false })]).toEqual([7, 0x9c, 100, 1])
+    expect([...encodeDrive({ seq: 255, x: 0, y: -1, thumb: false, clearFault: false })]).toEqual([255, 0, 0xff, 0])
+    expect([...encodeDrive({ seq: 3, x: 0, y: 0, thumb: false, clearFault: true })]).toEqual([3, 0, 0, 2])
   })
 
   it('round-trips', () => {
-    const message = { seq: 200, x: 42, y: -37, thumb: true }
+    const message = { seq: 200, x: 42, y: -37, thumb: true, clearFault: false }
     expect(decodeDrive(encodeDrive(message))).toEqual(message)
+    const clear = { seq: 201, x: 0, y: 0, thumb: false, clearFault: true }
+    expect(decodeDrive(encodeDrive(clear))).toEqual(clear)
   })
 
   it('rejects the wrong length and sticks outside -100..100', () => {
@@ -49,8 +55,8 @@ describe('Drive, 4 bytes', () => {
     expect(decodeDrive(new Uint8Array([1, 0, 0, 0, 0]))).toBeNull()
     expect(decodeDrive(new Uint8Array([1, 101, 0, 1]))).toBeNull()
     expect(decodeDrive(new Uint8Array([1, 0, 0x9b, 1]))).toBeNull() // -101
-    expect(() => encodeDrive({ seq: 1, x: 120, y: 0, thumb: true })).toThrow(RangeError)
-    expect(() => encodeDrive({ seq: 256, x: 0, y: 0, thumb: true })).toThrow(RangeError)
+    expect(() => encodeDrive({ seq: 1, x: 120, y: 0, thumb: true, clearFault: false })).toThrow(RangeError)
+    expect(() => encodeDrive({ seq: 256, x: 0, y: 0, thumb: true, clearFault: false })).toThrow(RangeError)
   })
 })
 
@@ -122,6 +128,17 @@ describe('hire key, 78 bytes', () => {
     expect(decodeHireKey(new Uint8Array(79))).toBeNull()
     expect(() => hireKeyBody({ ...fields, serial: 'A1B' })).toThrow(RangeError)
     expect(() => encodeHireKey(fields, new Uint8Array(63))).toThrow(RangeError)
+  })
+})
+
+describe('Unlock read-back, 1 byte', () => {
+  it('numbers the results as firmware ADR 0005 does', () => {
+    expect(UNLOCK_RESULTS).toEqual(['ok', 'bad_length', 'bad_version', 'bad_signature', 'wrong_serial', 'not_yet', 'expired', 'no_clock'])
+    expect([...encodeUnlockResult('wrong_serial')]).toEqual([4])
+    expect(decodeUnlockResult(new Uint8Array([6]))).toBe('expired')
+    expect(decodeUnlockResult(new Uint8Array([7]))).toBe('no_clock')
+    expect(decodeUnlockResult(new Uint8Array([8]))).toBeNull()
+    expect(decodeUnlockResult(new Uint8Array([0, 0]))).toBeNull()
   })
 })
 

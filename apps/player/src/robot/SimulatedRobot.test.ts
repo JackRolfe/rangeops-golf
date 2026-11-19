@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { issueBenchKey } from './hireKey'
-import { LIMIT, RobotState, encodeHireKey, type Telemetry } from './protocol'
+import { FAULT, LIMIT, RobotState, decodeUnlockResult, encodeHireKey, type Telemetry } from './protocol'
 import { HireKeyRefused } from './RobotLink'
 import { SIM_DEFAULTS, SimulatedRobot, type SimulatedRobotOptions } from './SimulatedRobot'
 
@@ -27,14 +27,14 @@ function makeRobot(options: SimulatedRobotOptions = {}) {
     hold(x: number, y: number, ms: number) {
       for (let elapsed = 0; elapsed < ms; elapsed += 50) {
         seq = (seq + 1) & 0xff
-        robot.sendDrive({ seq, x, y, thumb: true })
+        robot.sendDrive({ seq, x, y, thumb: true, clearFault: false })
         robot.advance(50)
       }
     },
     release() {
       for (let index = 0; index < 3; index++) {
         seq = (seq + 1) & 0xff
-        robot.sendDrive({ seq, x: 0, y: 0, thumb: false })
+        robot.sendDrive({ seq, x: 0, y: 0, thumb: false, clearFault: false })
         robot.advance(50)
       }
     },
@@ -64,8 +64,21 @@ describe('SimulatedRobot hire keys', () => {
     expect(sim.robot.connected).toBe(false)
     expect(sim.robot.firmware.locked).toBe(true)
     sim.robot.firmware.writeDrive(new Uint8Array([1, 0, 100, 1]))
+    sim.robot.advance(10)
+    expect(sim.robot.firmware.telemetryBytes()[0]).toBe(RobotState.Locked)
     sim.robot.advance(500)
     expect(sim.robot.world().robot.y).toBe(0.5)
+  })
+
+  it('reports the result of the last key when Unlock is read back', async () => {
+    const sim = makeRobot()
+    const unlock = () => decodeUnlockResult(sim.robot.firmware.readUnlock())
+    expect(unlock()).toBe('bad_length') // before any key
+    await sim.robot.firmware.writeUnlock(await issueBenchKey({ ...window, serial: 'A1B2' }))
+    expect(unlock()).toBe('wrong_serial')
+    await sim.robot.firmware.writeUnlock(await issueBenchKey(window))
+    expect(unlock()).toBe('ok')
+    expect(sim.robot.firmware.locked).toBe(false)
   })
 
   it('locks again when the hire ends and on disconnect', async () => {
@@ -83,23 +96,28 @@ describe('SimulatedRobot hire keys', () => {
 })
 
 describe('SimulatedRobot driving', () => {
-  it('drives forward while the stick is held, at the speed cap', async () => {
+  it('drives forward while the stick is held, at walking pace', async () => {
     const sim = makeRobot()
     await sim.connect()
     sim.hold(0, 100, 3000)
     const { robot } = sim.robot.world()
     expect(robot.y).toBeGreaterThan(0.5 + 2.5)
+    expect(robot.y).toBeLessThan(0.5 + 3 * SIM_DEFAULTS.topSpeed)
     expect(sim.last().state).toBe(RobotState.Driving)
-    expect(sim.last().limits & LIMIT.speed).toBe(LIMIT.speed)
+    expect(sim.last().limits).toBe(0)
     expect(sim.last().lastSeq).toBeGreaterThan(50) // 60 messages sent; telemetry lags by under 200 ms
     expect(sim.last().distanceDm).toBeGreaterThan(25)
   })
 
-  it('does not set the speed flag below the cap', async () => {
+  it('caps full stick with a turn, keeping the turn, and says so as at a limit', async () => {
     const sim = makeRobot()
     await sim.connect()
-    sim.hold(0, 50, 2000)
-    expect(sim.last().limits & LIMIT.speed).toBe(0)
+    sim.hold(50, 100, 1000)
+    expect(sim.last().limits).toBe(LIMIT.speed)
+    expect(sim.last().state).toBe(RobotState.AtLimit)
+    sim.hold(20, 50, 1000)
+    expect(sim.last().limits).toBe(0)
+    expect(sim.last().state).toBe(RobotState.Driving)
   })
 
   it('stops when the stick is released', async () => {
@@ -133,9 +151,9 @@ describe('SimulatedRobot driving', () => {
   it('ignores a late or repeated Drive message', async () => {
     const sim = makeRobot()
     await sim.connect()
-    sim.robot.sendDrive({ seq: 10, x: 0, y: 100, thumb: true })
-    sim.robot.sendDrive({ seq: 9, x: 0, y: 0, thumb: false })
-    sim.robot.sendDrive({ seq: 10, x: 0, y: 0, thumb: false })
+    sim.robot.sendDrive({ seq: 10, x: 0, y: 100, thumb: true, clearFault: false })
+    sim.robot.sendDrive({ seq: 9, x: 0, y: 0, thumb: false, clearFault: false })
+    sim.robot.sendDrive({ seq: 10, x: 0, y: 0, thumb: false, clearFault: false })
     sim.robot.advance(200)
     expect(sim.last().lastSeq).toBe(10)
     expect(sim.last().state).toBe(RobotState.Driving)
@@ -144,9 +162,9 @@ describe('SimulatedRobot driving', () => {
   it('turns in robot terms: sideways on the stick turns, it does not slide', async () => {
     const sim = makeRobot()
     await sim.connect()
-    sim.hold(100, 0, 500)
+    sim.hold(100, 0, 1500)
     const { robot } = sim.robot.world()
-    expect(robot.heading).toBeLessThan(Math.PI / 2 - 1)
+    expect(robot.heading).toBeLessThan(Math.PI / 2 - 1.5)
     expect(robot.x).toBe(0)
   })
 
@@ -220,16 +238,64 @@ describe('SimulatedRobot telemetry', () => {
     expect(sim.seen.length - before).toBe(5)
   })
 
-  it('reports the stop switch, faults and a low battery', async () => {
+  it('reports the stop switch over a fault over a low battery, as the firmware does', async () => {
     const sim = makeRobot({ batteryPercent: 5 })
     await sim.connect()
     sim.robot.advance(200)
-    expect(sim.last().state).toBe(RobotState.LowBattery)
-    sim.robot.firmware.setFaults(1)
+    expect(sim.last()).toMatchObject({ state: RobotState.LowBattery, faults: FAULT.lowVoltage })
+    sim.robot.firmware.setFaults(FAULT.stall)
     sim.robot.advance(200)
-    expect(sim.last()).toMatchObject({ state: RobotState.Fault, faults: 1 })
+    expect(sim.last()).toMatchObject({ state: RobotState.Fault, faults: FAULT.stall | FAULT.lowVoltage })
     sim.robot.firmware.setStopSwitch(true)
     sim.robot.advance(200)
     expect(sim.last().state).toBe(RobotState.StoppedBySwitch)
+  })
+})
+
+describe('SimulatedRobot safety rules from the R0 firmware', () => {
+  it('will not drive on a low battery, and stays that way', async () => {
+    const sim = makeRobot({ batteryPercent: 9 })
+    await sim.connect()
+    sim.hold(0, 100, 1000)
+    expect(sim.robot.world().robot.y).toBe(0.5)
+    expect(sim.last().state).toBe(RobotState.LowBattery)
+  })
+
+  it('needs the stick let go after the stop switch before it drives again', async () => {
+    const sim = makeRobot()
+    await sim.connect()
+    sim.robot.firmware.setStopSwitch(true)
+    sim.hold(0, 100, 500)
+    sim.robot.firmware.setStopSwitch(false)
+    sim.hold(0, 100, 1000)
+    expect(sim.robot.world().robot.y).toBe(0.5)
+    sim.release()
+    sim.hold(0, 100, 1000)
+    expect(sim.robot.world().robot.y).toBeGreaterThan(0.6)
+  })
+
+  it('clears a stall on request, but a tilt only once the robot is upright', async () => {
+    const sim = makeRobot()
+    await sim.connect()
+    const clear = () => {
+      sim.robot.sendDrive({ seq: 200, x: 0, y: 0, thumb: false, clearFault: true })
+      sim.robot.advance(200)
+    }
+    sim.robot.firmware.setFaults(FAULT.tilt)
+    sim.robot.advance(200)
+    clear()
+    expect(sim.last().state).toBe(RobotState.Fault)
+    sim.robot.firmware.setFaults(0) // set upright
+    sim.release()
+    sim.robot.advance(200)
+    expect(sim.last().state).toBe(RobotState.Fault) // a plain release doesn't clear it
+    sim.robot.sendDrive({ seq: 4, x: 0, y: 0, thumb: false, clearFault: true })
+    sim.robot.advance(200)
+    expect(sim.last()).toMatchObject({ state: RobotState.Idle, faults: 0 })
+
+    sim.robot.firmware.setFaults(FAULT.stall)
+    sim.robot.sendDrive({ seq: 5, x: 0, y: 0, thumb: false, clearFault: true })
+    sim.robot.advance(200)
+    expect(sim.last()).toMatchObject({ state: RobotState.Idle, faults: 0 })
   })
 })

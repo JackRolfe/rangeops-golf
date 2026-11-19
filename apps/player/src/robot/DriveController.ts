@@ -23,6 +23,7 @@ export class DriveController {
   private stick = { x: 0, y: 0 }
   private holdTimer: ReturnType<typeof setInterval> | null = null
   private releaseTimer: ReturnType<typeof setInterval> | null = null
+  private clearing = false
 
   constructor(
     private readonly link: RobotLink,
@@ -38,8 +39,19 @@ export class DriveController {
     this.stick = { x: toStick(x), y: toStick(y) }
     if (this.holdTimer !== null) return
     this.cancelRelease()
+    this.clearing = false
     this.send(true)
     this.holdTimer = setInterval(() => this.send(true), this.intervalMs)
+  }
+
+  /**
+   * Ask the robot to clear a latched fault (firmware ADR 0003): a release whose
+   * three messages also carry the clear-fault flag. The robot only clears it
+   * once the cause has gone.
+   */
+  clearFault(): void {
+    this.clearing = true
+    this.release()
   }
 
   release(): void {
@@ -51,7 +63,10 @@ export class DriveController {
     const sendOne = () => {
       this.send(false)
       left--
-      if (left === 0) this.cancelRelease()
+      if (left === 0) {
+        this.cancelRelease()
+        this.clearing = false
+      }
     }
     sendOne()
     if (left > 0) this.releaseTimer = setInterval(sendOne, this.intervalMs)
@@ -69,8 +84,8 @@ export class DriveController {
   private send(thumb: boolean): void {
     this.seq = (this.seq + 1) & 0xff
     const message: DriveMessage = thumb
-      ? { seq: this.seq, x: this.stick.x, y: this.stick.y, thumb: true }
-      : { seq: this.seq, x: 0, y: 0, thumb: false }
+      ? { seq: this.seq, x: this.stick.x, y: this.stick.y, thumb: true, clearFault: false }
+      : { seq: this.seq, x: 0, y: 0, thumb: false, clearFault: this.clearing }
     this.link.sendDrive(message)
   }
 }

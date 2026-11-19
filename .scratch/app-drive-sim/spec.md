@@ -24,17 +24,19 @@ The Drive tab has to exist before Mulligan does, so the app and the firmware can
 | Hire key checks | Same order and names as the firmware branch (`bad_length`, `bad_version`, `bad_signature`, `wrong_serial`, `not_yet`, `expired`); valid while `start <= now < end`. | Matches `robot/firmware` and `robot/tools/hire-key.mjs` on the firmware branch. |
 | Signature checking | `HireKeyVerifier` interface with two implementations: `ed25519Verifier(publicKey)` using WebCrypto, tested against the shared hire-key vectors from the firmware branch (copied into a test fixture), and `benchVerifier`, a stub that accepts only keys signed by the app's `benchSigner`, a checksum that is not cryptographic. The simulator in the app uses the bench pair. | The real signing key belongs to the backend; no signing secret goes into the app bundle. The Ed25519 path proves the layout matches. |
 | Where the app gets a hire key | For the simulator, the Drive tab issues a bench key for the simulated robot (serial `SIM1`, bay 7, valid from 5 minutes ago for an hour). Keys from links come with the backend. | No backend yet. |
-| Why the robot refused a key | `RobotLink.connect` rejects with `HireKeyRefused`. The simulator gives the reason; a real robot may not, so the reason can be `unknown`. | The control link doesn't define a refusal code yet. |
+| Why the robot refused a key | `RobotLink.connect` writes the key, then reads Unlock back: one byte, 0 ok, 1 bad length, 2 bad version, 3 bad signature, 4 wrong serial, 5 not yet, 6 expired, 7 no clock. It rejects with `HireKeyRefused` carrying that reason, or `unknown` if the read fails. | Firmware ADR 0005: the R0 firmware can't refuse the write itself, so the write always succeeds and the app reads the result about 100 ms later. |
+| Clearing a fault | Drive flag bit 1, sent with the thumb flag clear, from a Clear fault button shown while telemetry says Fault. `DriveController.clearFault()` sends it as a three-message release. The robot clears a tilt or sensor fault only once the cause has gone; a stall clears on request. | Firmware ADR 0003. |
+| Safety rules in the simulator | Follow the R0 firmware's safety core: state order switch, fault, low battery, locked, link lost, at a limit, driving, idle; full stick is 1.11 m/s; the speed flag (and state 2) only when stick plus turn saturates a side; the stick must be let go after the stop switch or a new fault; low battery stops driving and latches; a lost link resumes when messages return. | Notes from the firmware session, 2026-11-19, and `safety.cpp` on its branch. |
 | Stick meaning | Simulator default is **robot terms** (up is forward, sideways turns), as R0 starts. Range terms, as in the site demo, are an option. | The simulator rehearses the real robot. |
 | Lane | 30 m long; 4.5 m either side of the bay's centre line, the bay plus an empty bay each side, as the plan suggests for the pilot. Configurable. | `docs/PLAN.md`, Risks. |
-| Speed | Full stick asks for 1.5 m/s; the cap is 1.1 m/s (4 km/h), and the speed flag is set while the cap is cutting the stick. Ramp 2 m/s², brake 6 m/s². | `robot/README.md` target spec. |
+| Speed | Full stick is 1.11 m/s (4 km/h); turning at full 85°/s; ramp 1 m/s², brake 2.5 m/s²; skid steer with a 0.37 m track. | The R0 firmware's limits. |
 | Pickup and unloading | Ten balls at most. Unloading is by hand at the mat, so the simulator empties the robot once it has sat stopped at the bay for a second. | `robot/README.md`, Pickup. |
 | What the lane view shows | The simulator's own world (robot, balls, lane). It is only shown for the simulator; a real robot is in front of the child, and telemetry has no position. | Telemetry carries distance only. |
 | Leaving the Drive tab | Releases the stick and disconnects. | Never leave a robot driving off-screen. |
 
 ## Out of scope
 
-`BleRobot` and Capacitor (stage 3), hire keys from the backend (stage 4), the proposed clear-fault Drive flag (firmware ADR 0003; add when it is accepted).
+`BleRobot` and Capacitor (stage 3), hire keys from the backend (stage 4). The clear-fault flag and the Unlock read-back were added after the firmware session reported them; both are still marked "proposed" in firmware ADRs 0003 and 0005 and are not yet in `robot/README.md` (their ticket 09).
 
 ## Tickets
 

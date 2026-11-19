@@ -1,5 +1,4 @@
-import type { HireKeyCheck } from './hireKey'
-import type { DriveMessage, RobotInfo, Telemetry } from './protocol'
+import type { DriveMessage, RobotInfo, Telemetry, UnlockResult } from './protocol'
 
 export type { DriveMessage, RobotInfo, Telemetry } from './protocol'
 
@@ -7,7 +6,8 @@ export type { DriveMessage, RobotInfo, Telemetry } from './protocol'
  * The app's one way of talking to a Mulligan. Every method maps onto a
  * characteristic of the control link (robot/README.md):
  *
- * - `connect` connects, reads Info and writes the hire key to Unlock.
+ * - `connect` connects, reads Info, writes the hire key to Unlock, waits about
+ *   100 ms and reads Unlock back for the result (firmware ADR 0005).
  * - `sendDrive` writes Drive. Callers use DriveController, which owns the
  *   rate, sequence and release rules, rather than calling this directly.
  * - `onTelemetry` subscribes to Telemetry notifications.
@@ -24,8 +24,8 @@ export interface RobotLink {
   readonly connected: boolean
 }
 
-/** Why a robot would not unlock. A real robot may not say, hence `unknown`. */
-export type RefusalReason = Exclude<HireKeyCheck, 'ok'> | 'unknown'
+/** Why a robot would not unlock, as read back from Unlock; `unknown` if the read fails. */
+export type RefusalReason = Exclude<UnlockResult, 'ok'> | 'unknown'
 
 export class HireKeyRefused extends Error {
   readonly reason: RefusalReason

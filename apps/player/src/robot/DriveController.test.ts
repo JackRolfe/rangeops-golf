@@ -30,12 +30,12 @@ describe('DriveController', () => {
     const { link, sent } = recordingLink()
     const controller = new DriveController(link)
     controller.hold(0.5, 1)
-    expect(sent).toEqual([{ seq: 1, x: 50, y: 100, thumb: true }])
+    expect(sent).toEqual([{ seq: 1, x: 50, y: 100, thumb: true, clearFault: false }])
     vi.advanceTimersByTime(1000)
     expect(sent).toHaveLength(21)
     controller.hold(-0.25, 0)
     vi.advanceTimersByTime(50)
-    expect(sent[sent.length - 1]).toEqual({ seq: 22, x: -25, y: 0, thumb: true })
+    expect(sent[sent.length - 1]).toEqual({ seq: 22, x: -25, y: 0, thumb: true, clearFault: false })
   })
 
   it('rounds and clamps the stick to -100..100', () => {
@@ -63,7 +63,7 @@ describe('DriveController', () => {
     vi.advanceTimersByTime(100)
     const held = sent.length
     controller.release()
-    expect(sent.slice(held)).toEqual([{ seq: held + 1, x: 0, y: 0, thumb: false }])
+    expect(sent.slice(held)).toEqual([{ seq: held + 1, x: 0, y: 0, thumb: false, clearFault: false }])
     vi.advanceTimersByTime(100)
     expect(sent.slice(held).map(({ x, y, thumb }) => [x, y, thumb])).toEqual([
       [0, 0, false],
@@ -83,6 +83,21 @@ describe('DriveController', () => {
     controller.hold(0, 1)
     vi.advanceTimersByTime(100)
     expect(sent.map(({ thumb }) => thumb)).toEqual([true, false, true, true, true])
+  })
+
+  it('asks the robot to clear a fault with the thumb flag clear', () => {
+    const { link, sent } = recordingLink()
+    const controller = new DriveController(link)
+    controller.clearFault()
+    vi.advanceTimersByTime(500)
+    expect(sent.map(({ thumb, clearFault, x, y }) => [thumb, clearFault, x, y])).toEqual([
+      [false, true, 0, 0],
+      [false, true, 0, 0],
+      [false, true, 0, 0],
+    ])
+    controller.hold(0, 1)
+    controller.release()
+    expect(sent.slice(3).map(({ clearFault }) => clearFault)).toEqual([false, false])
   })
 
   it('releases when disposed', () => {
