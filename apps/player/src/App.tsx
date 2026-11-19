@@ -21,6 +21,7 @@ import {
 import { getBestSession } from './domain/metrics';
 import { DEFAULT_PREFERENCES, type GameMode, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
 import type { TabId } from './components/TabBar';
+import { DriveScreen } from './screens/DriveScreen';
 import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
@@ -29,7 +30,7 @@ import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-type View = 'loading' | 'onboarding' | 'games' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
+type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
 type DetailReturnView = 'games' | 'progress';
 
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -434,6 +435,8 @@ export default function App() {
         onTab={selectTab}
       />
     );
+  } else if (view === 'drive') {
+    screen = <DriveScreen onTab={selectTab} />;
   } else if (view === 'settings') {
     screen = (
       <SettingsScreen

@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react';
-import { Gamepad2, Settings, type LucideIcon } from 'lucide-react';
+import { Gamepad2, Joystick, Settings, type LucideIcon } from 'lucide-react';
 
-/** The app's top-level tabs. Drive joins in stage 2; Book and Balls in stage 4. */
-export type TabId = 'games' | 'settings';
+/** The app's top-level tabs. Book and Balls join in stage 4. */
+export type TabId = 'games' | 'drive' | 'settings';
 
 export interface TabDefinition {
   id: TabId;
@@ -12,6 +12,7 @@ export interface TabDefinition {
 
 export const TABS: readonly TabDefinition[] = [
   { id: 'games', label: 'Games', Icon: Gamepad2 },
+  { id: 'drive', label: 'Drive', Icon: Joystick },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 

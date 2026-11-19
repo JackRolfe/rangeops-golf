@@ -213,6 +213,43 @@ test('plays Shrink the Ring start to finish', async ({ page }) => {
   await page.screenshot({ path: '/tmp/rangeops-games-best.png' });
 });
 
+test('drives the simulated robot from the Drive tab', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => consoleErrors.push(error.message));
+  await page.goto('./');
+  await page.getByLabel('Range name').fill('Drive Range');
+  await page.locator('#range-image').setInputFiles({
+    name: 'range.png',
+    mimeType: 'image/png',
+    buffer: await makeRangeImage(page),
+  });
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('button', { name: 'Drive' }).click();
+  await page.getByRole('button', { name: 'Connect to Mulligan' }).click();
+  await expect(page.getByText('Mulligan-SIM1 · simulator')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Hold the stick to drive out and scoop the balls.');
+
+  const stick = page.getByRole('application', { name: /Joystick/ });
+  const box = await stick.boundingBox();
+  if (!box) throw new Error('Joystick has no bounding box.');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + 4, { steps: 4 });
+  await expect(page.getByRole('status')).toHaveText('Driving at walking pace. Let go and it stops.');
+  await expect.poll(async () => parseFloat((await page.getByTestId('distance').textContent()) ?? '0')).toBeGreaterThan(2);
+  await page.screenshot({ path: '/tmp/rangeops-drive.png' });
+  await page.mouse.up();
+  await expect(page.getByRole('status')).toHaveText('Hold the stick to drive out and scoop the balls.');
+  const stopped = await page.getByTestId('distance').textContent();
+  await page.waitForTimeout(600);
+  await expect(page.getByTestId('distance')).toHaveText(stopped ?? '');
+
+  await page.getByRole('button', { name: 'Games' }).click();
+  await expect(page.getByRole('heading', { name: 'Drive Range' })).toBeVisible();
+  expect(consoleErrors).toEqual([]);
+});
+
 test.describe('desktop frame', () => {
   test.use({ viewport: { width: 1024, height: 900 }, isMobile: false, hasTouch: false });
 

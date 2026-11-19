@@ -35,7 +35,7 @@ describe('DriveController', () => {
     expect(sent).toHaveLength(21)
     controller.hold(-0.25, 0)
     vi.advanceTimersByTime(50)
-    expect(sent.at(-1)).toEqual({ seq: 22, x: -25, y: 0, thumb: true })
+    expect(sent[sent.length - 1]).toEqual({ seq: 22, x: -25, y: 0, thumb: true })
   })
 
   it('rounds and clamps the stick to -100..100', () => {
@@ -122,6 +122,6 @@ describe('DriveController with the simulated robot', () => {
     expect(robot.world().robot.y).toBe(stopped)
     expect(states).toContain(RobotState.Driving)
     expect(states).not.toContain(RobotState.LinkLost)
-    expect(states.at(-1)).toBe(RobotState.Idle)
+    expect(states[states.length - 1]).toBe(RobotState.Idle)
   })
 })

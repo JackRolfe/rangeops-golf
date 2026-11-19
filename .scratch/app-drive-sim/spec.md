@@ -1,6 +1,6 @@
 # Spec: App stage 2, Drive against a simulated robot
 
-Status: ready-for-agent
+Status: resolved
 Source: `docs/PLAN.md`, "The app", stage 2; the control link in `robot/README.md`.
 
 ## Problem

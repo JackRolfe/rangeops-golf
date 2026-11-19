@@ -1,6 +1,6 @@
 # Spec: App stage 1, Games
 
-Status: ready-for-agent
+Status: resolved
 Source: `docs/PLAN.md`, "The app", stage 1.
 
 ## Problem
