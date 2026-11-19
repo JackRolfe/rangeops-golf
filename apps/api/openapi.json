@@ -1681,6 +1681,361 @@
             "type": "boolean"
           }
         }
+      },
+      "RangeUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "offPeakCentsPerHour": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "peakCentsPerHour": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          }
+        }
+      },
+      "OpeningHoursUpdate": {
+        "type": "object",
+        "properties": {
+          "openingHours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6,
+                  "description": "0 Sunday to 6 Saturday"
+                },
+                "opens": {
+                  "type": "string",
+                  "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$|^24:00$",
+                  "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+                  "example": "07:00"
+                },
+                "closes": {
+                  "type": "string",
+                  "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$|^24:00$",
+                  "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+                  "example": "07:00"
+                }
+              },
+              "required": [
+                "weekday",
+                "opens",
+                "closes"
+              ]
+            },
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "openingHours"
+        ]
+      },
+      "PeakWindowsUpdate": {
+        "type": "object",
+        "properties": {
+          "peakWindows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6,
+                  "description": "0 Sunday to 6 Saturday"
+                },
+                "from": {
+                  "type": "string",
+                  "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$|^24:00$",
+                  "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+                  "example": "07:00"
+                },
+                "to": {
+                  "type": "string",
+                  "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$|^24:00$",
+                  "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+                  "example": "07:00"
+                }
+              },
+              "required": [
+                "weekday",
+                "from",
+                "to"
+              ]
+            },
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "peakWindows"
+        ]
+      },
+      "StaffBay": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rangeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "offPeakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "peakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "checkInCode": {
+            "type": "string",
+            "description": "The secret in the bay's QR code"
+          },
+          "checkInUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "What the QR code should encode: APP_URL/check-in/<code>"
+          }
+        },
+        "required": [
+          "id",
+          "rangeId",
+          "number",
+          "name",
+          "active",
+          "offPeakCentsPerHour",
+          "peakCentsPerHour",
+          "checkInCode",
+          "checkInUrl"
+        ]
+      },
+      "NewBay": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255,
+            "description": "1 to 255: it is one byte of the robot's hire key"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "offPeakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "peakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "BayUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "offPeakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "peakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          }
+        }
+      },
+      "DayBookings": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "bookings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffBooking"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "bookings"
+        ]
+      },
+      "StaffBooking": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Booking"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "customerEmail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "customerEmail"
+            ]
+          }
+        ]
+      },
+      "DayOrders": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "paidCents": {
+                "type": "integer",
+                "description": "Money in cents of the range currency",
+                "example": 1800
+              },
+              "refundedCents": {
+                "type": "integer",
+                "description": "Money in cents of the range currency",
+                "example": 1800
+              },
+              "orders": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "paidCents",
+              "refundedCents",
+              "orders"
+            ]
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "totals",
+          "orders"
+        ]
+      },
+      "ExternalBookingRequest": {
+        "type": "object",
+        "properties": {
+          "bayId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "hours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 1
+          },
+          "addOns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddOnRequest"
+            },
+            "maxItems": 3,
+            "default": []
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The other system's booking id; unique per range"
+          },
+          "customerName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "bayId",
+          "startsAt",
+          "externalRef"
+        ]
       }
     },
     "parameters": {}
@@ -1763,6 +2118,93 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Rename a range or change its bay-hour prices (staff)",
+        "description": "Prices apply to new bookings; existing ones keep what they paid.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -3221,6 +3663,797 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/hours": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Replace the week's opening hours (staff)",
+        "description": "One entry per open weekday; a weekday left out is closed. Existing bookings are not moved.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpeningHoursUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/peak-windows": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Replace the week's peak windows (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PeakWindowsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/bays": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Bays with their check-in codes (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bays",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bays": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StaffBay"
+                      }
+                    }
+                  },
+                  "required": [
+                    "bays"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Add a bay (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewBay"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBay"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bays/{bayId}": {
+      "patch": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Rename a bay, close it, or set its own prices (staff)",
+        "description": "Set a price to null to use the range's price again.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "bayId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BayUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBay"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bays/{bayId}/check-in-code": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Replace a bay's check-in code (staff)",
+        "description": "The old QR code stops working. Print the new checkInUrl.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "bayId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bay with its new code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBay"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/bookings": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "A day's bookings, from every source (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "YYYY-MM-DD in the range's time zone; today if left out"
+            },
+            "required": false,
+            "description": "YYYY-MM-DD in the range's time zone; today if left out",
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings starting that local day, in time order, cancelled ones included",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayBookings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/orders": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "A day's orders and takings (staff)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "YYYY-MM-DD in the range's time zone; today if left out"
+            },
+            "required": false,
+            "description": "YYYY-MM-DD in the range's time zone; today if left out",
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orders made that local day, newest first, without ones still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayOrders"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/external-bookings": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Record a booking taken by another system (staff)",
+        "description": "For bookings made at the counter, by phone, or on another booking platform. No payment is taken here. It blocks the bay like any booking, and a robot add-on becomes a hire with a signed key and link, the same as in the app.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalBookingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with something that already exists",
             "content": {
               "application/json": {
                 "schema": {

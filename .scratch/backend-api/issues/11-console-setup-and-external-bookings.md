@@ -1,6 +1,6 @@
 # 11. Console set-up, day views and external bookings
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06, 07
 Spec: [../spec.md](../spec.md) (Console set-up and views)
 
@@ -14,3 +14,7 @@ Staff endpoints: `PATCH /ranges/{rangeId}`, `PUT .../hours`, `PUT .../peak-windo
 - [ ] External booking with a robot returns a hire link and blocks the slot
 - [ ] Day views use the range's local date
 - [ ] Every console endpoint refuses non-staff with 403
+
+## Comments
+
+Done. Also added `GET /ranges/{rangeId}/bays` (staff), which is where the console reads check-in codes and the URL to print as a QR code. External bookings record an order with provider `external` at the range's prices, so takings stay comparable, but charge nothing. `externalRef` is unique per range, so re-sending the same booking from another system gets 409 instead of a double booking. Day views use the range's local date; `/bookings` lists bookings starting that day, `/orders` orders made that day.
