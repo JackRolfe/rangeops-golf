@@ -2,6 +2,7 @@ import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
 import type { Deps } from './deps.js';
 import { ApiError } from './errors.js';
+import { authRoutes } from './auth/routes.js';
 import { healthRoutes } from './health.js';
 import { rangeRoutes } from './ranges/routes.js';
 
@@ -47,6 +48,7 @@ export function createApp(deps: Deps): Api {
 
   healthRoutes(app, deps);
   rangeRoutes(app, deps);
+  authRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;

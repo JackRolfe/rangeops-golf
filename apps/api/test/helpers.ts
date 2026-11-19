@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { createApp, type Api } from '../src/app.js';
+import { CapturingMailer } from '../src/auth/mailer.js';
 import { Db, migrate } from '../src/db/db.js';
 import { seedDemo } from '../src/db/seed.js';
 import type { Deps } from '../src/deps.js';
@@ -30,6 +31,9 @@ export interface TestApp {
   app: Api;
   deps: Deps;
   clock: TestClock;
+  mailer: CapturingMailer;
+  /** Signs in by email link and returns the session token. */
+  signIn: (email: string) => Promise<string>;
   close: () => Promise<void>;
   /** Calls the app with a JSON body and returns status and parsed JSON. */
   call: (method: string, path: string, opts?: { body?: unknown; token?: string }) => Promise<{ status: number; body: any }>;
@@ -38,10 +42,12 @@ export interface TestApp {
 export async function makeTestApp(): Promise<TestApp> {
   const db = new Db(await freshPg());
   const clock = new TestClock();
+  const mailer = new CapturingMailer();
   const deps: Deps = {
     db,
     now: clock.now,
     config: { appUrl: 'https://app.rangeops.test' },
+    mailer,
   };
   const app = createApp(deps);
   const call: TestApp['call'] = async (method, path, opts = {}) => {
@@ -56,5 +62,12 @@ export async function makeTestApp(): Promise<TestApp> {
     const text = await res.text();
     return { status: res.status, body: text ? JSON.parse(text) : undefined };
   };
-  return { app, deps, clock, call, close: () => db.close() };
+  const signIn = async (email: string) => {
+    await call('POST', '/auth/email-link', { body: { email } });
+    const token = new URL(/https:\S+/.exec(mailer.last().text)![0]).searchParams.get('token')!;
+    const res = await call('POST', '/auth/verify', { body: { token } });
+    if (res.status !== 200) throw new Error(`sign in failed: ${JSON.stringify(res.body)}`);
+    return res.body.sessionToken as string;
+  };
+  return { app, deps, clock, mailer, call, signIn, close: () => db.close() };
 }

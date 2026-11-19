@@ -1,3 +1,4 @@
+import type { Mailer } from './auth/mailer.js';
 import type { Db } from './db/db.js';
 
 export interface Config {
@@ -10,4 +11,5 @@ export interface Deps {
   db: Db;
   now: () => Date;
   config: Config;
+  mailer: Mailer;
 }

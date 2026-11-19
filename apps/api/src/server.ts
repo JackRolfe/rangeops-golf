@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { createApp } from './app.js';
+import { consoleMailer } from './auth/mailer.js';
 import { openDatabase } from './db/db.js';
 import { seedDemo } from './db/seed.js';
 import type { Deps } from './deps.js';
@@ -18,6 +19,7 @@ const deps: Deps = {
   db,
   now: () => new Date(),
   config: { appUrl: process.env.APP_URL ?? 'http://localhost:5173/app' },
+  mailer: consoleMailer,
 };
 
 const app = createApp(deps);
