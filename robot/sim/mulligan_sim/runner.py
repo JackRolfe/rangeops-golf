@@ -8,10 +8,10 @@ import numpy as np
 from . import params as P
 from .driver import Driver
 from .lane_limit import limit_command
-from .estimators import Odometry, OdometryGyro, SensorFrame, UwbEkf
+from .estimators import Odometry, OdometryGyro, RtkEkf, SensorFrame, UwbEkf
 from .scenarios import Scenario
 from .world import World
-from .sensors import ONE_ANCHOR, TWO_ANCHORS, TWO_ANCHORS_WIDE, Encoders, Gyro, Uwb
+from .sensors import ONE_ANCHOR, TWO_ANCHORS, TWO_ANCHORS_WIDE, Encoders, Gnss, Gyro, Uwb
 
 # Anchor layouts, each with its own random stream so adding one leaves the others alone.
 LAYOUTS = {
@@ -20,13 +20,16 @@ LAYOUTS = {
     "two_wide": (TWO_ANCHORS_WIDE, 43),
 }
 
-# name -> (factory, anchor layout or None)
+GNSS_STREAM = 50
+
+# name -> (factory, UWB anchor layout, "gnss", or None)
 ESTIMATORS = {
     "odometry": (lambda: Odometry(), None),
     "odo_gyro": (lambda: OdometryGyro(), None),
     "uwb1": (lambda: UwbEkf(ONE_ANCHOR, "uwb1"), "one"),
     "uwb2": (lambda: UwbEkf(TWO_ANCHORS, "uwb2"), "two"),
     "uwb2_wide": (lambda: UwbEkf(TWO_ANCHORS_WIDE, "uwb2_wide"), "two_wide"),
+    "rtk": (lambda: RtkEkf("rtk"), "gnss"),
 }
 LABELS = {
     "odometry": "Odometry only",
@@ -34,6 +37,7 @@ LABELS = {
     "uwb1": "Gyro + UWB, 1 anchor",
     "uwb2": "Gyro + UWB, 2 anchors",
     "uwb2_wide": "Gyro + UWB, 2 anchors 6 m apart",
+    "rtk": "Gyro + RTK GNSS",
 }
 
 
@@ -72,7 +76,10 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
     encoders = Encoders()
     gyro = Gyro(scenario.gyro, scenario.rng(3))
     ests = {name: ESTIMATORS[name][0]() for name in estimators}
-    layouts = {ESTIMATORS[name][1] for name in estimators} - {None}
+    layouts = {ESTIMATORS[name][1] for name in estimators} - {None, "gnss"}
+    gnss = Gnss(scenario.gnss, scenario.rng(GNSS_STREAM)) if any(
+        ESTIMATORS[name][1] == "gnss" for name in estimators) else None
+    gnss_every = max(1, round(scenario.gnss.period_s / P.DT_S))
     uwbs = {k: Uwb(scenario.uwb, LAYOUTS[k][0], scenario.rng(LAYOUTS[k][1])) for k in sorted(layouts)}
     if enforce is not None and enforce not in ests:
         raise ValueError(f"enforce={enforce!r} is not among the estimators")
@@ -95,10 +102,12 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
         if step % P.UWB_PERIOD_STEPS == 0:
             for k, u in uwbs.items():
                 ranges[k] = u.read(world)
+        fix = gnss.read(world) if gnss is not None and step % gnss_every == 0 else None
         for name, e in ests.items():
             layout = ESTIMATORS[name][1]
             e.step(SensorFrame(dt=dt, d_counts_left=d_left, d_counts_right=d_right,
-                               gyro_z=gyro_z, ranges=ranges.get(layout, [])))
+                               gyro_z=gyro_z, ranges=ranges.get(layout, []),
+                               gnss=fix if layout == "gnss" else None))
             lx, ly, lth = est_log[name]
             lx.append(e.x)
             ly.append(e.y)

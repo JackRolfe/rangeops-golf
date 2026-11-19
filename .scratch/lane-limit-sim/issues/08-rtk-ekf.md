@@ -1,6 +1,6 @@
 # 08: Gyro + RTK GNSS estimator
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 07
 
 ## Parent
@@ -13,10 +13,10 @@ Generalise the EKF so it can correct with either UWB ranges or GNSS positions, k
 
 ## Acceptance criteria
 
-- [ ] With a perfect receiver the estimator tracks truth to about a centimetre once outside the roof.
-- [ ] A wrong fix far from the estimate is gated out; a run of good fixes is accepted.
-- [ ] Through a fix gap it dead-reckons on gyro and encoders.
-- [ ] UWB estimator results unchanged by the refactor (same seeds, same numbers).
+- [x] With a perfect receiver the estimator tracks truth to about a centimetre once outside the roof.
+- [x] A wrong fix far from the estimate is gated out; a run of good fixes is accepted.
+- [x] Through a fix gap it dead-reckons on gyro and encoders.
+- [x] UWB estimator results unchanged by the refactor (same seeds, same numbers).
 
 ## Blocked by
 

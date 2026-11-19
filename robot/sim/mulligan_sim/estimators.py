@@ -11,6 +11,7 @@ import math
 from dataclasses import dataclass, field
 
 from . import params as P
+from .sensors import GNSS_FIXED
 
 
 @dataclass
@@ -23,6 +24,8 @@ class SensorFrame:
     gyro_z: float = 0.0  # rad/s, already corrected by the dock's bias calibration
     # (anchor index, range in metres) for each UWB range that arrived this tick.
     ranges: list = field(default_factory=list)
+    # (x, y, quality) from the RTK receiver if a reading arrived this tick, else None.
+    gnss: tuple | None = None
 
 
 class Odometry:
@@ -118,14 +121,15 @@ def _mul_bt(a: list, b: list) -> list:
     return out
 
 
-class UwbEkf:
-    """Extended Kalman filter: gyro and encoders predict, UWB ranges to dock anchors correct.
+class PoseEkf:
+    """Extended Kalman filter: gyro and encoders predict; a position source corrects.
 
     State: x, y, theta, gyro bias b (residual after dock calibration), odometry distance
     scale k (wet grass slips more than the dry-grass calibration). Predict each tick with
-    encoder distance and gyro rate; update with each range, behind an innovation gate that
-    rejects multipath outliers. If an anchor's ranges are rejected many times in a row the
-    filter has probably drifted, so the next one is let through with a widened variance.
+    encoder distance and gyro rate. Subclasses correct with UWB ranges (UwbEkf) or RTK
+    GNSS positions (RtkEkf), each behind an innovation gate that rejects outliers. If a
+    source is rejected many times in a row the filter has probably drifted, so the next
+    measurement is let through with a widened variance.
     """
 
     # Process noise. Variances grow with distance travelled and angle turned, not time,
@@ -136,15 +140,9 @@ class UwbEkf:
     Q_GYRO = (0.014 * math.pi / 180.0) ** 2  # rad^2/s (gyro white noise)
     Q_BIAS = (0.001 * math.pi / 180.0) ** 2  # (rad/s)^2 per s, 3x the bias walk
     Q_SCALE = 0.01 ** 2  # per m travelled
-    # Measurement: white plus the slow part, widened because the slow part is not white.
-    R_RANGE = 0.25 ** 2
-    GATE = 9.0  # chi-squared, 1 dof: 3 sigma
-    REACQUIRE_AFTER = 20  # consecutive rejections of one anchor (2 s at 10 Hz)
-    MIN_RANGE = 0.5  # range direction is ill-defined right next to an anchor
 
-    def __init__(self, anchors: tuple, name: str = "uwb_ekf") -> None:
+    def __init__(self, name: str, n_sources: int) -> None:
         self.name = name
-        self.anchors = anchors
         self.s = [0.0, 0.0, 0.0, 0.0, 1.0]
         self.P = _zeros()
         self.P[IX][IX] = 0.02 ** 2
@@ -153,7 +151,7 @@ class UwbEkf:
         self.P[IB][IB] = (0.5 * math.pi / 180.0 / 60.0) ** 2
         self.P[IK][IK] = 0.03 ** 2
         self.metres_per_count = P.METRES_PER_COUNT * P.ODOMETRY_DISTANCE_SCALE
-        self.rejected_in_row = [0] * len(anchors)
+        self.rejected_in_row = [0] * n_sources
         self.accepted = 0
         self.rejected = 0
 
@@ -168,11 +166,6 @@ class UwbEkf:
     @property
     def theta(self) -> float:
         return self.s[ITH]
-
-    def step(self, f: SensorFrame) -> None:
-        self.predict(f)
-        for i, r in f.ranges:
-            self.update_range(i, r)
 
     def predict(self, f: SensorFrame) -> None:
         s = self.s
@@ -215,9 +208,56 @@ class UwbEkf:
             for j in range(N):
                 self.P[i][j] = FPFt[i][j] + Q[i][j]
 
+    def _apply(self, h: list, nu: float, r_var: float, pht: list, S: float) -> None:
+        """Kalman update for one scalar measurement with row h, innovation nu."""
+        s, Pm = self.s, self.P
+        K = [pht[a] / S for a in range(N)]
+        for a in range(N):
+            s[a] += K[a] * nu
+
+        # Joseph form: P = (I - K h) P (I - K h)^T + K R K^T, for numerical robustness.
+        A = _identity()
+        for a in range(N):
+            for b in range(N):
+                A[a][b] -= K[a] * h[b]
+        AP = _mul(A, Pm)
+        APAt = _mul_bt(AP, A)
+        for a in range(N):
+            for b in range(N):
+                Pm[a][b] = APAt[a][b] + K[a] * r_var * K[b]
+
+    def _pht(self, h: list) -> list:
+        """P * h^T."""
+        pht = [0.0] * N
+        for a in range(N):
+            acc = 0.0
+            for b in range(N):
+                acc += self.P[a][b] * h[b]
+            pht[a] = acc
+        return pht
+
+
+class UwbEkf(PoseEkf):
+    """PoseEkf corrected by UWB ranges to anchors at the dock."""
+
+    # Measurement: white plus the slow part, widened because the slow part is not white.
+    R_RANGE = 0.25 ** 2
+    GATE = 9.0  # chi-squared, 1 dof: 3 sigma
+    REACQUIRE_AFTER = 20  # consecutive rejections of one anchor (2 s at 10 Hz)
+    MIN_RANGE = 0.5  # range direction is ill-defined right next to an anchor
+
+    def __init__(self, anchors: tuple, name: str = "uwb_ekf") -> None:
+        super().__init__(name, len(anchors))
+        self.anchors = anchors
+
+    def step(self, f: SensorFrame) -> None:
+        self.predict(f)
+        for i, r in f.ranges:
+            self.update_range(i, r)
+
     def update_range(self, i: int, measured: float) -> bool:
         """Correct with one range to anchor i. Returns False if the gate rejected it."""
-        s, Pm = self.s, self.P
+        s = self.s
         ax, ay = self.anchors[i]
         dx, dy = s[IX] - ax, s[IY] - ay
         predicted = math.sqrt(dx * dx + dy * dy)
@@ -226,12 +266,7 @@ class UwbEkf:
         h = [dx / predicted, dy / predicted, 0.0, 0.0, 0.0]
 
         # PHt = P * h^T, S = h * P * h^T + R
-        pht = [0.0] * N
-        for a in range(N):
-            acc = 0.0
-            for b in range(N):
-                acc += Pm[a][b] * h[b]
-            pht[a] = acc
+        pht = self._pht(h)
         r_var = self.R_RANGE
         S = r_var
         for a in range(N):
@@ -248,18 +283,55 @@ class UwbEkf:
         self.rejected_in_row[i] = 0
         self.accepted += 1
 
-        K = [pht[a] / S for a in range(N)]
-        for a in range(N):
-            s[a] += K[a] * nu
+        self._apply(h, nu, r_var, pht, S)
+        return True
 
-        # Joseph form: P = (I - K h) P (I - K h)^T + K R K^T, for numerical robustness.
-        A = _identity()
-        for a in range(N):
-            for b in range(N):
-                A[a][b] -= K[a] * h[b]
-        AP = _mul(A, Pm)
-        APAt = _mul_bt(AP, A)
-        for a in range(N):
-            for b in range(N):
-                Pm[a][b] = APAt[a][b] + K[a] * r_var * K[b]
+
+class RtkEkf(PoseEkf):
+    """PoseEkf corrected by RTK GNSS positions in the surveyed lane frame.
+
+    Only "RTK fixed" positions are used, as the research note's firmware rule says: a float
+    solution can be a metre out with a slowly wandering error that the filter can't average
+    away, so with float or no solution the filter dead-reckons on the gyro and encoders.
+    A fix far from the estimate (a wrong ambiguity fix) is gated out; if fixes keep being
+    rejected for 5 s, one is let through with a widened variance.
+    """
+
+    R_FIXED = 0.025 ** 2  # per axis: 2 cm receiver error plus a little for survey and lag
+    R_REACQUIRE = 0.1 ** 2
+    GATE = 13.8  # chi-squared, 2 dof: 99.9%
+    REACQUIRE_AFTER = 25  # consecutive rejected fixes (5 s at 5 Hz)
+
+    def __init__(self, name: str = "rtk") -> None:
+        super().__init__(name, 1)
+
+    def step(self, f: SensorFrame) -> None:
+        self.predict(f)
+        if f.gnss is not None and f.gnss[2] == GNSS_FIXED:
+            self.update_position(f.gnss[0], f.gnss[1])
+
+    def update_position(self, mx: float, my: float) -> bool:
+        """Correct with a fixed position. Returns False if the gate rejected it."""
+        s, Pm = self.s, self.P
+        nx, ny = mx - s[IX], my - s[IY]
+        r_var = self.R_FIXED
+        # Joint 2-dof gate: d^2 = nu^T S^-1 nu, S = P[0:2, 0:2] + R I.
+        sxx, syy, sxy = Pm[IX][IX] + r_var, Pm[IY][IY] + r_var, Pm[IX][IY]
+        det = sxx * syy - sxy * sxy
+        d2 = (syy * nx * nx - 2.0 * sxy * nx * ny + sxx * ny * ny) / det
+        if d2 > self.GATE:
+            self.rejected_in_row[0] += 1
+            if self.rejected_in_row[0] < self.REACQUIRE_AFTER:
+                self.rejected += 1
+                return False
+            r_var = self.R_REACQUIRE
+        self.rejected_in_row[0] = 0
+        self.accepted += 1
+        # Two sequential scalar updates (x, then y): exact for independent axis noise.
+        hx = [1.0, 0.0, 0.0, 0.0, 0.0]
+        pht = self._pht(hx)
+        self._apply(hx, mx - s[IX], r_var, pht, pht[IX] + r_var)
+        hy = [0.0, 1.0, 0.0, 0.0, 0.0]
+        pht = self._pht(hy)
+        self._apply(hy, my - s[IY], r_var, pht, pht[IY] + r_var)
         return True
