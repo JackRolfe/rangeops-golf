@@ -4,6 +4,7 @@ import { generateCode } from '../domain/buckets';
 import { addMonths } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { addDays, addMinutes, dateTimeAt, hourOf, toIsoDate, toLocalDateTime, weekdayOf } from '../domain/time';
+import { BUCKET_BALLS } from '../domain/types';
 import type {
   Bay,
   Booking,
@@ -169,7 +170,7 @@ export function seedDemoRange(nowDate: Date): FakeState {
     const source: Source = random() < 0.75 ? 'app' : 'counter';
     const amount = setup.prices.buckets[bucket];
     const handedOverAt = status === 'handed-over' ? notAfterNow(addMinutes(paidAt, 2 + Math.floor(random() * 20))) : null;
-    const order: Order = { id: id('ord'), code, bucket, status, source, amount, paidAt, handedOverAt, passId: null };
+    const order: Order = { id: id('ord'), code, bucket, balls: BUCKET_BALLS[bucket], status, source, amount, paidAt, handedOverAt, passId: null };
     orders.push(order);
     payments.push({ id: id('pay'), at: paidAt, kind: 'bucket', amount, ref: order.id });
     if (status === 'refunded') payments.push({ id: id('pay'), at: notAfterNow(addMinutes(paidAt, 10)), kind: 'bucket', amount: -amount, ref: order.id });

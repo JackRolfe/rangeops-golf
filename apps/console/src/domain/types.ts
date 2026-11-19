@@ -26,6 +26,8 @@ export interface Bay {
   name: string;
   band: PriceBand;
   inService: boolean;
+  /** What the bay's QR code encodes, when the data source issues its own (the API's has a secret code). */
+  checkInUrl?: string;
 }
 
 /** Whole hours, 0 to 24. The range is open from `open` up to but not including `close`. */
@@ -58,11 +60,15 @@ export interface MonthlyPassProduct {
   bucketsPerMonth: number;
   bayHoursPerMonth: number;
   months: number;
+  /** Set when the pass is a discount instead of an allowance (the API's model). */
+  discountPercent?: number;
 }
 
 export interface CreditPackProduct {
   price: Cents;
   credits: number;
+  /** Set when credit is counted in balls instead of buckets (the API's model). */
+  balls?: number;
 }
 
 export interface PriceList {
@@ -70,6 +76,8 @@ export interface PriceList {
   peakWindows: PeakWindow[];
   robotHirePerHour: Cents;
   buckets: Record<BucketSize, Cents>;
+  /** Balls in each bucket when the source sets its own sizes; else BUCKET_BALLS. */
+  bucketBalls?: Record<BucketSize, number>;
   monthlyPass: MonthlyPassProduct;
   creditPack: CreditPackProduct;
 }
@@ -105,6 +113,8 @@ export interface Order {
   id: string;
   code: string;
   bucket: BucketSize;
+  /** Balls in the bucket. */
+  balls: number;
   status: OrderStatus;
   source: Source;
   amount: Cents;
@@ -134,6 +144,10 @@ export interface Pass {
   /** Credit packs: prepaid buckets bought. */
   creditsBought: number;
   redemptions: PassRedemption[];
+  /** Monthly passes that give a discount instead of an allowance (the API's model). */
+  discountPercent?: number;
+  /** Ball credit counted in balls (the API's model). */
+  ballsLeft?: number;
 }
 
 export type PaymentKind = 'bay' | 'robot' | 'bucket' | 'pass';
@@ -170,7 +184,8 @@ export interface Robot {
   id: string;
   name: string;
   state: RobotState;
-  battery: number;
+  /** Percent; `null` until the robot has reported. */
+  battery: number | null;
   /** `null` when the robot doesn't count balls. */
   ballsOnBoard: number | null;
   hire: RobotHire | null;

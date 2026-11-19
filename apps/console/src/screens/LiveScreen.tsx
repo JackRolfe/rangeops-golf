@@ -145,8 +145,9 @@ function BayTile({ now, robot }: { now: BayNow; robot?: Robot }) {
 }
 
 function RobotRow({ robot, bayName }: { robot: Robot; bayName: string | null }) {
-  const battery = Math.round(robot.battery);
-  const low = battery < LOW_BATTERY;
+  const known = robot.battery !== null;
+  const battery = Math.round(robot.battery ?? 0);
+  const low = known && battery < LOW_BATTERY;
   const Icon = low ? BatteryLow : battery < 80 ? BatteryMedium : BatteryFull;
   const state = ROBOT_STATE[robot.state];
   return (
@@ -159,10 +160,10 @@ function RobotRow({ robot, bayName }: { robot: Robot; bayName: string | null }) 
         </div>
       </div>
       <span className={`pill pill--${state.tone === 'quiet' ? 'plain' : state.tone}`}>{state.label}</span>
-      <div className={`battery${low ? ' battery--low' : ''}`} aria-label={`Battery ${battery}%`}>
+      <div className={`battery${low ? ' battery--low' : ''}`} aria-label={known ? `Battery ${battery}%` : 'Battery not reported yet'}>
         <Icon size={18} aria-hidden="true" />
         <span className="battery__bar"><span style={{ width: `${battery}%` }} /></span>
-        <span className="battery__pct">{battery}%</span>
+        <span className="battery__pct">{known ? `${battery}%` : '–'}</span>
       </div>
     </li>
   );

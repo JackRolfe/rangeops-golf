@@ -305,3 +305,5 @@ h3 { font-size: 16px; font-weight: 700; }
 .battery__pct { min-width: 40px; font-size: 13px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 .battery--low { color: var(--clay); }
 .table tr.note td { color: var(--muted); font-size: 13px; }
+.plain { display: grid; gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.plain:disabled .input { background: var(--paper); color: var(--muted); }
