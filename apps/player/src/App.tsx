@@ -28,6 +28,8 @@ import { PracticeScreen } from './screens/PracticeScreen';
 import { TabScreen } from './screens/TabScreen';
 import { TabBar } from './components/TabBar';
 import { parseLink, type AppLink } from './routes';
+import { AccountSection } from './account/AccountSection';
+import { apiErrorMessage, useAccount } from './account/AccountContext';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
@@ -118,6 +120,9 @@ export default function App() {
   const bootStarted = useRef(false);
   /** The link the app was opened with, read once at start. */
   const [link, setLink] = useState<AppLink>({ kind: 'home' });
+  const account = useAccount();
+  const [linkMessage, setLinkMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const linkHandled = useRef(false);
   const targetSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const pendingTargetSave = useRef<{ sessionId: string; target: Target } | null>(null);
   const targetSaveInFlight = useRef(false);
@@ -167,6 +172,16 @@ export default function App() {
         setView('fatal');
       });
   }, []);
+
+  // A sign-in link: swap its token for a session, once.
+  useEffect(() => {
+    if (link.kind !== 'signin' || linkHandled.current) return;
+    linkHandled.current = true;
+    account
+      .verifyLink(link.token)
+      .then((session) => setLinkMessage({ kind: 'ok', text: `You’re signed in as ${session.account.email}.` }))
+      .catch((verifyError: unknown) => setLinkMessage({ kind: 'error', text: apiErrorMessage(verifyError) }));
+  }, [account, link]);
 
   function upsertSession(session: PracticeSession): void {
     setCurrentSession(session);
@@ -414,6 +429,7 @@ export default function App() {
     screen = (
       <SettingsScreen
         range={activeRange}
+        account={<AccountSection linkMessage={linkMessage} />}
         busy={busy}
         error={error}
         onTab={selectTab}

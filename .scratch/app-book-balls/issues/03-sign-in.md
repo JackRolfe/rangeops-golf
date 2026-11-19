@@ -1,6 +1,6 @@
 # 03. Sign in by email link
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 01, 02
 
@@ -10,4 +10,8 @@ A session store (`localStorage`), `SignInCard` (email, "check your email", a dem
 
 ## Acceptance
 
-- [ ] Component tests: request a link, open it, signed in; sign out; an expired or used link says so.
+- [x] Component tests: request a link, open it, signed in; sign out; an expired or used link says so.
+
+## Comments
+
+Done in `apps/player/src/account/`: `AccountProvider` (one API, session in localStorage, dropped on 401), `SignInCard`, `AccountSection` in Settings. The app swaps a `/signin?token=` link for a session at start and says so in Settings.
