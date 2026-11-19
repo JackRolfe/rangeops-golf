@@ -1,0 +1,109 @@
+{
+  "comment": "Copied from robot/firmware/test/vectors/hire_keys.json on the feature/robot-firmware-r0-c75956 branch (written by robot/tools/hire-key.mjs). TEST ONLY: the test key is public. Copy again if the vectors change.",
+  "public_key": "7e21c990bafcd68f6d0f01b62a6795b188cd9077060dfaff082ff78b382e634d",
+  "robot_serial": "A1B2",
+  "cases": [
+    {
+      "name": "ok_mid_hire",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798763400,
+      "expect": "ok"
+    },
+    {
+      "name": "ok_at_start",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798761600,
+      "expect": "ok"
+    },
+    {
+      "name": "ok_last_second",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798765199,
+      "expect": "ok"
+    },
+    {
+      "name": "expired_at_end",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798765200,
+      "expect": "expired"
+    },
+    {
+      "name": "expired_after_end",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798765260,
+      "expect": "expired"
+    },
+    {
+      "name": "not_yet_one_second_early",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798761599,
+      "expect": "not_yet"
+    },
+    {
+      "name": "ok_wide_window_bay_255",
+      "key": "014131423204030201feffffffff9ffe9be342098fb8f8cefc38f03338017b15be3291a9d06915b9d8ae9868179eb357d581a9adf7e74c4a9adf3b5fc4d5f8102b5b98edc66f0308f5c00cb0e803",
+      "now": 2147483648,
+      "expect": "ok"
+    },
+    {
+      "name": "wrong_serial",
+      "key": "014333443480ec366b90fa366b0310c06cca3bdaedecf06cf2def8e913b05ad377916f991de0ea6962fab8ff9aa3ad7ab221732738ffd5de991847f989e09b34481c9dc3c539a01c5e655f53c306",
+      "now": 1798763400,
+      "expect": "wrong_serial"
+    },
+    {
+      "name": "wrong_serial_lower_case",
+      "key": "016131623280ec366b90fa366b0319501773e1331065dba4e383bca14859b1728d878004969b4331fdfffd4e3030342955fd6bcc37856ee2f3b7ba78e2ab967dda6ba5cfedd849ed1ec9b15c790d",
+      "now": 1798763400,
+      "expect": "wrong_serial"
+    },
+    {
+      "name": "bad_signature_bay_changed",
+      "key": "014131423280ec366b90fa366b0291f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798763400,
+      "expect": "bad_signature"
+    },
+    {
+      "name": "bad_signature_end_changed",
+      "key": "014131423280ec366b90fa36eb0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798763400,
+      "expect": "bad_signature"
+    },
+    {
+      "name": "bad_signature_signature_changed",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d0daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae09",
+      "now": 1798763400,
+      "expect": "bad_signature"
+    },
+    {
+      "name": "bad_signature_other_signer",
+      "key": "014131423280ec366b90fa366b034e2b63d7650bc44ef24d9e1c86f8d0f319285e14e34370909bdce419d4a36a08b4bdf776546bfb29bbe9220bf27c1e6e0ad297c57f8064845d6bdd558ba3530e",
+      "now": 1798763400,
+      "expect": "bad_signature"
+    },
+    {
+      "name": "bad_version_2",
+      "key": "024131423280ec366b90fa366b039990810f1e0e541cb60e61f45756432f0cb118a5b389c0bdd24f09195ed2d636c7963506a49f9fffdca7961df63fe8260ea9e4b5d3425a2d9b53479ed1783e0f",
+      "now": 1798763400,
+      "expect": "bad_version"
+    },
+    {
+      "name": "bad_length_77",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae",
+      "now": 1798763400,
+      "expect": "bad_length"
+    },
+    {
+      "name": "bad_length_79",
+      "key": "014131423280ec366b90fa366b0391f5bca08ec7c7523ca1538cdf2adfe3d399c0e9737025ec5f53d1daed08d9cef2e15dd188fae124a3b37432571e6a419dfc2126052cdcef6d98358e25d0ae0900",
+      "now": 1798763400,
+      "expect": "bad_length"
+    },
+    {
+      "name": "bad_length_0",
+      "key": "",
+      "now": 1798763400,
+      "expect": "bad_length"
+    }
+  ]
+}
