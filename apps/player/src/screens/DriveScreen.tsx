@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bluetooth, RotateCcw, Unplug } from 'lucide-react';
 import { driveMessage, refusalMessage } from '../domain/drive';
 import { DriveController } from '../robot/DriveController';
-import { issueBenchKey } from '../robot/hireKey';
+import { issueBenchKey, type HireKeyVerifier } from '../robot/hireKey';
 import { HireKeyRefused, type RobotLink } from '../robot/RobotLink';
-import { RobotState, type RobotInfo, type Telemetry } from '../robot/protocol';
+import { RobotState, decodeHireKey, type RobotInfo, type Telemetry } from '../robot/protocol';
+import { localTime } from '../domain/zonedTime';
 import { SIM_DEFAULTS, SimulatedRobot, type SimulatedWorld } from '../robot/SimulatedRobot';
 import { AppShell } from '../components/AppShell';
 import { Joystick } from '../components/Joystick';
@@ -20,10 +21,14 @@ export interface DriveTarget {
 
 export const SIM_BAY = 7;
 
-/** The simulator, unlocked by a bench key the app issues itself. Real keys come from bookings in stage 4. */
-export function createSimulatedTarget(): DriveTarget {
-  const robot = new SimulatedRobot();
-  return { link: robot, world: () => robot.world() };
+/**
+ * The simulator. With a hire, it poses as the hired robot (the key's serial)
+ * and checks keys the way the robot does, with the verifier for the backend
+ * that issued it. Without one, it's the bench robot SIM1.
+ */
+export function createSimulatedTarget(robot?: { serial: string; verifier: HireKeyVerifier }): DriveTarget {
+  const simulated = new SimulatedRobot(robot ?? {});
+  return { link: simulated, world: () => simulated.world() };
 }
 
 export function issueSimulatorKey(): Promise<Uint8Array> {
@@ -33,13 +38,31 @@ export function issueSimulatorKey(): Promise<Uint8Array> {
 
 type Status = 'disconnected' | 'connecting' | 'connected' | 'refused' | 'failed';
 
+/** A hire key from a link, a booking or a check-in, and how its robot checks it. */
+export interface DriveHire {
+  key: Uint8Array;
+  verifier: () => Promise<HireKeyVerifier>;
+  timeZone?: string;
+}
+
 interface DriveScreenProps {
   onTab: (tab: TabId) => void;
-  createTarget?: () => DriveTarget;
+  hire?: DriveHire | null;
+  /** The app was opened with a hire link that isn't a hire key. */
+  badHireLink?: boolean;
+  createTarget?: (robot?: { serial: string; verifier: HireKeyVerifier }) => DriveTarget;
   issueKey?: () => Promise<Uint8Array>;
 }
 
-export function DriveScreen({ onTab, createTarget = createSimulatedTarget, issueKey = issueSimulatorKey }: DriveScreenProps) {
+export function DriveScreen({
+  onTab,
+  hire = null,
+  badHireLink = false,
+  createTarget = createSimulatedTarget,
+  issueKey = issueSimulatorKey,
+}: DriveScreenProps) {
+  const hired = hire ? decodeHireKey(hire.key) : null;
+  const bay = hired?.bay ?? SIM_BAY;
   const [status, setStatus] = useState<Status>('disconnected');
   const [problem, setProblem] = useState<string | null>(null);
   const [info, setInfo] = useState<RobotInfo | null>(null);
@@ -65,11 +88,24 @@ export function DriveScreen({ onTab, createTarget = createSimulatedTarget, issue
     setStatus('connecting');
     setProblem(null);
     setTelemetry(null);
-    const next = createTarget();
+    let next: DriveTarget;
+    let key: Uint8Array;
+    try {
+      if (hire && hired) {
+        next = createTarget({ serial: hired.serial, verifier: await hire.verifier() });
+        key = hire.key;
+      } else {
+        next = createTarget();
+        key = await issueKey();
+      }
+    } catch (error) {
+      setStatus('failed');
+      setProblem(error instanceof Error ? error.message : 'Could not reach Mulligan.');
+      return;
+    }
     target.current = next;
     unsubscribe.current = next.link.onTelemetry(setTelemetry);
     try {
-      const key = await issueKey();
       const robotInfo = await next.link.connect(key);
       if (target.current !== next) return;
       controller.current = new DriveController(next.link);
@@ -101,7 +137,7 @@ export function DriveScreen({ onTab, createTarget = createSimulatedTarget, issue
 
   return (
     <AppShell className="drive-screen">
-      <PageHeader title="Drive" action={<span className="chip">Bay {SIM_BAY}</span>} />
+      <PageHeader title="Drive" action={<span className="chip">Bay {bay}</span>} />
       <div className="screen-scroll drive-body">
         {status === 'connected' ? (
           <>
@@ -138,8 +174,21 @@ export function DriveScreen({ onTab, createTarget = createSimulatedTarget, issue
               Hold the stick to drive out, roll over the balls to scoop them up, and bring them back to the bay.
               Let go and it stops.
             </p>
+            {hired ? (
+              <p className="success-note">
+                Mulligan-{hired.serial} is hired for Bay {hired.bay}
+                {hire?.timeZone
+                  ? `, ${localTime(new Date(hired.start * 1000), hire.timeZone)}–${localTime(new Date(hired.end * 1000), hire.timeZone)}`
+                  : ''}
+                .
+              </p>
+            ) : null}
+            {badHireLink ? (
+              <p className="notice" role="alert">That hire link is broken. Open it again from your booking.</p>
+            ) : null}
             <p className="drive-connect__note">
-              Mulligan isn’t built yet, so this drives a simulated robot on a pretend lane.
+              Mulligan isn’t built yet, so this drives a simulated robot on a pretend lane
+              {hired ? ', which checks your hire key the way the real one will' : ''}.
             </p>
             {problem ? <p className="drive-problem" role="alert">{problem}</p> : null}
             <button

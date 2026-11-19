@@ -25,12 +25,21 @@ import { DriveScreen } from './screens/DriveScreen';
 import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
+import { TabBar } from './components/TabBar';
+import { parseLink, type AppLink } from './routes';
+import { AccountSection } from './account/AccountSection';
+import { BookScreen } from './book/BookScreen';
+import { BallsScreen } from './balls/BallsScreen';
+import { CheckInScreen } from './checkin/CheckInScreen';
+import { savePendingCheckIn, takePendingCheckIn } from './checkin/pendingCheckIn';
+import { bytesToBase64url } from './robot/protocol';
+import { apiErrorMessage, useAccount } from './account/AccountContext';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
+type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'book' | 'balls' | 'check-in' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
 type DetailReturnView = 'games' | 'progress';
 
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -113,6 +122,14 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bootStarted = useRef(false);
+  /** The link the app was opened with, read once at start. */
+  const [link, setLink] = useState<AppLink>({ kind: 'home' });
+  const account = useAccount();
+  const [linkMessage, setLinkMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const linkHandled = useRef(false);
+  /** A hire key to drive with, from a link, a booking or a check-in. */
+  const [hireKey, setHireKey] = useState<Uint8Array | null>(null);
+  const [checkInCode, setCheckInCode] = useState<string | null>(null);
   const targetSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const pendingTargetSave = useRef<{ sessionId: string; target: Target } | null>(null);
   const targetSaveInFlight = useRef(false);
@@ -146,16 +163,46 @@ export default function App() {
     if (bootStarted.current) return;
     bootStarted.current = true;
 
+    const opened = parseLink(window.location.pathname, window.location.search, import.meta.env.BASE_URL);
+    setLink(opened);
+    // A link is used once: put the plain app address back, so a reload doesn't repeat it.
+    if (opened.kind !== 'home' || window.location.search) {
+      window.history.replaceState(null, '', import.meta.env.BASE_URL);
+    }
+
+    if (opened.kind === 'drive') setHireKey(opened.hireKey);
+    // A QR code scanned before signing in carries on after the sign-in link.
+    const checkIn = opened.kind === 'check-in' ? opened.code : opened.kind === 'signin' ? takePendingCheckIn() : null;
+    if (opened.kind === 'check-in') savePendingCheckIn(opened.code);
+    setCheckInCode(checkIn);
+
     void loadSnapshot()
-      .then((snapshot) => {
-        const range = latestRangeForId(snapshot.ranges, snapshot.preferences.activeRangeId);
-        setView(range ? 'games' : 'onboarding');
+      .then(() => {
+        setView(
+          checkIn
+            ? 'check-in'
+            : opened.kind === 'drive' || opened.kind === 'bad-hire-link'
+              ? 'drive'
+              : opened.kind === 'signin'
+                ? 'settings'
+                : 'games',
+        );
       })
       .catch((bootError) => {
         setError(errorMessage(bootError));
         setView('fatal');
       });
   }, []);
+
+  // A sign-in link: swap its token for a session, once.
+  useEffect(() => {
+    if (link.kind !== 'signin' || linkHandled.current) return;
+    linkHandled.current = true;
+    account
+      .verifyLink(link.token)
+      .then((session) => setLinkMessage({ kind: 'ok', text: `You’re signed in as ${session.account.email}.` }))
+      .catch((verifyError: unknown) => setLinkMessage({ kind: 'error', text: apiErrorMessage(verifyError) }));
+  }, [account, link]);
 
   function upsertSession(session: PracticeSession): void {
     setCurrentSession(session);
@@ -316,6 +363,11 @@ export default function App() {
     }
   }
 
+  function openDrive(key: Uint8Array): void {
+    setHireKey(key);
+    setView('drive');
+  }
+
   function selectTab(tab: TabId): void {
     setError(null);
     setView(tab);
@@ -366,7 +418,7 @@ export default function App() {
       setSessions([]);
       setCurrentSession(null);
       setSelectedSession(null);
-      setView('onboarding');
+      setView('games');
     } catch (deleteError) {
       setError(errorMessage(deleteError));
     } finally {
@@ -393,8 +445,37 @@ export default function App() {
         </button>
       </AppShell>
     );
+  } else if (view === 'drive') {
+    screen = (
+      <DriveScreen
+        key={hireKey ? bytesToBase64url(hireKey) : 'bench'}
+        onTab={selectTab}
+        hire={hireKey ? { key: hireKey, verifier: () => account.api.hireKeyVerifier() } : null}
+        badHireLink={link.kind === 'bad-hire-link' && !hireKey}
+      />
+    );
+  } else if (view === 'check-in' && checkInCode) {
+    screen = <CheckInScreen code={checkInCode} onTab={selectTab} onDrive={openDrive} />;
+  } else if (view === 'book') {
+    screen = <BookScreen onTab={selectTab} onDrive={openDrive} />;
+  } else if (view === 'balls') {
+    screen = <BallsScreen onTab={selectTab} />;
+  } else if (view === 'settings') {
+    screen = (
+      <SettingsScreen
+        range={activeRange}
+        account={<AccountSection linkMessage={linkMessage} />}
+        busy={busy}
+        error={error}
+        onTab={selectTab}
+        onRename={handleRename}
+        onReplaceImage={handleReplaceImage}
+        onDeleteAll={handleDeleteAll}
+      />
+    );
   } else if (view === 'onboarding' || !activeRange) {
-    screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} />;
+    // Set-up lives inside the Games tab, so the other tabs work before there's a range map.
+    screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} footer={<TabBar active="games" onSelect={selectTab} />} />;
   } else if (view === 'setup') {
     screen = <SessionSetupScreen lastClub={preferences.lastClub} initialMode={setupMode} busy={busy} onBack={() => setView('games')} onContinue={(club, note, mode) => void startSession(club, note, mode)} />;
   } else if (view === 'practice' && currentSession && practiceRange && displayedImageUrl) {
@@ -433,20 +514,6 @@ export default function App() {
         onBack={() => setView('games')}
         onSession={(session) => openDetail(session, 'progress')}
         onTab={selectTab}
-      />
-    );
-  } else if (view === 'drive') {
-    screen = <DriveScreen onTab={selectTab} />;
-  } else if (view === 'settings') {
-    screen = (
-      <SettingsScreen
-        range={activeRange}
-        busy={busy}
-        error={error}
-        onTab={selectTab}
-        onRename={handleRename}
-        onReplaceImage={handleReplaceImage}
-        onDeleteAll={handleDeleteAll}
       />
     );
   } else if (view === 'detail' && selectedSession && detailRange && displayedImageUrl) {

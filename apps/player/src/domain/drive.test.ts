@@ -30,7 +30,7 @@ describe('driveMessage', () => {
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.farEnd })).toBe('Far limit. Mulligan goes no further from the bay.')
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.leftEdge })).toBe('Lane limit. Mulligan stays in front of its own bay.')
     expect(at({ state: RobotState.AtLimit, limits: LIMIT.rightEdge | LIMIT.speed })).toMatch(/Lane limit/)
-    expect(at({ state: RobotState.AtLimit, limits: LIMIT.speed })).toBe('Driving at walking pace, as fast as Mulligan goes.')
+    expect(at({ state: RobotState.AtLimit, limits: LIMIT.speed })).toBe(at({ state: RobotState.Driving }))
   })
 
   it('names the fault', () => {

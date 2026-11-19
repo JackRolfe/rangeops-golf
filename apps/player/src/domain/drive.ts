@@ -20,8 +20,9 @@ export function driveMessage(telemetry: Telemetry | null, capacity = 10): string
     case RobotState.AtLimit:
       if (limits & LIMIT.farEnd) return 'Far limit. Mulligan goes no further from the bay.'
       if (limits & (LIMIT.leftEdge | LIMIT.rightEdge)) return 'Lane limit. Mulligan stays in front of its own bay.'
-      // Only the speed cap: full stick and a turn at once.
-      return 'Driving at walking pace, as fast as Mulligan goes.'
+      // Only the speed cap, from full stick with the slightest turn: to a child
+      // that's just driving, so say the same as Driving rather than flicker.
+      return 'Driving at walking pace. Let go and it stops.'
     case RobotState.LowBattery:
       return 'Battery low, so Mulligan has stopped. Swap the battery at the bay.'
   }
