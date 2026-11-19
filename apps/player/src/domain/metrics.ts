@@ -1,3 +1,4 @@
+import { shotTarget } from './games'
 import { isShotOnTarget } from './geometry'
 import type {
   ImageDimensions,
@@ -81,7 +82,7 @@ export function getSessionAccuracy(
   dimensions: ImageDimensions,
 ): AccuracySummary {
   const onTarget = session.shots.reduce(
-    (count, shot) => count + Number(isShotOnTarget(shot, session.target, dimensions)),
+    (count, shot) => count + Number(isShotOnTarget(shot, shotTarget(session.target, shot), dimensions)),
     0,
   )
   return accuracySummary(onTarget, session.shots.length)
@@ -134,7 +135,7 @@ export function getLastNAccuracy(
   const recent = getRecentShots(sessions, limit)
   const onTarget = recent.reduce((count, { session, shot }) => {
     const dimensions = requireDimensions(ranges, session)
-    return count + Number(isShotOnTarget(shot, session.target, dimensions))
+    return count + Number(isShotOnTarget(shot, shotTarget(session.target, shot), dimensions))
   }, 0)
   return accuracySummary(onTarget, recent.length)
 }

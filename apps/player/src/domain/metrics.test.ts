@@ -17,6 +17,7 @@ function shot(index: number, onTarget: boolean, base = Date.UTC(2026, 0, 1)): Sh
     id: `shot-${index}`,
     x: onTarget ? 0.5 : 0.9,
     y: 0.5,
+    radius: 0.1,
     recordedAt: new Date(base + index * 1000).toISOString(),
   }
 }
@@ -34,6 +35,7 @@ function session(
     id,
     rangeId: 'range-1',
     rangeRevision: options.revision ?? 1,
+    mode: 'bullseye',
     club,
     note: '',
     target: { cx: 0.5, cy: 0.5, radius: 0.1 },
@@ -144,5 +146,14 @@ describe('accuracy metrics', () => {
       total: 2,
       percentage: 50,
     })
+  })
+})
+
+describe('Shrink the Ring sessions', () => {
+  it('judges each shot against the ring it was played at', () => {
+    // 0.09 from the centre: on target at the starting ring, a miss once it shrinks.
+    const edge = (index: number, radius: number): Shot => ({ ...shot(index, true), x: 0.59, radius })
+    const shrink = { ...session('session-1', 'Driver', [edge(1, 0.1), edge(2, 0.1), edge(3, 0.1), edge(4, 0.08)]), mode: 'shrink' as const }
+    expect(getSessionAccuracy(shrink, dimensions)).toEqual({ onTarget: 3, total: 4, percentage: 75 })
   })
 })

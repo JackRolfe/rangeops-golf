@@ -1,3 +1,7 @@
+import type { GameMode } from './games'
+
+export type { GameMode } from './games'
+
 /** An ISO-8601 timestamp. Timestamps are strings so records remain portable. */
 export type ISODateString = string
 
@@ -29,11 +33,16 @@ export interface Target {
   radius: number
 }
 
-/** Landing coordinates are normalized to the image (0–1). */
+/**
+ * Landing coordinates are normalized to the image (0–1). `radius` is the ring
+ * the shot was played against, in the same units as `Target.radius`. It equals
+ * the session's target radius except in Shrink the Ring, where the ring shrinks.
+ */
 export interface Shot {
   id: string
   x: number
   y: number
+  radius: number
   recordedAt: ISODateString
 }
 
@@ -43,8 +52,11 @@ export interface PracticeSession {
   id: string
   rangeId: string
   rangeRevision: number
+  /** The game this session is played as. Sessions from before games are `bullseye`. */
+  mode: GameMode
   club: string
   note: string
+  /** The ring's centre, and its starting radius. */
   target: Target
   targetLocked: boolean
   shots: Shot[]

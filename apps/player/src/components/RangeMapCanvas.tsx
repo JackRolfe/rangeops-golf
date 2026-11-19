@@ -6,6 +6,7 @@ import {
   type PointerEvent,
 } from 'react';
 import { clientPointToNormalized, isShotOnTarget } from '../domain/geometry';
+import { shotTarget } from '../domain/games';
 import type { Shot, Target } from '../domain/types';
 
 export type RangeMapMode = 'setup' | 'record' | 'review';
@@ -443,7 +444,7 @@ export function RangeMapCanvas({
         ) : null}
 
         {shots.map((shot, index) => {
-          const onTarget = isShotOnTarget(shot, target, { width, height });
+          const onTarget = isShotOnTarget(shot, shotTarget(target, shot), { width, height });
           const x = clamp(shot.x) * width;
           const y = clamp(shot.y) * height;
           const label = markerLabel(shot, index, onTarget);
