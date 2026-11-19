@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { Deps } from './deps.js';
 import { ApiError } from './errors.js';
 import { healthRoutes } from './health.js';
+import { rangeRoutes } from './ranges/routes.js';
 
 export type Api = OpenAPIHono;
 
@@ -45,6 +46,7 @@ export function createApp(deps: Deps): Api {
   });
 
   healthRoutes(app, deps);
+  rangeRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;

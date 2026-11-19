@@ -1,6 +1,6 @@
 # 02. Ranges, bays, hours, prices and availability
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: [../spec.md](../spec.md) (Ranges, prices and availability; Demo data)
 
@@ -13,3 +13,7 @@ Schema for range, bay, opening hours, peak windows, add-on prices, bucket and pa
 - [ ] Demo range seeded on first dev start, exactly as the spec's Demo data
 - [ ] Availability lists each open hour per active bay with price, peak flag and free flag, in the range's time zone, across a DST change
 - [ ] Unit tests for pricing and time-zone maths
+
+## Comments
+
+Done. Ranges accept an id or a slug (`/ranges/demo`). Availability is free everywhere until bookings (05) and robots (06) fill in `availabilityCounts`. Opening hours that start on the half hour give slots from the next whole hour.

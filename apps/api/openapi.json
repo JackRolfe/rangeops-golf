@@ -38,6 +38,414 @@
           "ok",
           "time"
         ]
+      },
+      "RangeSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "example": "demo"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string",
+            "example": "Australia/Sydney"
+          },
+          "currency": {
+            "type": "string",
+            "example": "AUD"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "timeZone",
+          "currency"
+        ]
+      },
+      "Range": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RangeSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "prices": {
+                "type": "object",
+                "properties": {
+                  "offPeakCentsPerHour": {
+                    "type": "integer",
+                    "description": "Money in cents of the range currency",
+                    "example": 1800
+                  },
+                  "peakCentsPerHour": {
+                    "type": "integer",
+                    "description": "Money in cents of the range currency",
+                    "example": 1800
+                  }
+                },
+                "required": [
+                  "offPeakCentsPerHour",
+                  "peakCentsPerHour"
+                ]
+              },
+              "openingHours": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OpeningHours"
+                }
+              },
+              "peakWindows": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PeakWindow"
+                }
+              },
+              "bays": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Bay"
+                }
+              },
+              "addOns": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AddOnPrice"
+                }
+              },
+              "bucketProducts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BucketProduct"
+                }
+              }
+            },
+            "required": [
+              "prices",
+              "openingHours",
+              "peakWindows",
+              "bays",
+              "addOns",
+              "bucketProducts"
+            ]
+          }
+        ]
+      },
+      "OpeningHours": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "0 Sunday to 6 Saturday"
+          },
+          "opens": {
+            "type": "string",
+            "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+            "example": "07:00"
+          },
+          "closes": {
+            "type": "string",
+            "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+            "example": "07:00"
+          }
+        },
+        "required": [
+          "weekday",
+          "opens",
+          "closes"
+        ]
+      },
+      "PeakWindow": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "0 Sunday to 6 Saturday"
+          },
+          "from": {
+            "type": "string",
+            "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+            "example": "07:00"
+          },
+          "to": {
+            "type": "string",
+            "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+            "example": "07:00"
+          }
+        },
+        "required": [
+          "weekday",
+          "from",
+          "to"
+        ],
+        "description": "Bay-hours starting inside a window cost the peak price"
+      },
+      "Bay": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rangeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "offPeakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Overrides the range's off-peak price when set",
+            "example": 1800
+          },
+          "peakCentsPerHour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Overrides the range's peak price when set",
+            "example": 1800
+          }
+        },
+        "required": [
+          "id",
+          "rangeId",
+          "number",
+          "name",
+          "active",
+          "offPeakCentsPerHour",
+          "peakCentsPerHour"
+        ]
+      },
+      "AddOnPrice": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AddOnKind"
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "per_hour",
+              "per_booking"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "priceCents",
+          "unit"
+        ]
+      },
+      "AddOnKind": {
+        "type": "string",
+        "enum": [
+          "robot",
+          "club_hire",
+          "lesson"
+        ]
+      },
+      "BucketProduct": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "balls": {
+            "type": "integer"
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "balls",
+          "priceCents",
+          "active"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "not_found"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Availability": {
+        "type": "object",
+        "properties": {
+          "rangeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-11-24"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2026-11-24T05:00:00.000Z"
+                },
+                "localTime": {
+                  "type": "string",
+                  "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+                  "example": "07:00"
+                },
+                "robotsFree": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "startsAt",
+                "localTime",
+                "robotsFree"
+              ]
+            },
+            "description": "Each open hour of the day, with how many robots could be hired for it"
+          },
+          "bays": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bayId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "number": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Slot"
+                  }
+                }
+              },
+              "required": [
+                "bayId",
+                "number",
+                "name",
+                "slots"
+              ]
+            }
+          }
+        },
+        "required": [
+          "rangeId",
+          "date",
+          "timeZone",
+          "hours",
+          "bays"
+        ]
+      },
+      "Slot": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "localTime": {
+            "type": "string",
+            "description": "Local time HH:MM, 24-hour; \"24:00\" is midnight at the end of the day",
+            "example": "07:00"
+          },
+          "peak": {
+            "type": "boolean"
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Money in cents of the range currency",
+            "example": 1800
+          },
+          "free": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt",
+          "localTime",
+          "peak",
+          "priceCents",
+          "free"
+        ]
       }
     },
     "parameters": {}
@@ -56,6 +464,144 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges": {
+      "get": {
+        "tags": [
+          "Ranges"
+        ],
+        "summary": "List RangeOps ranges",
+        "responses": {
+          "200": {
+            "description": "Every range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ranges": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeSummary"
+                      }
+                    }
+                  },
+                  "required": [
+                    "ranges"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}": {
+      "get": {
+        "tags": [
+          "Ranges"
+        ],
+        "summary": "A range: bays, hours, prices and products",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/availability": {
+      "get": {
+        "tags": [
+          "Ranges"
+        ],
+        "summary": "Free bays and robots, hour by hour, on one local date",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "YYYY-MM-DD in the range's time zone; today if left out",
+              "example": "2026-11-24"
+            },
+            "required": false,
+            "description": "YYYY-MM-DD in the range's time zone; today if left out",
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every open hour of every active bay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Availability"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

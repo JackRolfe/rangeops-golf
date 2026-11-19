@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { createApp } from './app.js';
 import { openDatabase } from './db/db.js';
+import { seedDemo } from './db/seed.js';
 import type { Deps } from './deps.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -11,6 +12,7 @@ const dataDir = process.env.DATA_DIR ?? `${root}.data/pglite`;
 
 await mkdir(dataDir, { recursive: true });
 const db = await openDatabase(dataDir);
+if (await seedDemo(db)) console.log('Seeded the demo range (slug: demo).');
 
 const deps: Deps = {
   db,

@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { createApp, type Api } from '../src/app.js';
 import { Db, migrate } from '../src/db/db.js';
+import { seedDemo } from '../src/db/seed.js';
 import type { Deps } from '../src/deps.js';
 
 let template: Promise<PGlite> | undefined;
@@ -11,6 +12,7 @@ async function freshPg() {
   template ??= (async () => {
     const pg = await PGlite.create({ extensions: { btree_gist } });
     await migrate(pg);
+    await seedDemo(new Db(pg));
     return pg;
   })();
   return (await template).clone();
