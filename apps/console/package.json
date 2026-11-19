@@ -6,6 +6,7 @@
   "description": "RangeOps range console: the staff web app for bays, prices, bookings, buckets, passes, check-in codes and the live range.",
   "scripts": {
     "dev": "vite",
+    "dev:api": "VITE_CONSOLE_API=http://localhost:8787 vite",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit --pretty false && tsc --noEmit --pretty false -p tsconfig.node.json",

@@ -1,4 +1,4 @@
-import { Activity, CalendarDays, Package, QrCode, Settings, Ticket } from 'lucide-react';
+import { Activity, CalendarDays, LogOut, Package, QrCode, Settings, Ticket } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ROUTES, type RouteId } from '../routes';
 
@@ -11,7 +11,7 @@ const ICONS: Record<RouteId, LucideIcon> = {
   setup: Settings,
 };
 
-export function Nav({ current, rangeName }: { current: RouteId; rangeName?: string }) {
+export function Nav({ current, rangeName, account }: { current: RouteId; rangeName?: string; account?: { email: string; onSignOut: () => void } }) {
   return (
     <nav className="nav" aria-label="Console">
       <div className="nav__brand">
@@ -38,6 +38,15 @@ export function Nav({ current, rangeName }: { current: RouteId; rangeName?: stri
           );
         })}
       </ul>
+      {account && (
+        <div className="nav__account">
+          <span title={account.email}>{account.email}</span>
+          <button className="nav__link nav__signout" type="button" onClick={account.onSignOut}>
+            <LogOut size={18} aria-hidden="true" />
+            Sign out
+          </button>
+        </div>
+      )}
     </nav>
   );
 }

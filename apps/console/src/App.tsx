@@ -17,12 +17,18 @@ const SCREENS: Record<RouteId, ComponentType> = {
   setup: SetupScreen,
 };
 
-export default function App() {
+export interface SignedInAccount {
+  email: string;
+  rangeName: string;
+  onSignOut: () => void;
+}
+
+export default function App({ account }: { account?: SignedInAccount }) {
   const route = useRoute();
   const Screen = SCREENS[route];
   return (
     <div className="shell">
-      <Nav current={route} />
+      <Nav current={route} rangeName={account?.rangeName} account={account} />
       <main className="main">
         <Screen />
       </main>
