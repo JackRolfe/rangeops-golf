@@ -30,13 +30,16 @@ import { parseLink, type AppLink } from './routes';
 import { AccountSection } from './account/AccountSection';
 import { BookScreen } from './book/BookScreen';
 import { BallsScreen } from './balls/BallsScreen';
+import { CheckInScreen } from './checkin/CheckInScreen';
+import { savePendingCheckIn, takePendingCheckIn } from './checkin/pendingCheckIn';
+import { bytesToBase64url } from './robot/protocol';
 import { apiErrorMessage, useAccount } from './account/AccountContext';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'book' | 'balls' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
+type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'book' | 'balls' | 'check-in' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
 type DetailReturnView = 'games' | 'progress';
 
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -126,6 +129,7 @@ export default function App() {
   const linkHandled = useRef(false);
   /** A hire key to drive with, from a link, a booking or a check-in. */
   const [hireKey, setHireKey] = useState<Uint8Array | null>(null);
+  const [checkInCode, setCheckInCode] = useState<string | null>(null);
   const targetSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const pendingTargetSave = useRef<{ sessionId: string; target: Target } | null>(null);
   const targetSaveInFlight = useRef(false);
@@ -166,9 +170,23 @@ export default function App() {
       window.history.replaceState(null, '', import.meta.env.BASE_URL);
     }
 
+    if (opened.kind === 'drive') setHireKey(opened.hireKey);
+    // A QR code scanned before signing in carries on after the sign-in link.
+    const checkIn = opened.kind === 'check-in' ? opened.code : opened.kind === 'signin' ? takePendingCheckIn() : null;
+    if (opened.kind === 'check-in') savePendingCheckIn(opened.code);
+    setCheckInCode(checkIn);
+
     void loadSnapshot()
       .then(() => {
-        setView(opened.kind === 'drive' || opened.kind === 'bad-hire-link' ? 'drive' : opened.kind === 'signin' ? 'settings' : 'games');
+        setView(
+          checkIn
+            ? 'check-in'
+            : opened.kind === 'drive' || opened.kind === 'bad-hire-link'
+              ? 'drive'
+              : opened.kind === 'signin'
+                ? 'settings'
+                : 'games',
+        );
       })
       .catch((bootError) => {
         setError(errorMessage(bootError));
@@ -428,7 +446,16 @@ export default function App() {
       </AppShell>
     );
   } else if (view === 'drive') {
-    screen = <DriveScreen onTab={selectTab} />;
+    screen = (
+      <DriveScreen
+        key={hireKey ? bytesToBase64url(hireKey) : 'bench'}
+        onTab={selectTab}
+        hire={hireKey ? { key: hireKey, verifier: () => account.api.hireKeyVerifier() } : null}
+        badHireLink={link.kind === 'bad-hire-link' && !hireKey}
+      />
+    );
+  } else if (view === 'check-in' && checkInCode) {
+    screen = <CheckInScreen code={checkInCode} onTab={selectTab} onDrive={openDrive} />;
   } else if (view === 'book') {
     screen = <BookScreen onTab={selectTab} onDrive={openDrive} />;
   } else if (view === 'balls') {

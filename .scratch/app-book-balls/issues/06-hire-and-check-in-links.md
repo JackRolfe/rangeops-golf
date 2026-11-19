@@ -1,6 +1,6 @@
 # 06. Hire links and check-in
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 02, 03, 04
 
@@ -10,4 +10,8 @@ Blocked by: 02, 03, 04
 
 ## Acceptance
 
-- [ ] Tests: a hire key from the fake drives the simulator; a key for another time is refused with the right message; check-in shows the bay and the Drive button; an unknown code says so.
+- [x] Tests: a hire key from the fake drives the simulator; a key for another time is refused with the right message; check-in shows the bay and the Drive button; an unknown code says so.
+
+## Comments
+
+Done. `DriveScreen` takes a `hire`; the simulator poses as the key's robot and checks it with `api.hireKeyVerifier()` (Ed25519 against `/hire-keys/public-key` when live, bench with the fake). `CheckInScreen` checks in as soon as there's a session. A code scanned signed out is kept 30 minutes in localStorage, so it carries on after a sign-in link opens in a new tab.

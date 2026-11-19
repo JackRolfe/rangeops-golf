@@ -3,7 +3,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { issueBenchKey } from '../robot/hireKey';
+import { benchVerifier, issueBenchKey } from '../robot/hireKey';
 import { SimulatedRobot, type SimulatedRobotOptions } from '../robot/SimulatedRobot';
 import { DriveScreen } from './DriveScreen';
 
@@ -102,5 +102,47 @@ describe('DriveScreen', () => {
     await act(async () => {});
     expect(robot.connected).toBe(false);
     expect(robot.firmware.locked).toBe(true);
+  });
+});
+
+describe('DriveScreen with a hire key', () => {
+  const realNow = () => Math.floor(Date.now() / 1000);
+
+  function renderHire(window: { start: number; end: number }) {
+    let robot: SimulatedRobot | undefined;
+    const keyPromise = issueBenchKey({ serial: 'A1B2', bay: 3, ...window });
+    return keyPromise.then((key) => {
+      render(
+        <DriveScreen
+          onTab={vi.fn()}
+          hire={{ key, verifier: async () => benchVerifier }}
+          createTarget={(hired) => {
+            robot = new SimulatedRobot({ autoRun: false, balls: [], ...hired });
+            return { link: robot, world: () => robot!.world() };
+          }}
+        />,
+      );
+      return () => robot!;
+    });
+  }
+
+  it('drives the hired robot, which takes the key’s serial and bay', async () => {
+    const robot = await renderHire({ start: realNow() - 60, end: realNow() + 3600 });
+    expect(screen.getByText(/Mulligan-A1B2 is hired for Bay 3/)).toBeInTheDocument();
+    expect(screen.getByText('Bay 3')).toBeInTheDocument();
+    await connect();
+    expect(screen.getByText('Mulligan-A1B2 · simulator')).toBeInTheDocument();
+    expect(robot().firmware.serial).toBe('A1B2');
+  });
+
+  it('is refused before the hire starts, with the reason', async () => {
+    await renderHire({ start: realNow() + 3600, end: realNow() + 7200 });
+    await connect();
+    expect(screen.getByRole('alert')).toHaveTextContent('This hire hasn’t started yet.');
+  });
+
+  it('says when a hire link was broken', () => {
+    render(<DriveScreen onTab={vi.fn()} badHireLink />);
+    expect(screen.getByRole('alert')).toHaveTextContent('That hire link is broken.');
   });
 });
