@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import type { ImageDimensions, PracticeSession } from '../domain/types';
+import { GAME_NAMES } from '../domain/games';
 import { getSessionAccuracy } from '../domain/metrics';
 import { formatDate, formatPercent, pluralShots } from '../domain/format';
 
@@ -23,7 +24,7 @@ export function SessionRow({ session, dimensions, onClick }: SessionRowProps) {
           </time>
         </span>
         <span className="session-row__meta">
-          {pluralShots(session.shots.length)}{session.note ? ` · ${session.note}` : ''}
+          {GAME_NAMES[session.mode]} · {pluralShots(session.shots.length)}{session.note ? ` · ${session.note}` : ''}
         </span>
       </span>
       <strong className={`session-row__score ${percent < 50 ? 'is-low' : ''}`}>{percent}%</strong>

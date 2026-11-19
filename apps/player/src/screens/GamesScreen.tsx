@@ -1,5 +1,6 @@
-import { Clock3, Flag, Play, Target } from 'lucide-react';
-import type { PracticeSession, RangeMap } from '../domain/types';
+import { Clock3, Crosshair, Play, Shrink, Target } from 'lucide-react';
+import type { GameMode, PracticeSession, RangeMap } from '../domain/types';
+import { GAME_NAMES } from '../domain/games';
 import { getLastNAccuracy, getSessionTrend } from '../domain/metrics';
 import { formatChartDate, formatPercent } from '../domain/format';
 import { AccuracyChart } from '../components/AccuracyChart';
@@ -14,7 +15,7 @@ interface GamesScreenProps {
   ranges: RangeMap[];
   sessions: PracticeSession[];
   draft: PracticeSession | null;
-  onStart: () => void;
+  onStart: (mode: GameMode) => void;
   onResume: () => void;
   onDiscardDraft: () => void;
   onProgress: () => void;
@@ -79,9 +80,20 @@ export function GamesScreen({
           </p>
         </section>
 
-        <button className="button button--primary button--full home-start" type="button" onClick={onStart}>
-          <Flag aria-hidden="true" /> Start practice
-        </button>
+        {draft ? null : (
+          <section className="game-cards" aria-label="Choose a game">
+            <button className="game-card" type="button" onClick={() => onStart('bullseye')}>
+              <Crosshair aria-hidden="true" />
+              <strong>{GAME_NAMES.bullseye}</strong>
+              <span>Land it in the ring.</span>
+            </button>
+            <button className="game-card game-card--shrink" type="button" onClick={() => onStart('shrink')}>
+              <Shrink aria-hidden="true" />
+              <strong>{GAME_NAMES.shrink}</strong>
+              <span>Three in a row shrinks the ring.</span>
+            </button>
+          </section>
+        )}
 
         <section className="home-section">
           <h2 className="section-heading">Recent accuracy</h2>
@@ -117,7 +129,7 @@ export function GamesScreen({
             <div className="empty-state">
               <Target aria-hidden="true" />
               <h3>No sessions yet</h3>
-              <p>Set a target, tap each landing point, and your progress will build automatically.</p>
+              <p>Pick a game, set the ring, and tap where each ball lands. Your progress builds as you play.</p>
             </div>
           )}
         </section>

@@ -170,7 +170,12 @@ export function RangeMapCanvas({
   const width = imageWidth > 0 ? imageWidth : 1;
   const height = imageHeight > 0 ? imageHeight : 1;
   const shortEdge = Math.min(width, height);
-  const targetRadius = clamp(target.radius, MIN_TARGET_RADIUS, MAX_TARGET_RADIUS);
+  // The size limits apply to setting the ring. Once play starts, draw the ring
+  // the shots are judged against, which Shrink the Ring can take below the minimum.
+  const targetRadius =
+    mode === 'setup'
+      ? clamp(target.radius, MIN_TARGET_RADIUS, MAX_TARGET_RADIUS)
+      : clamp(target.radius, 0, MAX_TARGET_RADIUS);
   const targetRadiusPixels = targetRadius * shortEdge;
   const targetX = clamp(target.cx) * width;
   const targetY = clamp(target.cy) * height;
@@ -390,6 +395,7 @@ export function RangeMapCanvas({
           cx={targetX}
           cy={targetY}
           r={targetRadiusPixels}
+          data-target-ring="true"
           fill="color-mix(in srgb, var(--target) 14%, transparent)"
           stroke="var(--target)"
           strokeWidth={3}

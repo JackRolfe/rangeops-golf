@@ -91,7 +91,7 @@ test('records a session, restores it after reload, and starts offline', async ({
   await expect(page.getByRole('heading', { name: 'Harbour Practice Range' })).toBeVisible();
   await expect(page.getByText('No sessions yet')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start practice' }).click();
+  await page.getByRole('button', { name: /^Bullseye/ }).click();
   await expect(page.getByRole('heading', { name: 'What are you hitting?' })).toBeVisible();
   await page.getByLabel('Club').selectOption({ label: '7 iron' });
   await page.getByLabel(/Note/).fill('Tempo drill');
@@ -168,6 +168,43 @@ test('records a session, restores it after reload, and starts offline', async ({
   await context.setOffline(false);
 
   expect(consoleErrors).toEqual([]);
+});
+
+test('plays Shrink the Ring start to finish', async ({ page }) => {
+  await page.goto('./');
+  await page.getByLabel('Range name').fill('Shrink Range');
+  await page.locator('#range-image').setInputFiles({
+    name: 'range.png',
+    mimeType: 'image/png',
+    buffer: await makeRangeImage(page),
+  });
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('button', { name: /^Shrink the Ring/ }).click();
+  await expect(page.getByRole('heading', { name: 'Shrink the Ring' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Shrink the Ring' })).toBeChecked();
+  await page.getByLabel('Club').selectOption({ label: 'Pitching wedge' });
+  await page.getByRole('button', { name: 'Set target' }).click();
+  await page.getByRole('button', { name: 'Set target' }).click();
+  await expect(page.getByText('3 more in a row to shrink the ring.')).toBeVisible();
+
+  // The default ring is centred at (0.5, 0.42).
+  for (let shot = 1; shot <= 3; shot++) {
+    await clickMapAtNormalized(page, 0.5, 0.42);
+    await expect(page.getByText(`${shot} ${shot === 1 ? 'shot' : 'shots'}`, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByText('The ring shrank to 80%.')).toBeVisible();
+  await expect(page.getByTestId('streak')).toHaveText('3');
+  await clickMapAtNormalized(page, 0.1, 0.9);
+  await expect(page.getByTestId('streak')).toHaveText('0');
+  await page.screenshot({ path: '/tmp/rangeops-shrink.png' });
+
+  await page.getByRole('button', { name: 'Finish' }).click();
+  await expect(page.getByRole('heading', { name: 'Pitching wedge' })).toBeVisible();
+  await expect(page.getByText('Shrank the ring 1 time, down to 80%.')).toBeVisible();
+  await expect(page.getByText('75%', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Go back' }).click();
+  await expect(page.getByText(/Shrink the Ring · 4 shots/)).toBeVisible();
 });
 
 test.describe('desktop frame', () => {

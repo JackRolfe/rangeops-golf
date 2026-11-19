@@ -18,7 +18,7 @@ import {
   undoLastShot,
   updateSession,
 } from './data/db';
-import { DEFAULT_PREFERENCES, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
+import { DEFAULT_PREFERENCES, type GameMode, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
 import type { TabId } from './components/TabBar';
 import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
@@ -106,6 +106,7 @@ export default function App() {
   const [currentSession, setCurrentSession] = useState<PracticeSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<PracticeSession | null>(null);
   const [recording, setRecording] = useState(false);
+  const [setupMode, setSetupMode] = useState<GameMode>('bullseye');
   const [detailReturn, setDetailReturn] = useState<DetailReturnView>('games');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,17 +178,18 @@ export default function App() {
     }
   }
 
-  function openPractice(): void {
+  function openPractice(mode: GameMode = 'bullseye'): void {
     if (activeDraft) {
       setCurrentSession(activeDraft);
       setRecording(activeDraft.targetLocked || activeDraft.shots.length > 0);
       setView('practice');
       return;
     }
+    setSetupMode(mode);
     setView('setup');
   }
 
-  async function startSession(club: string, note: string): Promise<void> {
+  async function startSession(club: string, note: string, mode: GameMode): Promise<void> {
     if (!activeRange) return;
     setBusy(true);
     setError(null);
@@ -195,6 +197,7 @@ export default function App() {
       const session = await createSession({
         rangeId: activeRange.id,
         rangeRevision: activeRange.revision,
+        mode,
         club,
         note,
         target: DEFAULT_TARGET,
@@ -391,7 +394,7 @@ export default function App() {
   } else if (view === 'onboarding' || !activeRange) {
     screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} />;
   } else if (view === 'setup') {
-    screen = <SessionSetupScreen lastClub={preferences.lastClub} busy={busy} onBack={() => setView('games')} onContinue={(club, note) => void startSession(club, note)} />;
+    screen = <SessionSetupScreen lastClub={preferences.lastClub} initialMode={setupMode} busy={busy} onBack={() => setView('games')} onContinue={(club, note, mode) => void startSession(club, note, mode)} />;
   } else if (view === 'practice' && currentSession && practiceRange && displayedImageUrl) {
     screen = (
       <PracticeScreen
@@ -460,7 +463,7 @@ export default function App() {
         sessions={sessions}
         draft={activeDraft}
         onStart={openPractice}
-        onResume={openPractice}
+        onResume={() => openPractice()}
         onDiscardDraft={() => void discardDraft()}
         onProgress={() => setView('progress')}
         onSession={(session) => openDetail(session, 'games')}

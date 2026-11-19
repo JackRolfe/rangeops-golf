@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { GAME_MODES, GAME_NAMES } from '../domain/games';
+import type { GameMode } from '../domain/types';
 import { AppShell } from '../components/AppShell';
 import { PageHeader } from '../components/PageHeader';
 
@@ -22,29 +24,40 @@ const CLUBS = [
 
 interface SessionSetupScreenProps {
   lastClub: string | null;
+  initialMode: GameMode;
   busy: boolean;
   onBack: () => void;
-  onContinue: (club: string, note: string) => void;
+  onContinue: (club: string, note: string, mode: GameMode) => void;
 }
 
-export function SessionSetupScreen({ lastClub, busy, onBack, onContinue }: SessionSetupScreenProps) {
+export function SessionSetupScreen({ lastClub, initialMode, busy, onBack, onContinue }: SessionSetupScreenProps) {
   const [club, setClub] = useState(lastClub && CLUBS.includes(lastClub) ? lastClub : '7 iron');
+  const [mode, setMode] = useState<GameMode>(initialMode);
   const [note, setNote] = useState('');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onContinue(club, note.trim());
+    onContinue(club, note.trim(), mode);
   }
 
   return (
     <AppShell>
-      <PageHeader title="New practice" onBack={onBack} />
+      <PageHeader title={GAME_NAMES[mode]} onBack={onBack} />
       <div className="screen-scroll setup-screen">
         <div className="setup-screen__intro">
           <h2>What are you hitting?</h2>
           <p>Choose a club now. You can add an optional note for context later.</p>
         </div>
         <form className="form-stack" onSubmit={handleSubmit}>
+          <fieldset className="game-choice">
+            <legend>Game</legend>
+            {GAME_MODES.map((option) => (
+              <label key={option} className={option === mode ? 'is-selected' : undefined}>
+                <input type="radio" name="game" value={option} checked={option === mode} onChange={() => setMode(option)} />
+                {GAME_NAMES[option]}
+              </label>
+            ))}
+          </fieldset>
           <div className="field">
             <label htmlFor="club">Club</label>
             <select id="club" value={club} onChange={(event) => setClub(event.target.value)}>

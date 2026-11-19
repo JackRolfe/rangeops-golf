@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, Hand, Move, Undo2 } from 'lucide-react';
 import type { PracticeSession, RangeMap, Target } from '../domain/types';
 import type { NormalizedPoint } from '../components/RangeMapCanvas';
+import { GAME_NAMES, SHRINK_FLOOR_RATIO, SHRINK_STREAK, ringForNextShot } from '../domain/games';
 import { getSessionAccuracy } from '../domain/metrics';
 import { formatPercent } from '../domain/format';
 import { AppShell } from '../components/AppShell';
@@ -22,6 +23,17 @@ interface PracticeScreenProps {
   onLeave: () => void;
 }
 
+/** What to tell the player about the ring in Shrink the Ring. */
+function shrinkMessage(session: PracticeSession, range: RangeMap): string {
+  const ring = ringForNextShot(session, range);
+  const before = ringForNextShot({ ...session, shots: session.shots.slice(0, -1) }, range);
+  const percent = formatPercent((ring.radius / session.target.radius) * 100);
+  if (ring.shrinks > before.shrinks) return `The ring shrank to ${percent}%.`;
+  if (ring.radius <= session.target.radius * SHRINK_FLOOR_RATIO + 1e-9) return 'The ring is as small as it gets.';
+  const toGo = SHRINK_STREAK - (ring.streak % SHRINK_STREAK);
+  return `${toGo} more in a row to shrink the ring.`;
+}
+
 export function PracticeScreen({
   range,
   imageUrl,
@@ -37,6 +49,11 @@ export function PracticeScreen({
 }: PracticeScreenProps) {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const summary = getSessionAccuracy(session, range);
+  const ring = ringForNextShot(session, range);
+  const shrink = session.mode === 'shrink';
+  // While setting up, the ring is the starting ring the player is sizing.
+  // Once playing, draw the ring the next shot will be judged against.
+  const shownTarget = recording ? { ...session.target, radius: ring.radius } : session.target;
 
   return (
     <AppShell fullBleed className="practice-screen">
@@ -52,7 +69,11 @@ export function PracticeScreen({
 
       <div className="practice-instruction" aria-live="polite">
         {recording ? <Hand aria-hidden="true" /> : <Move aria-hidden="true" />}
-        <strong>{recording ? 'Tap where the ball landed' : 'Move and resize the target'}</strong>
+        <span className="practice-instruction__text">
+          <small>{GAME_NAMES[session.mode]}</small>
+          <strong>{recording ? 'Tap where the ball landed' : 'Move and resize the target'}</strong>
+          {recording && shrink ? <small>{shrinkMessage(session, range)}</small> : null}
+        </span>
       </div>
 
       <div className="practice-map-wrap">
@@ -61,7 +82,7 @@ export function PracticeScreen({
           imageUrl={imageUrl}
           imageWidth={range.width}
           imageHeight={range.height}
-          target={session.target}
+          target={shownTarget}
           shots={session.shots}
           mode={recording ? 'record' : 'setup'}
           disabled={busy}
@@ -76,10 +97,17 @@ export function PracticeScreen({
             <strong>{summary.onTarget}<span> of {summary.total}</span></strong>
             <small>on target</small>
           </div>
-          <div className="practice-stat">
-            <strong>{formatPercent(summary.percentage)}%</strong>
-            <small>accuracy</small>
-          </div>
+          {shrink ? (
+            <div className="practice-stat">
+              <strong data-testid="streak">{ring.streak}</strong>
+              <small>in a row</small>
+            </div>
+          ) : (
+            <div className="practice-stat">
+              <strong>{formatPercent(summary.percentage)}%</strong>
+              <small>accuracy</small>
+            </div>
+          )}
           <button className="button button--secondary practice-undo" type="button" disabled={!session.shots.length || busy} onClick={onUndo}>
             <Undo2 aria-hidden="true" />
             Undo last
@@ -87,7 +115,11 @@ export function PracticeScreen({
         </footer>
       ) : (
         <footer className="practice-footer practice-footer--setup">
-          <p>Drag the circle to aim. Use the handle to set its visual size.</p>
+          <p>
+            {shrink
+              ? 'Drag the circle to aim and size the starting ring. Three in a row shrinks it.'
+              : 'Drag the circle to aim. Use the handle to set its visual size.'}
+          </p>
           <button className="button button--primary" type="button" disabled={busy} onClick={onSetTarget}>
             Set target
           </button>
