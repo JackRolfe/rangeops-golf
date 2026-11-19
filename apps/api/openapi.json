@@ -1346,6 +1346,53 @@
           "method"
         ],
         "description": "Spend the bucket's balls from your ball credit at this range"
+      },
+      "CheckIn": {
+        "type": "object",
+        "properties": {
+          "checkedInAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "bay": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "number": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "name"
+            ]
+          },
+          "booking": {
+            "$ref": "#/components/schemas/Booking"
+          },
+          "hireLink": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Opens the Drive tab with the hire key, if a robot was hired"
+          }
+        },
+        "required": [
+          "checkedInAt",
+          "bay",
+          "booking",
+          "hireLink"
+        ]
       }
     },
     "parameters": {}
@@ -2476,6 +2523,65 @@
           },
           "409": {
             "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-in/{code}": {
+      "post": {
+        "tags": [
+          "Bookings"
+        ],
+        "summary": "Check in at a bay by scanning its QR code",
+        "description": "The QR code at each bay opens APP_URL/check-in/<code>; the app posts that code here. Finds your confirmed booking at that bay that is running now or starts within 15 minutes, marks it checked in, and returns the hire link if a robot was hired. Checking in again is harmless and keeps the first time.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The bay's check-in code"
+            },
+            "required": true,
+            "description": "The bay's check-in code",
+            "name": "code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckIn"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {

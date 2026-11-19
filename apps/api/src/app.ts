@@ -5,6 +5,7 @@ import { ApiError } from './errors.js';
 import { authRoutes } from './auth/routes.js';
 import { ballRoutes } from './balls/routes.js';
 import { bookingRoutes } from './bookings/routes.js';
+import { checkInRoutes } from './checkin/routes.js';
 import { healthRoutes } from './health.js';
 import { hireRoutes } from './hires/routes.js';
 import { rangeRoutes } from './ranges/routes.js';
@@ -55,6 +56,7 @@ export function createApp(deps: Deps): Api {
   bookingRoutes(app, deps);
   hireRoutes(app, deps);
   ballRoutes(app, deps);
+  checkInRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;

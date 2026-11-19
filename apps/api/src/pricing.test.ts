@@ -3,7 +3,7 @@ import { hourSlot, openHourStarts, percentOff } from './pricing.js';
 import type { BayRow, RangeData } from './ranges/repo.js';
 
 const bay = (over: Partial<BayRow> = {}): BayRow => ({
-  id: 'b', range_id: 'r', number: 1, name: 'Bay 1', active: true, off_peak_cents: null, peak_cents: null, ...over,
+  id: 'b', range_id: 'r', number: 1, name: 'Bay 1', active: true, off_peak_cents: null, peak_cents: null, check_in_code: 'x', ...over,
 });
 
 const data: RangeData = {

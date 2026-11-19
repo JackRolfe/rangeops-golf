@@ -20,6 +20,7 @@ export interface BayRow {
   active: boolean;
   off_peak_cents: number | null;
   peak_cents: number | null;
+  check_in_code: string;
 }
 
 export interface HoursRow {

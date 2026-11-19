@@ -1,6 +1,6 @@
 # 09. Bay check-in by QR code
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06
 Spec: [../spec.md](../spec.md) (Check-in at the bay)
 
@@ -14,3 +14,7 @@ Bay check-in codes (made with the bay, rotatable by staff). `POST /check-in/{cod
 - [ ] Checking in twice keeps the first time
 - [ ] Unknown code 404; someone else's booking isn't found
 - [ ] The returned hire key is the one issued at booking
+
+## Comments
+
+Done. Codes are 128 random bits as 32 hex characters, made by the database, and never appear in public range or bay responses. The QR code should open `APP_URL/check-in/<code>`; the app posts the code to `POST /check-in/{code}`. Staff read and rotate codes through the console bay endpoints in 11.
