@@ -636,6 +636,9 @@
           "order": {
             "$ref": "#/components/schemas/Order"
           },
+          "hire": {
+            "$ref": "#/components/schemas/Hire"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -667,6 +670,7 @@
           "totalCents",
           "currency",
           "order",
+          "hire",
           "createdAt",
           "cancelledAt"
         ]
@@ -786,6 +790,107 @@
           "refundedAt"
         ]
       },
+      "Hire": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "cancelled"
+            ]
+          },
+          "robot": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "serial": {
+                "type": "string",
+                "example": "A1B2"
+              },
+              "name": {
+                "type": "string"
+              },
+              "bluetoothName": {
+                "type": "string",
+                "description": "What the robot advertises over Bluetooth",
+                "example": "Mulligan-A1B2"
+              }
+            },
+            "required": [
+              "id",
+              "serial",
+              "name",
+              "bluetoothName"
+            ]
+          },
+          "bayNumber": {
+            "type": "integer"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "key": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "hex": {
+                "type": "string",
+                "description": "The 78-byte hire key, hex"
+              },
+              "base64url": {
+                "type": "string",
+                "description": "The same bytes, base64url without padding"
+              }
+            },
+            "required": [
+              "hex",
+              "base64url"
+            ],
+            "description": "Write these 78 bytes to the robot's Unlock characteristic. Null until paid, and once cancelled."
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Opens the Drive tab with the key: APP_URL/drive?hire=<base64url>",
+            "example": "http://localhost:5173/app/drive?hire=AUExQjKA7DZrkPo2awM…"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "robot",
+          "bayNumber",
+          "startsAt",
+          "endsAt",
+          "key",
+          "link"
+        ],
+        "description": "The robot hire, if a robot was booked"
+      },
       "BookingRequest": {
         "type": "object",
         "properties": {
@@ -839,6 +944,35 @@
         },
         "required": [
           "kind"
+        ]
+      },
+      "HireKeyPublicKey": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "Ed25519"
+            ]
+          },
+          "hex": {
+            "type": "string"
+          },
+          "base64": {
+            "type": "string"
+          },
+          "keyVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          }
+        },
+        "required": [
+          "algorithm",
+          "hex",
+          "base64",
+          "keyVersion"
         ]
       }
     },
@@ -1522,6 +1656,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hire-keys/public-key": {
+      "get": {
+        "tags": [
+          "Robots"
+        ],
+        "summary": "The public key robots check hire keys against",
+        "description": "Flash these 32 bytes into the firmware. Hire keys are Ed25519-signed; see robot/README.md.",
+        "responses": {
+          "200": {
+            "description": "The raw Ed25519 public key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HireKeyPublicKey"
                 }
               }
             }

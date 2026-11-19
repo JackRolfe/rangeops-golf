@@ -1,6 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import type { Queryable } from '../db/db.js';
 import type { Deps } from '../deps.js';
+import { HireSchema, hireForBooking } from '../hires/service.js';
 import { OrderSchema, orderOut, type OrderRow } from '../orders/service.js';
 import type { BayRow, RangeRow } from '../ranges/repo.js';
 import { AddOnKindSchema, Cents, Instant, RangeSummarySchema, rangeSummary } from '../ranges/schemas.js';
@@ -32,6 +33,7 @@ export const BookingSchema = z
     totalCents: Cents,
     currency: z.string(),
     order: OrderSchema.nullable(),
+    hire: HireSchema.nullable().openapi({ description: 'The robot hire, if a robot was booked' }),
     createdAt: Instant,
     cancelledAt: Instant.nullable(),
   })
@@ -41,7 +43,7 @@ export type BookingOut = z.infer<typeof BookingSchema>;
 
 export async function bookingOut(deps: Deps, b: BookingRow, q?: Queryable): Promise<BookingOut> {
   const { db } = deps;
-  const [range, bay, addOns, order] = await Promise.all([
+  const [range, bay, addOns, order, hire] = await Promise.all([
     db.one<RangeRow>('select * from ranges where id = $1', [b.range_id], q),
     db.one<BayRow>('select * from bays where id = $1', [b.bay_id], q),
     db.many<{ kind: 'robot' | 'club_hire' | 'lesson'; quantity: number; total_cents: number }>(
@@ -50,6 +52,7 @@ export async function bookingOut(deps: Deps, b: BookingRow, q?: Queryable): Prom
       q,
     ),
     b.order_id ? db.one<OrderRow>('select * from orders where id = $1', [b.order_id], q) : Promise.resolve(undefined),
+    hireForBooking(deps, b.id, q),
   ]);
   return {
     id: b.id,
@@ -68,6 +71,7 @@ export async function bookingOut(deps: Deps, b: BookingRow, q?: Queryable): Prom
     totalCents: order?.total_cents ?? 0,
     currency: range.currency,
     order: order ? await orderOut(deps, order, q) : null,
+    hire,
     createdAt: b.created_at.toISOString(),
     cancelledAt: b.cancelled_at?.toISOString() ?? null,
   };

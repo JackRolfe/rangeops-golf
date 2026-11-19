@@ -37,6 +37,13 @@ export async function seedDemo(db: Db): Promise<boolean> {
          ($1, 'Small bucket', 50, 1000), ($1, 'Medium bucket', 100, 1800), ($1, 'Large bucket', 150, 2400)`,
       [rangeId],
     );
+    await tx.query(
+      `insert into robots (range_id, serial, name, home_bay_id)
+       select $1, 'A1B2', 'Mulligan A1B2', id from bays where range_id = $1 and number = 1
+       union all
+       select $1, 'C3D4', 'Mulligan C3D4', id from bays where range_id = $1 and number = 2`,
+      [rangeId],
+    );
     const staff = await tx.query<{ id: string }>("insert into accounts (email, name) values ('staff@rangeops.test', 'Demo Staff') returning id");
     await tx.query('insert into range_staff (account_id, range_id) values ($1, $2)', [staff.rows[0]!.id, rangeId]);
   });

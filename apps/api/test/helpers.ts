@@ -3,6 +3,7 @@ import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { createApp, type Api } from '../src/app.js';
 import { CapturingMailer } from '../src/auth/mailer.js';
 import { Db, migrate } from '../src/db/db.js';
+import { generateSigner } from '../src/hires/signer.js';
 import { FakePaymentProvider } from '../src/payments/fake.js';
 import { seedDemo } from '../src/db/seed.js';
 import type { Deps } from '../src/deps.js';
@@ -54,6 +55,7 @@ export async function makeTestApp(): Promise<TestApp> {
     config: { appUrl: 'https://app.rangeops.test' },
     mailer,
     payments,
+    signer: generateSigner(),
   };
   const app = createApp(deps);
   const call: TestApp['call'] = async (method, path, opts = {}) => {

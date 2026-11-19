@@ -1,5 +1,6 @@
 import type { Deps } from '../deps.js';
 import { conflict, paymentDeclined, unprocessable } from '../errors.js';
+import { activateHire, cancelHire, reserveRobot } from '../hires/service.js';
 import { chargeOrder, createOrder, markPaid, refundOrder, type OrderLineRow, type OrderRow } from '../orders/service.js';
 import { hourSlot } from '../pricing.js';
 import { findBay, loadRange, type AddOnKind } from '../ranges/repo.js';
@@ -95,7 +96,8 @@ function isExclusionViolation(err: unknown, constraint: string) {
 
 /**
  * Books a bay. For `rangeops` bookings it charges the payment method; for
- * `external` ones the money was taken elsewhere.
+ * `external` ones the money was taken elsewhere. Either way, a robot add-on
+ * becomes a hire with a signed key.
  */
 export async function createBooking(deps: Deps, req: BookingRequest): Promise<BookingRow> {
   const { data, bay, addOns, lines } = await quoteBooking(deps, req);
@@ -119,6 +121,7 @@ export async function createBooking(deps: Deps, req: BookingRequest): Promise<Bo
       for (const a of addOns) {
         await deps.db.many('insert into booking_addons (booking_id, kind, quantity, total_cents) values ($1, $2, $3, $4)', [booking.id, a.kind, a.quantity, a.totalCents], tx);
       }
+      if (addOns.some((a) => a.kind === 'robot')) await reserveRobot(deps, booking, tx);
       return { booking, order };
     }));
   } catch (err) {
@@ -135,10 +138,12 @@ export async function createBooking(deps: Deps, req: BookingRequest): Promise<Bo
 
   if (paid.status !== 'paid') {
     await setCancelled(deps, booking.id);
+    await cancelHire(deps, booking.id);
     throw paymentDeclined(paid.failure_reason ?? 'The payment did not go through.');
   }
 
   booking = await deps.db.one<BookingRow>("update bookings set status = 'confirmed' where id = $1 returning *", [booking.id]);
+  await activateHire(deps, booking.id);
   return booking;
 }
 
@@ -149,7 +154,7 @@ function setCancelled(deps: Deps, bookingId: string) {
   );
 }
 
-/** Cancels a confirmed booking and refunds its order. */
+/** Cancels a booking, refunds its order and frees its robot. */
 export async function cancelBooking(deps: Deps, booking: BookingRow): Promise<BookingRow> {
   if (booking.status === 'cancelled') throw conflict('That booking is already cancelled.', 'already_cancelled');
   const cancelled = await setCancelled(deps, booking.id);
@@ -157,5 +162,6 @@ export async function cancelBooking(deps: Deps, booking: BookingRow): Promise<Bo
     const order = await deps.db.one<OrderRow>('select * from orders where id = $1', [booking.order_id]);
     await refundOrder(deps, order);
   }
+  await cancelHire(deps, booking.id);
   return cancelled;
 }

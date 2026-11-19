@@ -12,7 +12,7 @@ This spec is for a backend that runs entirely on one machine: no host, no real e
 
 A TypeScript HTTP API in `apps/api`, on Node 22, started with `npm run dev` on port 8787. Self-contained: its own `package.json` and lockfile, not in the root workspaces yet.
 
-- **Stack** ([ADR 0001](../../docs/adr/0001-backend-stack-for-local-api.md)): Hono with `@hono/zod-openapi`, PGlite (Postgres compiled to WASM, in-process), Vitest.
+- **Stack** ([ADR 0010](../../docs/adr/0010-backend-stack-for-local-api.md)): Hono with `@hono/zod-openapi`, PGlite (Postgres compiled to WASM, in-process), Vitest.
 - **Database**: Postgres SQL, run by PGlite. On disk at `apps/api/.data/` in dev (gitignored), in memory in tests. Plain SQL migrations in `src/db/migrations/`, applied in order at start-up.
 - **OpenAPI**: generated from the route definitions and committed as `apps/api/openapi.json`. A test fails if the committed file differs from what the routes produce, so the file always matches.
 - **Seed**: on first start the dev database gets one demo range (see [Demo data](#demo-data)).

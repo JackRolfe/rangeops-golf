@@ -5,6 +5,7 @@ import { ApiError } from './errors.js';
 import { authRoutes } from './auth/routes.js';
 import { bookingRoutes } from './bookings/routes.js';
 import { healthRoutes } from './health.js';
+import { hireRoutes } from './hires/routes.js';
 import { rangeRoutes } from './ranges/routes.js';
 
 export type Api = OpenAPIHono;
@@ -51,6 +52,7 @@ export function createApp(deps: Deps): Api {
   rangeRoutes(app, deps);
   authRoutes(app, deps);
   bookingRoutes(app, deps);
+  hireRoutes(app, deps);
 
   app.doc31('/openapi.json', openApiConfig);
   return app;

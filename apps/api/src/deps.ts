@@ -1,5 +1,6 @@
 import type { Mailer } from './auth/mailer.js';
 import type { Db } from './db/db.js';
+import type { HireKeySigner } from './hires/signer.js';
 import type { PaymentProvider } from './payments/provider.js';
 
 export interface Config {
@@ -14,4 +15,5 @@ export interface Deps {
   config: Config;
   mailer: Mailer;
   payments: PaymentProvider;
+  signer: HireKeySigner;
 }

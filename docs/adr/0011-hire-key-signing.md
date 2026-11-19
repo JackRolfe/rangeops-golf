@@ -1,4 +1,4 @@
-# 0002. Hire keys: who signs them, with what, and how they reach the phone
+# 0011. Hire keys: who signs them, with what, and how they reach the phone
 
 Date: 2026-11-19
 Status: accepted

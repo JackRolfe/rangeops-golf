@@ -1,4 +1,4 @@
-# 0001. Backend stack: Hono, PGlite and generated OpenAPI, run locally
+# 0010. Backend stack: Hono, PGlite and generated OpenAPI, run locally
 
 Date: 2026-11-19
 Status: accepted
@@ -14,7 +14,7 @@ Decision 4 in [docs/PLAN.md](../PLAN.md) recommends a small TypeScript API on se
 - **Plain SQL migrations**, numbered files applied in order at start-up and recorded in `schema_migrations`. No ORM, to keep the dependency list short and the SQL readable.
 - **`@hono/zod-openapi`**: each route is declared once with Zod schemas, which validate requests and generate the OpenAPI document. The generated `apps/api/openapi.json` is committed, and a test fails if it drifts from the routes.
 - **Vitest**, calling the app through `app.request()` with a fresh in-memory database per test.
-- **Ed25519 hire keys with `node:crypto`**, no extra library. See [0002](0002-hire-key-signing.md).
+- **Ed25519 hire keys with `node:crypto`**, no extra library. See [0011](0011-hire-key-signing.md).
 - **Payments behind a `PaymentProvider` interface**, with only a fake implementation until Stripe is wired in.
 
 ## Consequences
