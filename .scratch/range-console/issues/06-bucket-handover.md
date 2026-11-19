@@ -1,6 +1,6 @@
 # 06 Hand over buckets against codes
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 

@@ -1,3 +1,4 @@
+import { handOver, type HandoverResult } from '../domain/buckets';
 import { quoteBooking } from '../domain/pricing';
 import { validateSetup } from '../domain/setup';
 import { toIsoDate, toLocalDateTime, dateOf } from '../domain/time';
@@ -81,6 +82,14 @@ export class FakeConsoleApi implements ConsoleApi {
 
   async listOrders(date: IsoDate): Promise<Order[]> {
     return copy(this.state.orders.filter((o) => dateOf(o.paidAt) === date).sort((a, b) => b.paidAt.localeCompare(a.paidAt)));
+  }
+
+  async handOverBucket(code: string): Promise<HandoverResult> {
+    const result = handOver(code, this.state.orders, this.now());
+    if (result.outcome === 'handed-over') {
+      this.state.orders = this.state.orders.map((o) => (o.id === result.order.id ? result.order : o));
+    }
+    return copy(result);
   }
 
   async listPasses(): Promise<Pass[]> {

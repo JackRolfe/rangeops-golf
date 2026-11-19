@@ -1,5 +1,6 @@
 // The demo range the fake starts with: 20 bays, three robots, and a believable week of bookings,
 // bucket orders and passes around "now". Seeded by date, so a day looks the same on every reload.
+import { generateCode } from '../domain/buckets';
 import { quoteBooking } from '../domain/pricing';
 import { addDays, addMinutes, dateTimeAt, hourOf, toIsoDate, toLocalDateTime, weekdayOf } from '../domain/time';
 import type {
@@ -22,9 +23,7 @@ import { pick, seededRandom } from './rng';
 export const DEMO_BAY_COUNT = 20;
 
 /** Codes that are always there, for demos and the smoke test. */
-export const DEMO_CODES = { paid: 'PUTT42', handedOver: 'CHIP88', refunded: 'DRAW77' } as const;
-
-const CODE_ALPHABET = [...'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'];
+export const DEMO_CODES = { paid: 'PUTT42', handedOver: 'WEDG38', refunded: 'DRAW77' } as const;
 
 const PLAYERS = [
   'The Nguyen family', 'Priya Shah', 'Tom & Mia Walker', 'The Kowalski kids', 'Hannah Lee', 'Ari Cohen',
@@ -154,13 +153,9 @@ export function seedDemoRange(nowDate: Date): FakeState {
   // Bucket orders: today's, counting back from now, and yesterday's.
   const usedCodes = new Set<string>(Object.values(DEMO_CODES));
   const newCode = () => {
-    for (;;) {
-      const code = Array.from({ length: 6 }, () => pick(random, CODE_ALPHABET)).join('');
-      if (!usedCodes.has(code)) {
-        usedCodes.add(code);
-        return code;
-      }
-    }
+    const code = generateCode(random, usedCodes);
+    usedCodes.add(code);
+    return code;
   };
   const addOrder = (paidAt: LocalDateTime, bucket: BucketSize, status: Order['status'], code = newCode()) => {
     const source: Source = random() < 0.75 ? 'app' : 'counter';

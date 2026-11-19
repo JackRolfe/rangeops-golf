@@ -231,3 +231,11 @@ h3 { font-size: 16px; font-weight: 700; }
 .table tr.muted td { color: var(--muted); text-decoration: line-through; text-decoration-color: rgb(0 0 0 / 25%); }
 .table tr.muted td .pill { text-decoration: none; }
 .pill--robot { background: var(--clay-soft); color: #a3301a; }
+
+.result { display: flex; gap: 16px; align-items: flex-start; padding: 20px; border: 2px solid; border-radius: var(--radius-md); }
+.result p { margin-top: 4px; }
+.result--good { border-color: var(--forest); background: var(--forest-soft); color: var(--forest-deep); }
+.result--warn { border-color: #d9b520; background: var(--target-soft); color: #4d3f00; }
+.result--bad { border-color: var(--clay); background: var(--clay-soft); color: #8f2a16; }
+.result__big { font-family: var(--ro-font-sign); font-size: 40px; font-weight: 700; line-height: 1; }
+.input::placeholder { color: var(--line-strong); }

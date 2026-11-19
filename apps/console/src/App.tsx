@@ -1,5 +1,6 @@
 import { Nav } from './components/Nav';
 import { useRoute, type RouteId } from './routes';
+import { HandoverScreen } from './screens/HandoverScreen';
 import { SetupScreen } from './screens/SetupScreen';
 import { TodayScreen } from './screens/TodayScreen';
 
@@ -16,7 +17,7 @@ function Placeholder({ title }: { title: string }) {
 const SCREENS: Record<RouteId, () => React.ReactElement> = {
   live: () => <Placeholder title="Live" />,
   today: TodayScreen,
-  handover: () => <Placeholder title="Handover" />,
+  handover: HandoverScreen,
   passes: () => <Placeholder title="Passes" />,
   'check-in': () => <Placeholder title="Check-in QR" />,
   setup: SetupScreen,

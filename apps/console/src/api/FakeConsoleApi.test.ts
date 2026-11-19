@@ -60,3 +60,11 @@ describe('the demo range', () => {
     expect((await api.listRobots()).every((r) => !r.hire)).toBe(true);
   });
 });
+
+describe('the demo data', () => {
+  it('uses only well-formed bucket codes', async () => {
+    const { isWellFormedCode } = await import('../domain/buckets');
+    const orders = await new FakeConsoleApi({ clock: THURSDAY_5PM }).listOrders('2026-11-19');
+    expect(orders.filter((o) => !isWellFormedCode(o.code))).toEqual([]);
+  });
+});

@@ -52,5 +52,17 @@ export function consoleApiContract(name: string, make: () => { api: ConsoleApi; 
       const after = (await api.listPayments(today)).reduce((sum, p) => sum + p.amount, 0);
       expect(after).toBe(before - second.amount);
     });
+
+    it('hands over a paid bucket once, and refuses unknown codes', async () => {
+      const { api, clock } = make();
+      const paid = (await api.listOrders(toIsoDate(clock()))).find((o) => o.status === 'paid');
+      expect(paid).toBeDefined();
+      const typed = paid!.code.toLowerCase().replace(/(...)/, '$1-');
+      expect(await api.handOverBucket(typed)).toMatchObject({ outcome: 'handed-over', order: { id: paid!.id } });
+      expect((await api.handOverBucket(paid!.code)).outcome).toBe('already-handed-over');
+      const listed = (await api.listOrders(toIsoDate(clock()))).find((o) => o.id === paid!.id);
+      expect(listed?.status).toBe('handed-over');
+      expect((await api.handOverBucket('ZZZZ22')).outcome).toBe('not-found');
+    });
   });
 }

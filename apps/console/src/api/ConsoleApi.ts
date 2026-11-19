@@ -1,6 +1,7 @@
 // The one boundary between the console's screens and wherever range data lives.
 // Today: FakeConsoleApi (in memory). Later: an HTTP adapter for apps/api, or a partner's portal.
 // Every method is async and returns copies, so screens never hold live references into the store.
+import type { HandoverResult } from '../domain/buckets';
 import type { Booking, IsoDate, Order, Pass, Payment, RangeSetup, Result, Robot } from '../domain/types';
 
 export type Clock = () => Date;
@@ -18,6 +19,8 @@ export interface ConsoleApi {
 
   /** Bucket orders paid on a day, newest first. */
   listOrders(date: IsoDate): Promise<Order[]>;
+  /** Hand over the bucket for a code, at most once. Says why not when it can't. */
+  handOverBucket(code: string): Promise<HandoverResult>;
 
   /** Every pass, newest first. */
   listPasses(): Promise<Pass[]>;
