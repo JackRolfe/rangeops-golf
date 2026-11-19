@@ -1,6 +1,6 @@
 # 02. Hire-key tool and shared test vectors
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: none
 Spec: [spec.md](../spec.md#hire-key-tool)
@@ -17,5 +17,9 @@ Layout (78 bytes): version 1; serial, 4 ASCII bytes; start, u32 LE; end, u32 LE;
 
 ## Acceptance
 
-- [ ] `node --test robot/tools` passes: round trip, layout offsets, and the committed vectors equal what `vectors` produces now (byte for byte).
-- [ ] `keygen` refuses to overwrite without `--force` and writes the private key with mode 600.
+- [x] `node --test robot/tools` passes: round trip, layout offsets, and the committed vectors equal what `vectors` produces now (byte for byte).
+- [x] `keygen` refuses to overwrite without `--force` and writes the private key with mode 600.
+
+## Comments
+
+Done. Run the tests with `node --test robot/tools/*.test.mjs` (Node 22 treats a bare directory argument as a pattern). Besides the four commands in the spec there is `bench-key`, which writes the firmware header back to the test key (ADR 0004). `sign --test-key` signs with the test key for the bench.
