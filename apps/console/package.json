@@ -17,7 +17,7 @@
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/figtree": "^5.3.0",
-    "@rangeops/brand": "file:../../packages/brand",
+    "@rangeops/brand": "*",
     "lucide-react": "^1.24.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.7",
