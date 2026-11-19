@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from . import params as P
 from .driver import Goal, Style
-from .sensors import GyroSpec
+from .sensors import GyroSpec, UwbSpec
 from .world import DRY, Ground
 
 
@@ -20,6 +20,7 @@ class Scenario:
     dock_sd_xy_m: float = 0.02
     dock_sd_theta_rad: float = 0.5 * 3.141592653589793 / 180.0
     gyro: GyroSpec = field(default_factory=GyroSpec)
+    uwb: UwbSpec = field(default_factory=UwbSpec)
     max_time_s: float = 400.0
 
     def rng(self, stream: int) -> random.Random:

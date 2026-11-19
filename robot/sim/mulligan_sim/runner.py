@@ -7,13 +7,31 @@ import numpy as np
 
 from . import params as P
 from .driver import Driver
-from .estimators import Odometry, OdometryGyro, SensorFrame
+from .estimators import Odometry, OdometryGyro, SensorFrame, UwbEkf
 from .scenarios import Scenario
-from .sensors import Encoders, Gyro
+from .sensors import ONE_ANCHOR, TWO_ANCHORS, TWO_ANCHORS_WIDE, Encoders, Gyro, Uwb
 
+# Anchor layouts, each with its own random stream so adding one leaves the others alone.
+LAYOUTS = {
+    "one": (ONE_ANCHOR, 41),
+    "two": (TWO_ANCHORS, 42),
+    "two_wide": (TWO_ANCHORS_WIDE, 43),
+}
+
+# name -> (factory, anchor layout or None)
 ESTIMATORS = {
-    "odometry": lambda scenario: Odometry(),
-    "odo_gyro": lambda scenario: OdometryGyro(),
+    "odometry": (lambda: Odometry(), None),
+    "odo_gyro": (lambda: OdometryGyro(), None),
+    "uwb1": (lambda: UwbEkf(ONE_ANCHOR, "uwb1"), "one"),
+    "uwb2": (lambda: UwbEkf(TWO_ANCHORS, "uwb2"), "two"),
+    "uwb2_wide": (lambda: UwbEkf(TWO_ANCHORS_WIDE, "uwb2_wide"), "two_wide"),
+}
+LABELS = {
+    "odometry": "Odometry only",
+    "odo_gyro": "Odometry + gyro",
+    "uwb1": "Gyro + UWB, 1 anchor",
+    "uwb2": "Gyro + UWB, 2 anchors",
+    "uwb2_wide": "Gyro + UWB, 2 anchors 6 m apart",
 }
 
 
@@ -52,7 +70,9 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
     driver = Driver(list(scenario.goals), scenario.style, scenario.rng(2))
     encoders = Encoders()
     gyro = Gyro(scenario.gyro, scenario.rng(3))
-    ests = {name: ESTIMATORS[name](scenario) for name in estimators}
+    ests = {name: ESTIMATORS[name][0]() for name in estimators}
+    layouts = {ESTIMATORS[name][1] for name in estimators} - {None}
+    uwbs = {k: Uwb(scenario.uwb, LAYOUTS[k][0], scenario.rng(LAYOUTS[k][1])) for k in sorted(layouts)}
     if enforce is not None and enforce not in ests:
         raise ValueError(f"enforce={enforce!r} is not among the estimators")
 
@@ -70,10 +90,15 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
         world.step(v_cmd, w_cmd, dt)
         step += 1
         d_left, d_right = encoders.read(world)
-        frame = SensorFrame(dt=dt, d_counts_left=d_left, d_counts_right=d_right,
-                            gyro_z=gyro.read(world, dt))
+        gyro_z = gyro.read(world, dt)
+        ranges = {}
+        if step % P.UWB_PERIOD_STEPS == 0:
+            for k, u in uwbs.items():
+                ranges[k] = u.read(world)
         for name, e in ests.items():
-            e.step(frame)
+            layout = ESTIMATORS[name][1]
+            e.step(SensorFrame(dt=dt, d_counts_left=d_left, d_counts_right=d_right,
+                               gyro_z=gyro_z, ranges=ranges.get(layout, [])))
             lx, ly, lth = est_log[name]
             lx.append(e.x)
             ly.append(e.y)

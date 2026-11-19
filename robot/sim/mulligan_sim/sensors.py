@@ -83,3 +83,65 @@ class Gyro:
         self.bias += s.bias_walk_rads_per_rts * math.sqrt(dt) * self.rng.gauss(0.0, 1.0)
         noise = s.noise_density_rads_per_rthz / math.sqrt(dt) * self.rng.gauss(0.0, 1.0)
         return (1.0 + self.scale) * world.omega + self.bias + noise
+
+
+# Anchor layouts in the dock frame. The dock sits at the bay, the robot parks 0.3 m in
+# front of it. ASSUMED: robot antenna at the robot's centre and at the anchors' height,
+# so the 2D range is the true range.
+ONE_ANCHOR = ((-0.3, 0.0),)
+TWO_ANCHORS = ((-0.3, 1.4), (-0.3, -1.4))  # the two front corners of a 3 m bay
+TWO_ANCHORS_WIDE = ((-0.3, 3.0), (-0.3, -3.0))  # on the neighbouring bays' far dividers
+
+
+@dataclass(frozen=True)
+class UwbSpec:
+    """Ultra-wideband ranging from the robot to anchors at the dock.
+
+    ASSUMED, from the brief's "about +-10 cm" for DW1000/DW3000-class radios:
+      - white noise 8 cm plus a slowly varying per-anchor error of 5 cm with a 2 s
+        correlation time (antenna orientation, ground reflections): about 9.4 cm in all;
+      - 2% of ranges are multipath outliers, always long, by 0.3 to 2.5 m;
+      - 5% of ranges are lost;
+      - 10 Hz per anchor.
+    """
+
+    white_sd_m: float = 0.08
+    slow_sd_m: float = 0.05
+    slow_tau_s: float = 2.0
+    outlier_p: float = 0.02
+    outlier_min_m: float = 0.3
+    outlier_max_m: float = 2.5
+    dropout_p: float = 0.05
+    period_s: float = P.UWB_PERIOD_STEPS * P.DT_S
+
+
+PERFECT_UWB = UwbSpec(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)
+
+
+class Uwb:
+    def __init__(self, spec: UwbSpec, anchors: tuple, rng: random.Random) -> None:
+        self.spec = spec
+        self.anchors = anchors
+        self.rng = rng
+        self.slow = [spec.slow_sd_m * rng.gauss(0.0, 1.0) for _ in anchors]
+
+    def true_range(self, world, i: int) -> float:
+        ax, ay = self.anchors[i]
+        return math.hypot(world.x - ax, world.y - ay)
+
+    def read(self, world) -> list[tuple[int, float]]:
+        """One ranging round: (anchor index, measured range) for each range received."""
+        s, rng = self.spec, self.rng
+        a = min(1.0, s.period_s / s.slow_tau_s)
+        out = []
+        for i in range(len(self.anchors)):
+            self.slow[i] = self.slow[i] * (1.0 - a) + s.slow_sd_m * math.sqrt(a * (2.0 - a)) * rng.gauss(0.0, 1.0)
+            white = s.white_sd_m * rng.gauss(0.0, 1.0)
+            lost = rng.random() < s.dropout_p
+            outlier = rng.random() < s.outlier_p
+            extra = rng.uniform(s.outlier_min_m, s.outlier_max_m)
+            if lost:
+                continue
+            r = self.true_range(world, i) + self.slow[i] + white + (extra if outlier else 0.0)
+            out.append((i, max(0.0, r)))
+        return out
