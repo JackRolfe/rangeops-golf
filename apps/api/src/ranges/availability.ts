@@ -1,4 +1,5 @@
 import type { Deps } from '../deps.js';
+import { HOUR_MS } from '../time.js';
 import type { RangeData } from './repo.js';
 
 export interface AvailabilityCounts {
@@ -6,10 +7,21 @@ export interface AvailabilityCounts {
   robotsFree: number[];
 }
 
-/**
- * Which bay-hours are taken and how many robots are free in each hour.
- * Bookings and robots arrive in later tickets; until then everything is free.
- */
-export async function availabilityCounts(_deps: Deps, _data: RangeData, starts: Date[]): Promise<AvailabilityCounts> {
-  return { bayBusy: () => false, robotsFree: starts.map(() => 0) };
+const overlaps = (aStart: Date, aEnd: Date, bStart: number, bEnd: number) => aStart.getTime() < bEnd && bStart < aEnd.getTime();
+
+/** Which bay-hours are taken, and how many robots are free in each hour. */
+export async function availabilityCounts(deps: Deps, data: RangeData, starts: Date[]): Promise<AvailabilityCounts> {
+  if (starts.length === 0) return { bayBusy: () => false, robotsFree: [] };
+  const from = starts[0]!;
+  const to = new Date(starts.at(-1)!.getTime() + HOUR_MS);
+  const bookings = await deps.db.many<{ bay_id: string; starts_at: Date; ends_at: Date }>(
+    `select bay_id, starts_at, ends_at from bookings
+     where range_id = $1 and status <> 'cancelled' and starts_at < $3 and ends_at > $2`,
+    [data.range.id, from, to],
+  );
+  return {
+    bayBusy: (bayId, t) =>
+      bookings.some((b) => b.bay_id === bayId && overlaps(b.starts_at, b.ends_at, t.getTime(), t.getTime() + HOUR_MS)),
+    robotsFree: starts.map(() => 0),
+  };
 }

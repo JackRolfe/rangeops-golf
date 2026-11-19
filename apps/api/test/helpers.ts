@@ -34,6 +34,8 @@ export interface TestApp {
   clock: TestClock;
   mailer: CapturingMailer;
   payments: FakePaymentProvider;
+  /** The demo range as GET /ranges/demo returns it. */
+  demo: () => Promise<any>;
   /** Signs in by email link and returns the session token. */
   signIn: (email: string) => Promise<string>;
   close: () => Promise<void>;
@@ -73,5 +75,6 @@ export async function makeTestApp(): Promise<TestApp> {
     if (res.status !== 200) throw new Error(`sign in failed: ${JSON.stringify(res.body)}`);
     return res.body.sessionToken as string;
   };
-  return { app, deps, clock, mailer, payments, call, signIn, close: () => db.close() };
+  const demo = async () => (await call('GET', '/ranges/demo')).body;
+  return { app, deps, clock, mailer, payments, call, demo, signIn, close: () => db.close() };
 }

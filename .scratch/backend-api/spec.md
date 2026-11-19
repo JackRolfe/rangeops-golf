@@ -84,7 +84,7 @@ A TypeScript HTTP API in `apps/api`, on Node 22, started with `npm run dev` on p
 
 `POST /bookings {bayId, startsAt, hours (1–4), addOns: [{kind, quantity?}], paymentMethod}`, signed in.
 
-1. Refuse with 422 if: the start isn't on the hour, it's in the past, any hour falls outside opening hours, the bay is inactive, or an add-on kind is unknown.
+1. Refuse with 422 if: the start isn't on the hour, it's in the past, any hour falls outside opening hours, the bay is inactive, or an add-on is repeated, has a bad quantity or isn't offered at the range. (An add-on kind outside `robot`, `club_hire`, `lesson` fails the schema: 400.)
 2. Refuse with 409 if the bay already has a confirmed or pending booking overlapping the time, or a robot was asked for and none is free for the whole time.
 3. Price it: bay hours + add-ons (robot per hour, club hire per booking per set, lesson per booking), minus an active pass's discount on the bay hours.
 4. Charge through the payment provider. On decline: the booking is `cancelled`, the order `failed`, and the answer is 402.
