@@ -1,6 +1,6 @@
 # 01. Control link codec
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: none
 
@@ -10,4 +10,8 @@ Blocked by: none
 
 ## Acceptance
 
-- [ ] Round-trip tests for every message; exact byte layouts checked; out-of-range stick values and wrong lengths rejected; times past 2^31 survive.
+- [x] Round-trip tests for every message; exact byte layouts checked; out-of-range stick values and wrong lengths rejected; times past 2^31 survive.
+
+## Comments
+
+Done in `apps/player/src/robot/protocol.ts`. Names and constants follow the firmware branch's `link.h`.
