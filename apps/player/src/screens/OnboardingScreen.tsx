@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { ImagePlus, LockKeyhole } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { Brand } from '../components/Brand';
@@ -7,9 +7,11 @@ interface OnboardingScreenProps {
   busy: boolean;
   error: string | null;
   onSubmit: (name: string, file: File) => Promise<void>;
+  /** The tab bar, when set-up is shown inside the Games tab. */
+  footer?: ReactNode;
 }
 
-export function OnboardingScreen({ busy, error, onSubmit }: OnboardingScreenProps) {
+export function OnboardingScreen({ busy, error, onSubmit, footer }: OnboardingScreenProps) {
   const [name, setName] = useState('My Range');
   const [file, setFile] = useState<File | null>(null);
 
@@ -77,6 +79,7 @@ export function OnboardingScreen({ busy, error, onSubmit }: OnboardingScreenProp
           Your image and practice history stay in this browser.
         </p>
       </div>
+      {footer}
     </AppShell>
   );
 }

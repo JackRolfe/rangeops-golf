@@ -1,6 +1,6 @@
 # 02. Links and the five tabs
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 01
 
@@ -10,5 +10,9 @@ Blocked by: 01
 
 ## Acceptance
 
-- [ ] Unit tests for the router, with base `/`, `/app/` and the dev `app/` prefix; bad hire keys are rejected.
-- [ ] The existing Playwright flows still pass.
+- [x] Unit tests for the router, with base `/`, `/app/` and the dev `app/` prefix; bad hire keys are rejected.
+- [x] The existing Playwright flows still pass.
+
+## Comments
+
+Done. `src/routes.ts` parses links; the app clears the address bar after reading one. Tabs: Games, Drive, Book, Balls, Settings. Set-up of the range map shows inside the Games tab with the tab bar, so Drive, Book, Balls and Settings work before it. `TabScreen` is the shared tab layout.

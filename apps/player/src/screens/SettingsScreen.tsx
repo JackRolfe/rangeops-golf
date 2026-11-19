@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import type { RangeMap } from '../domain/types';
 import { AppShell } from '../components/AppShell';
@@ -7,7 +7,10 @@ import { PageHeader } from '../components/PageHeader';
 import { TabBar, type TabId } from '../components/TabBar';
 
 interface SettingsScreenProps {
-  range: RangeMap;
+  /** None until a range map is set up in Games. */
+  range: RangeMap | undefined;
+  /** The account section: sign in, or who is signed in. */
+  account?: ReactNode;
   busy: boolean;
   error: string | null;
   onTab: (tab: TabId) => void;
@@ -18,6 +21,7 @@ interface SettingsScreenProps {
 
 export function SettingsScreen({
   range,
+  account,
   busy,
   error,
   onTab,
@@ -25,20 +29,23 @@ export function SettingsScreen({
   onReplaceImage,
   onDeleteAll,
 }: SettingsScreenProps) {
-  const [name, setName] = useState(range.name);
+  const [name, setName] = useState(range?.name ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  useEffect(() => setName(range.name), [range.name]);
+  useEffect(() => setName(range?.name ?? ''), [range?.name]);
 
   async function handleRename(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (name.trim() && name.trim() !== range.name) await onRename(name.trim());
+    if (range && name.trim() && name.trim() !== range.name) await onRename(name.trim());
   }
 
   return (
     <AppShell>
       <PageHeader title="Settings" />
       <div className="screen-scroll settings-screen">
+        {account}
+        {range ? (
+        <>
         <section>
           <h2 className="section-heading">Range</h2>
           <form className="form-stack" onSubmit={handleRename}>
@@ -51,7 +58,7 @@ export function SettingsScreen({
                 onChange={(event) => setName(event.target.value)}
               />
             </div>
-            <button className="button button--secondary" type="submit" disabled={busy || !name.trim() || name.trim() === range.name}>
+            <button className="button button--secondary" type="submit" disabled={busy || !name.trim() || name.trim() === range?.name}>
               Save name
             </button>
           </form>
@@ -78,13 +85,16 @@ export function SettingsScreen({
             />
           </label>
         </section>
+        </>
+        ) : null}
 
         {error ? <p className="notice" role="alert">{error}</p> : null}
 
         <section className="settings-screen__danger">
-          <h2 className="section-heading">Local data</h2>
+          <h2 className="section-heading">Practice data</h2>
           <p className="supporting-copy">
-            RangeOps does not use an account or cloud backup. Clearing this browser’s data also removes your history.
+            Your range map and practice history stay on this phone, with or without an account. Signing in adds bookings and
+            balls; it doesn’t copy your history anywhere. Clearing this browser’s data removes it.
           </p>
           <button className="button button--danger button--full" type="button" onClick={() => setConfirmDelete(true)}>
             <Trash2 aria-hidden="true" /> Delete all data

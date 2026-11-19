@@ -25,12 +25,15 @@ import { DriveScreen } from './screens/DriveScreen';
 import { GamesScreen } from './screens/GamesScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
+import { TabScreen } from './screens/TabScreen';
+import { TabBar } from './components/TabBar';
+import { parseLink, type AppLink } from './routes';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
 import { SessionSetupScreen } from './screens/SessionSetupScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
+type View = 'loading' | 'onboarding' | 'games' | 'drive' | 'book' | 'balls' | 'progress' | 'setup' | 'practice' | 'settings' | 'detail' | 'fatal';
 type DetailReturnView = 'games' | 'progress';
 
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -113,6 +116,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bootStarted = useRef(false);
+  /** The link the app was opened with, read once at start. */
+  const [link, setLink] = useState<AppLink>({ kind: 'home' });
   const targetSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const pendingTargetSave = useRef<{ sessionId: string; target: Target } | null>(null);
   const targetSaveInFlight = useRef(false);
@@ -146,10 +151,16 @@ export default function App() {
     if (bootStarted.current) return;
     bootStarted.current = true;
 
+    const opened = parseLink(window.location.pathname, window.location.search, import.meta.env.BASE_URL);
+    setLink(opened);
+    // A link is used once: put the plain app address back, so a reload doesn't repeat it.
+    if (opened.kind !== 'home' || window.location.search) {
+      window.history.replaceState(null, '', import.meta.env.BASE_URL);
+    }
+
     void loadSnapshot()
-      .then((snapshot) => {
-        const range = latestRangeForId(snapshot.ranges, snapshot.preferences.activeRangeId);
-        setView(range ? 'games' : 'onboarding');
+      .then(() => {
+        setView(opened.kind === 'drive' || opened.kind === 'bad-hire-link' ? 'drive' : opened.kind === 'signin' ? 'settings' : 'games');
       })
       .catch((bootError) => {
         setError(errorMessage(bootError));
@@ -366,7 +377,7 @@ export default function App() {
       setSessions([]);
       setCurrentSession(null);
       setSelectedSession(null);
-      setView('onboarding');
+      setView('games');
     } catch (deleteError) {
       setError(errorMessage(deleteError));
     } finally {
@@ -393,8 +404,27 @@ export default function App() {
         </button>
       </AppShell>
     );
+  } else if (view === 'drive') {
+    screen = <DriveScreen onTab={selectTab} />;
+  } else if (view === 'book') {
+    screen = <TabScreen tab="book" title="Book" onTab={selectTab}><p>Booking comes next.</p></TabScreen>;
+  } else if (view === 'balls') {
+    screen = <TabScreen tab="balls" title="Balls" onTab={selectTab}><p>Balls come next.</p></TabScreen>;
+  } else if (view === 'settings') {
+    screen = (
+      <SettingsScreen
+        range={activeRange}
+        busy={busy}
+        error={error}
+        onTab={selectTab}
+        onRename={handleRename}
+        onReplaceImage={handleReplaceImage}
+        onDeleteAll={handleDeleteAll}
+      />
+    );
   } else if (view === 'onboarding' || !activeRange) {
-    screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} />;
+    // Set-up lives inside the Games tab, so the other tabs work before there's a range map.
+    screen = <OnboardingScreen busy={busy} error={error} onSubmit={handleOnboarding} footer={<TabBar active="games" onSelect={selectTab} />} />;
   } else if (view === 'setup') {
     screen = <SessionSetupScreen lastClub={preferences.lastClub} initialMode={setupMode} busy={busy} onBack={() => setView('games')} onContinue={(club, note, mode) => void startSession(club, note, mode)} />;
   } else if (view === 'practice' && currentSession && practiceRange && displayedImageUrl) {
@@ -433,20 +463,6 @@ export default function App() {
         onBack={() => setView('games')}
         onSession={(session) => openDetail(session, 'progress')}
         onTab={selectTab}
-      />
-    );
-  } else if (view === 'drive') {
-    screen = <DriveScreen onTab={selectTab} />;
-  } else if (view === 'settings') {
-    screen = (
-      <SettingsScreen
-        range={activeRange}
-        busy={busy}
-        error={error}
-        onTab={selectTab}
-        onRename={handleRename}
-        onReplaceImage={handleReplaceImage}
-        onDeleteAll={handleDeleteAll}
       />
     );
   } else if (view === 'detail' && selectedSession && detailRange && displayedImageUrl) {
