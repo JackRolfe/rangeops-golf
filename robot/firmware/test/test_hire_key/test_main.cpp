@@ -88,6 +88,7 @@ static void test_anchored_clock_survives_the_millisecond_counter_wrapping() {
 static void test_lock_unlocks_with_a_good_key_and_anchors_the_clock() {
   AnchoredClock clock;
   HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
   TEST_ASSERT_FALSE(lock.unlocked(0));
   const size_t n = loadCase("ok_mid_hire");
   TEST_ASSERT_EQUAL_STRING("ok", keyCheckName(lock.unlock(key, n, 1000)));
@@ -99,6 +100,7 @@ static void test_lock_unlocks_with_a_good_key_and_anchors_the_clock() {
 static void test_lock_locks_when_the_hire_ends() {
   AnchoredClock clock;
   HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
   const size_t n = loadCase("ok_mid_hire");  // a one-hour hire
   TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.unlock(key, n, 0));
   TEST_ASSERT_TRUE(lock.unlocked(3599999));
@@ -111,6 +113,7 @@ static void test_lock_locks_when_the_hire_ends() {
 static void test_a_bad_key_does_not_anchor_the_clock_and_locks() {
   AnchoredClock clock;
   HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
   const char* bad[] = {"bad_signature_bay_changed", "bad_signature_other_signer", "wrong_serial", "bad_version_2",
                        "bad_length_77"};
   for (const char* name : bad) {
@@ -129,6 +132,7 @@ static void test_a_bad_key_does_not_anchor_the_clock_and_locks() {
 static void test_a_later_key_is_checked_against_the_anchored_time() {
   AnchoredClock clock;
   HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
   // Anchor on the wide-window key, which starts in 1970: the 2027 hire is not
   // due yet by this clock.
   size_t n = loadCase("ok_wide_window_bay_255");
@@ -141,6 +145,7 @@ static void test_a_later_key_is_checked_against_the_anchored_time() {
 static void test_explicit_lock() {
   AnchoredClock clock;
   HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
   const size_t n = loadCase("ok_at_start");
   TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.unlock(key, n, 0));
   lock.lock();
@@ -159,6 +164,52 @@ static void test_result_codes_on_the_wire() {
   TEST_ASSERT_EQUAL_UINT8(7, static_cast<uint8_t>(KeyCheck::NoClock));
 }
 
+static void test_a_disconnect_forgets_the_key_and_its_result() {
+  AnchoredClock clock;
+  HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
+  const size_t n = loadCase("ok_mid_hire");
+  TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.unlock(key, n, 0));
+  TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.lastResult());
+  TEST_ASSERT_TRUE(lock.unlocked(10));
+
+  lock.disconnected();
+  TEST_ASSERT_FALSE(lock.unlocked(20));
+  TEST_ASSERT_EQUAL(KeyCheck::BadLength, lock.lastResult());
+
+  // The next phone, or the same one back: locked until it writes a key.
+  lock.connected();
+  TEST_ASSERT_FALSE(lock.unlocked(30));
+  TEST_ASSERT_EQUAL(KeyCheck::BadLength, lock.lastResult());
+  TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.unlock(key, n, 40));  // same key, still inside the hire
+  TEST_ASSERT_TRUE(lock.unlocked(40));
+}
+
+static void test_no_unlock_without_a_connection() {
+  AnchoredClock clock;
+  HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  const size_t n = loadCase("ok_mid_hire");
+  TEST_ASSERT_NOT_EQUAL(KeyCheck::Ok, lock.unlock(key, n, 0));
+  TEST_ASSERT_FALSE(lock.unlocked(0));
+  TEST_ASSERT_FALSE(clock.anchored());
+}
+
+static void test_last_result_tracks_each_write() {
+  AnchoredClock clock;
+  HireLock lock(publicKey, vectors::kRobotSerial, clock);
+  lock.connected();
+  size_t n = loadCase("wrong_serial");
+  lock.unlock(key, n, 0);
+  TEST_ASSERT_EQUAL(KeyCheck::WrongSerial, lock.lastResult());
+  n = loadCase("ok_mid_hire");
+  lock.unlock(key, n, 0);
+  TEST_ASSERT_EQUAL(KeyCheck::Ok, lock.lastResult());
+  n = loadCase("bad_length_79");
+  lock.unlock(key, n, 0);
+  TEST_ASSERT_EQUAL(KeyCheck::BadLength, lock.lastResult());
+  TEST_ASSERT_FALSE(lock.unlocked(0));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_every_vector_gives_its_expected_result);
@@ -171,5 +222,8 @@ int main() {
   RUN_TEST(test_a_later_key_is_checked_against_the_anchored_time);
   RUN_TEST(test_explicit_lock);
   RUN_TEST(test_result_codes_on_the_wire);
+  RUN_TEST(test_a_disconnect_forgets_the_key_and_its_result);
+  RUN_TEST(test_no_unlock_without_a_connection);
+  RUN_TEST(test_last_result_tracks_each_write);
   return UNITY_END();
 }

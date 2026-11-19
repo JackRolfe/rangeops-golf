@@ -49,24 +49,34 @@ KeyCheck checkHireKeyIdentity(const uint8_t* data, size_t length, const uint8_t 
 KeyCheck checkHireKey(const uint8_t* data, size_t length, const uint8_t publicKey[32], const char serial[kSerialLength],
                       uint32_t nowUnix);
 
-// Whether this connection may drive. Locked until a valid key is written,
-// and again on disconnect or when the hire ends.
+// Whether the connected phone may drive. Locked until it writes a valid key;
+// locked again when it disconnects, so the next connection must write a key
+// of its own, and when the hire ends.
 class HireLock {
  public:
   HireLock(const uint8_t publicKey[32], const char serial[kSerialLength], Clock& clock);
 
-  // An Unlock write. Locks on any failure.
+  // A phone connected. Starts locked, with nothing written yet.
+  void connected();
+  // The phone went away: forget its key and its last result.
+  void disconnected();
+  // An Unlock write. Locks on any failure. Ignored with no phone connected.
   KeyCheck unlock(const uint8_t* data, size_t length, uint32_t monotonicMs);
   void lock() { unlocked_ = false; }
   // Locks, and returns false, once the hire has ended.
   bool unlocked(uint32_t monotonicMs);
+  // What reading Unlock gives: the result of the last key written on this
+  // connection, BadLength before any (docs/adr/0005).
+  KeyCheck lastResult() const { return lastResult_; }
   const HireKey& key() const { return key_; }
 
  private:
   const uint8_t* publicKey_;
   char serial_[kSerialLength];
   Clock& clock_;
+  bool connected_ = false;
   bool unlocked_ = false;
+  KeyCheck lastResult_ = KeyCheck::BadLength;
   HireKey key_;
 };
 

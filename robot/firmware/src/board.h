@@ -50,4 +50,13 @@ constexpr uint32_t kBatteryStaleMs = 300;
 constexpr uint32_t kPowerDownDelayMs = 3000;  // time for telemetry to say why
 constexpr uint16_t kMtu = 185;
 
+// Connection parameters asked for after connecting, inside Apple's accessory
+// guidelines (docs/research/ble-iphone-to-robot.md, section 4): interval 15 to
+// 30 ms, no peripheral latency so no Drive message waits, supervision timeout
+// 6 s. The 300 ms Drive timeout, not this, is what stops the robot.
+constexpr uint16_t kConnIntervalMin = 12;  // x 1.25 ms = 15 ms
+constexpr uint16_t kConnIntervalMax = 24;  // x 1.25 ms = 30 ms
+constexpr uint16_t kConnLatency = 0;
+constexpr uint16_t kSupervisionTimeout = 600;  // x 10 ms = 6 s
+
 }  // namespace board

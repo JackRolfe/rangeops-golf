@@ -69,15 +69,30 @@ HireLock::HireLock(const uint8_t publicKey[32], const char serial[kSerialLength]
   memcpy(serial_, serial, kSerialLength);
 }
 
+void HireLock::connected() {
+  connected_ = true;
+  unlocked_ = false;
+  lastResult_ = KeyCheck::BadLength;
+}
+
+void HireLock::disconnected() {
+  connected_ = false;
+  unlocked_ = false;
+  lastResult_ = KeyCheck::BadLength;
+  key_ = HireKey();
+}
+
 KeyCheck HireLock::unlock(const uint8_t* data, size_t length, uint32_t monotonicMs) {
   unlocked_ = false;
+  if (!connected_) return lastResult_;
   HireKey k;
   KeyCheck result = checkHireKeyIdentity(data, length, publicKey_, serial_, &k);
-  if (result != KeyCheck::Ok) return result;
-  clock_.offerAnchor(k.start, monotonicMs);
-  uint32_t now = 0;
-  if (!clock_.now(monotonicMs, now)) return KeyCheck::NoClock;
-  result = checkTime(k, now);
+  if (result == KeyCheck::Ok) {
+    clock_.offerAnchor(k.start, monotonicMs);
+    uint32_t now = 0;
+    result = clock_.now(monotonicMs, now) ? checkTime(k, now) : KeyCheck::NoClock;
+  }
+  lastResult_ = result;
   if (result != KeyCheck::Ok) return result;
   key_ = k;
   unlocked_ = true;
@@ -85,7 +100,7 @@ KeyCheck HireLock::unlock(const uint8_t* data, size_t length, uint32_t monotonic
 }
 
 bool HireLock::unlocked(uint32_t monotonicMs) {
-  if (!unlocked_) return false;
+  if (!connected_ || !unlocked_) return false;
   uint32_t now = 0;
   if (!clock_.now(monotonicMs, now) || checkTime(key_, now) != KeyCheck::Ok) unlocked_ = false;
   return unlocked_;
