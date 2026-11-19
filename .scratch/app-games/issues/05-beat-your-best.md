@@ -1,6 +1,6 @@
 # 05. Beat Your Best
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 02, 03
 
@@ -13,5 +13,9 @@ Blocked by: 02, 03
 
 ## Acceptance
 
-- [ ] Unit tests: club filter is case-insensitive, mode filter, minimum shots, ties, exclude.
-- [ ] Component test for the detail "New best!" message.
+- [x] Unit tests: club filter is case-insensitive, mode filter, minimum shots, ties, exclude.
+- [x] Component test for the detail "New best!" message.
+
+## Comments
+
+Done. `getBestSession` in `domain/metrics.ts`; Games shows a Beat your best card for the last club played; practice shows the best to beat; detail compares against the best from before the session finished. Also fixed a ticket 03 slip: the tab-bar sed had changed the detail footer's grid columns.

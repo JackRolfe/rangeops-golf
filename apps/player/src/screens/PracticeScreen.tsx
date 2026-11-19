@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ChevronDown, Hand, Move, Undo2 } from 'lucide-react';
+import { ChevronDown, Hand, Move, Trophy, Undo2 } from 'lucide-react';
 import type { PracticeSession, RangeMap, Target } from '../domain/types';
 import type { NormalizedPoint } from '../components/RangeMapCanvas';
 import { GAME_NAMES, SHRINK_FLOOR_RATIO, SHRINK_STREAK, ringForNextShot } from '../domain/games';
-import { getSessionAccuracy } from '../domain/metrics';
+import { getSessionAccuracy, type BestSession } from '../domain/metrics';
 import { formatPercent } from '../domain/format';
 import { AppShell } from '../components/AppShell';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -15,6 +15,8 @@ interface PracticeScreenProps {
   session: PracticeSession;
   recording: boolean;
   busy: boolean;
+  /** The best earlier session with this club and game: the score to beat. */
+  best: BestSession | null;
   onTargetChange: (target: Target) => void;
   onSetTarget: () => void;
   onShot: (point: NormalizedPoint) => void;
@@ -40,6 +42,7 @@ export function PracticeScreen({
   session,
   recording,
   busy,
+  best,
   onTargetChange,
   onSetTarget,
   onShot,
@@ -112,6 +115,11 @@ export function PracticeScreen({
             <Undo2 aria-hidden="true" />
             Undo last
           </button>
+          {best ? (
+            <p className="practice-best">
+              <Trophy aria-hidden="true" /> Best to beat: <strong>{formatPercent(best.percentage)}%</strong>
+            </p>
+          ) : null}
         </footer>
       ) : (
         <footer className="practice-footer practice-footer--setup">

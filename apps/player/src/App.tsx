@@ -18,6 +18,7 @@ import {
   undoLastShot,
   updateSession,
 } from './data/db';
+import { getBestSession } from './domain/metrics';
 import { DEFAULT_PREFERENCES, type GameMode, type PracticeSession, type Preferences, type RangeMap, type Target } from './domain/types';
 import type { TabId } from './components/TabBar';
 import { GamesScreen } from './screens/GamesScreen';
@@ -403,6 +404,11 @@ export default function App() {
         session={currentSession}
         recording={recording}
         busy={busy}
+        best={getBestSession(sessions, ranges, {
+          club: currentSession.club,
+          mode: currentSession.mode,
+          excludeSessionId: currentSession.id,
+        })}
         onTargetChange={handleTargetChange}
         onSetTarget={() => void lockTarget()}
         onShot={(point) => void recordShot(point)}
@@ -446,6 +452,12 @@ export default function App() {
         range={detailRange}
         imageUrl={displayedImageUrl}
         session={selectedSession}
+        previousBest={getBestSession(sessions, ranges, {
+          club: selectedSession.club,
+          mode: selectedSession.mode,
+          excludeSessionId: selectedSession.id,
+          before: selectedSession.completedAt ?? undefined,
+        })}
         onBack={() => setView(detailReturn)}
       />
     );
@@ -462,6 +474,7 @@ export default function App() {
         ranges={ranges}
         sessions={sessions}
         draft={activeDraft}
+        club={preferences.lastClub}
         onStart={openPractice}
         onResume={() => openPractice()}
         onDiscardDraft={() => void discardDraft()}

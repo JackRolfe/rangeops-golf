@@ -1,4 +1,4 @@
-import { shotTarget } from './games'
+import { shotTarget, type GameMode } from './games'
 import { isShotOnTarget } from './geometry'
 import type {
   ImageDimensions,
@@ -177,3 +177,49 @@ export const calculateSessionAccuracy = getSessionAccuracy
 export const calculateOverallAccuracy = getOverallAccuracy
 export const calculateLastNAccuracy = getLastNAccuracy
 export const calculateTrend = getSessionTrend
+
+/** A session needs this many shots before its score can be the one to beat. */
+export const MIN_SHOTS_FOR_BEST = 5
+
+export interface BestSession extends AccuracySummary {
+  sessionId: string
+  club: string
+  mode: GameMode
+  recordedAt: string
+}
+
+export interface BestSessionQuery {
+  club: string
+  mode: GameMode
+  /** Leave this session out, usually the one being played. */
+  excludeSessionId?: string
+  /** Only sessions completed strictly before this time. */
+  before?: string
+}
+
+/**
+ * Beat Your Best: the completed session with the highest accuracy for a club
+ * and game. Sessions under MIN_SHOTS_FOR_BEST shots don't count, so one lucky
+ * shot can't set an unbeatable 100%. Ties go to the earlier session.
+ */
+export function getBestSession(
+  sessions: readonly PracticeSession[],
+  ranges: RangeSource,
+  query: BestSessionQuery,
+): BestSession | null {
+  let best: BestSession | null = null
+  for (const point of getSessionTrend(
+    sessions.filter(
+      (session) =>
+        session.mode === query.mode &&
+        session.id !== query.excludeSessionId &&
+        session.shots.length >= MIN_SHOTS_FOR_BEST,
+    ),
+    ranges,
+    query.club,
+  )) {
+    if (query.before !== undefined && point.recordedAt >= query.before) continue
+    if (!best || point.percentage > best.percentage) best = { ...point, mode: query.mode }
+  }
+  return best
+}

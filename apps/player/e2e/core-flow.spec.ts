@@ -202,9 +202,15 @@ test('plays Shrink the Ring start to finish', async ({ page }) => {
   await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByRole('heading', { name: 'Pitching wedge' })).toBeVisible();
   await expect(page.getByText('Shrank the ring 1 time, down to 80%.')).toBeVisible();
+  await expect(page.getByText('Play 5 shots or more to set a best.')).toBeVisible();
+  await page.screenshot({ path: '/tmp/rangeops-shrink-detail.png' });
   await expect(page.getByText('75%', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Go back' }).click();
   await expect(page.getByText(/Shrink the Ring · 4 shots/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Beat your best' })).toBeVisible();
+  await expect(page.getByText('With Pitching wedge')).toBeVisible();
+  await page.getByRole('heading', { name: 'Beat your best' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/tmp/rangeops-games-best.png' });
 });
 
 test.describe('desktop frame', () => {

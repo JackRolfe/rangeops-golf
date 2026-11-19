@@ -56,6 +56,7 @@ function renderPractice(practice: PracticeSession) {
       session={practice}
       recording
       busy={false}
+      best={null}
       onTargetChange={vi.fn()}
       onSetTarget={vi.fn()}
       onShot={vi.fn()}
@@ -87,5 +88,27 @@ describe('PracticeScreen in Bullseye', () => {
     expect(ringRadius(container)).toBeCloseTo(100);
     expect(screen.getByText('100%')).toBeInTheDocument();
     expect(screen.queryByTestId('streak')).not.toBeInTheDocument();
+  });
+});
+
+describe('PracticeScreen, Beat Your Best', () => {
+  it('shows the best to beat for this club and game', () => {
+    render(
+      <PracticeScreen
+        range={range}
+        imageUrl="blob:map"
+        session={session('bullseye', [hit(1)])}
+        recording
+        busy={false}
+        best={{ sessionId: 'old', club: '7 iron', mode: 'bullseye', recordedAt: '2026-01-01T00:00:00.000Z', onTarget: 7, total: 10, percentage: 70 }}
+        onTargetChange={vi.fn()}
+        onSetTarget={vi.fn()}
+        onShot={vi.fn()}
+        onUndo={vi.fn()}
+        onFinish={vi.fn()}
+        onLeave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Best to beat/)).toHaveTextContent('Best to beat: 70%');
   });
 });

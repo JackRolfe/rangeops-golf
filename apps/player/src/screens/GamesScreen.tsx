@@ -1,7 +1,7 @@
-import { Clock3, Crosshair, Play, Shrink, Target } from 'lucide-react';
+import { Clock3, Crosshair, Play, Shrink, Target, Trophy } from 'lucide-react';
 import type { GameMode, PracticeSession, RangeMap } from '../domain/types';
-import { GAME_NAMES } from '../domain/games';
-import { getLastNAccuracy, getSessionTrend } from '../domain/metrics';
+import { GAME_MODES, GAME_NAMES } from '../domain/games';
+import { MIN_SHOTS_FOR_BEST, getBestSession, getLastNAccuracy, getSessionTrend } from '../domain/metrics';
 import { formatChartDate, formatPercent } from '../domain/format';
 import { AccuracyChart } from '../components/AccuracyChart';
 import { AccuracyRing } from '../components/AccuracyRing';
@@ -15,6 +15,8 @@ interface GamesScreenProps {
   ranges: RangeMap[];
   sessions: PracticeSession[];
   draft: PracticeSession | null;
+  /** The club last played, for Beat Your Best. */
+  club: string | null;
   onStart: (mode: GameMode) => void;
   onResume: () => void;
   onDiscardDraft: () => void;
@@ -29,6 +31,7 @@ export function GamesScreen({
   ranges,
   sessions,
   draft,
+  club,
   onStart,
   onResume,
   onDiscardDraft,
@@ -94,6 +97,27 @@ export function GamesScreen({
             </button>
           </section>
         )}
+
+        {club ? (
+          <section className="best-card" aria-labelledby="best-title">
+            <Trophy aria-hidden="true" />
+            <div>
+              <h2 id="best-title">Beat your best</h2>
+              <p className="best-card__club">With {club}</p>
+              <ul>
+                {GAME_MODES.map((mode) => {
+                  const best = getBestSession(completed, ranges, { club, mode });
+                  return (
+                    <li key={mode}>
+                      <span>{GAME_NAMES[mode]}</span>
+                      <strong>{best ? `${formatPercent(best.percentage)}%` : `Play ${MIN_SHOTS_FOR_BEST} shots to set a best`}</strong>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        ) : null}
 
         <section className="home-section">
           <h2 className="section-heading">Recent accuracy</h2>

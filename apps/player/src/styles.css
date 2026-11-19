@@ -1166,7 +1166,7 @@ button.session-row:hover {
 
 .detail-footer {
   display: grid;
-  grid-template-columns: repeat(var(--tab-count, 2), 1fr);
+  grid-template-columns: repeat(3, 1fr);
   padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   background: var(--surface);
@@ -1462,4 +1462,84 @@ button.session-row:hover {
 .practice-instruction__text small {
   color: rgb(255 255 255 / 82%);
   font-size: 12px;
+}
+
+.best-card {
+  display: flex;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.best-card > svg {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  color: var(--forest);
+}
+
+.best-card > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.best-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.best-card__club {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.best-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.best-card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.best-card li strong {
+  color: var(--forest);
+  text-align: right;
+}
+
+.practice-best {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.practice-best svg {
+  width: 16px;
+  height: 16px;
+  color: var(--forest);
+}
+
+.practice-best strong {
+  color: var(--forest);
+}
+
+.detail-best {
+  margin: 0 20px 8px;
+  color: var(--forest);
+  font-weight: 700;
 }
