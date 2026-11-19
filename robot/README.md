@@ -2,7 +2,61 @@
 
 Mulligan is a knee-high remote-control buggy that lives at a driving range bay. A child drives it out from the RangeOps app, rolls it over the short shots to scoop them up, and drives them back to hit again.
 
-Nothing here is built yet. This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. Firmware, CAD and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
+Mulligan is at the design stage. [DESIGN.md](DESIGN.md) covers the dimensions, drawings, parts and the reasons behind them. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
+
+## Mulligan in motion
+
+[![Mulligan with its rounded red fairing and front ball pen](drawings/mulligan-preview.jpg)](drawings/mulligan.mp4)
+
+The [short film](drawings/mulligan.mp4) follows one yellow ball from the turf into Mulligan’s lift-out bin. The bin sits on an extension of the chassis tray, ahead of the front motors. Allowing room for the bin and ramp brings the robot to about 780 mm long and 426 mm wide. Red side panels connect the carriage rails to the nose. The ramp meets the lowered front rim of the bin, whose side and rear walls are 60 mm high.
+
+Open the [robot assembly](drawings/mulligan.glb) and play **Collect and stow** for the complete cycle. After the yellow ball passes the flaps, the buggy stops and the same gate slides back along the rails, transfers three balls and returns to the mouth. **Assembly breakdown** shows the bin lifting out of its pocket. **Passive pickup** isolates the first part of the cycle.
+
+The film illustrates the intended motion on level ground. The transfer actuator, force limit and performance on turf still need development. The drawings and strike calculations in [DESIGN.md](DESIGN.md) describe the earlier flat-panel prototype.
+
+### Sliding catcher bench test
+
+The [hand-transfer jig](drawings/transfer-jig.glb) explores a button-operated catcher before choosing an actuator. Play **Hand transfer** to see the flap carriage follow the ramp, deposit three balls and return. The 70 mm lip and 218 mm horizontal stroke are trial dimensions. Ball positions illustrate the intended transfer. On the physical jig, try three balls abreast, then put one ball 10 mm down in a depression. Record where it catches and the peak pull on the grip during each stroke. The [jig source](design/transfer_jig.py) builds with `cad run robot/design/transfer_jig.py`.
+
+### Simulate two pickups on the CAD assembly
+
+From the repository root, install the local viewer dependency once, start the simulator, and open the URL it prints.
+
+```sh
+npm ci --prefix robot/design
+uv run robot/design/simulate.py --serve
+```
+
+The yellow ball starts 64 mm right of centre. The white ball starts 300 mm further downrange at the selected lateral offset (positive is left). Both balls remain live across both pickups. Use **Top** to see which flaps open and where the balls end up. Use **Catcher** or **Side** to inspect the gate stroke. Drag to orbit, or scrub to either return stroke.
+
+**First load** requires the first ball to settle at bin-floor height for half a second with recent floor contact. **First retained** also requires it to stay within the bin envelope throughout the second cycle and settle again. **Second load** reports pickup and storage for the white ball. Change the offset, bin side and rear wall height, flap-tip clearance, sweep speed or horizontal force limit to compare rows. The bin floor and lowered entry lip stay at their CAD heights when adjusting the walls.
+
+The viewer loads the [CAD assembly](drawings/mulligan.glb) and drives its carriage, individual flaps and wheels from MuJoCo. The [course model](design/course.py) reads the ramp, rail, wing, skid and fairing meshes from that same export for convex collision surfaces. It uses separate bin walls to keep the pocket open, spherical balls, cylindrical tyres and hinged flap blades. The chassis can rise, pitch and roll on its wheels and skids. The straight-line drive is prescribed. Soil deformation, steering, tyre compliance and motor traction require other tests. The default 1.5 N gate limit and friction values are assumptions.
+
+For a headless comparison or a starting scene for inspection:
+
+```sh
+uv run robot/design/simulate.py --course --lane 185 --wall 60
+uv run robot/design/simulate.py --course --depth 20 --location wheel --xml /tmp/mulligan-course.xml
+```
+
+After changing CAD dimensions, re-export the GLB using the commands below, then reload the page. The settings in the browser are trial overrides.
+
+### Single-ball bench
+
+The **Single-ball bench** link opens the original level-chassis side section. The [recorded bench trials](drawings/catcher-replay.html) also work offline for level ground and 10 mm and 20 mm divots. To run one headlessly, use `uv run robot/design/simulate.py --depth 20 --tip 8 --sweep 87`. Use `--replay /tmp/catcher.html` to save the three traces as a standalone replay.
+
+### Rebuild the model and film
+
+With Node.js and text-to-cad installed, run the following from the repository root. Use the model ID printed by each CAD build for its export.
+
+```sh
+cad run robot/design/mulligan.py
+cad model export <model-id> robot/drawings/mulligan.glb --tolerance 0.045 --angle 9
+cad run robot/design/film.py
+```
+
+The [CAD model](design/mulligan.py) reads [the design parameters](design/params.mjs). The [Blender scene](design/film.py) renders the robot and all three balls from that one exported assembly. Add `--draft` to the film command for sample frames in the system temporary directory.
 
 ## Target spec
 

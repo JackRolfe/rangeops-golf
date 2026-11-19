@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mulligan · Catcher simulator</title>
+<style>
+:root{color-scheme:light;--ink:#223a30;--green:#1d573e;--line:#cdd5ca;--paper:#f7f7f0;--muted:#53685a}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px "Avenir Next",Inter,system-ui,sans-serif}
+header{background:#183d30;color:white;padding:15px max(5vw,24px);font-weight:700;letter-spacing:.12em;font-size:14px}
+main{max-width:1220px;margin:auto;padding:32px clamp(16px,4vw,50px)}h1{font-size:clamp(29px,4vw,52px);margin:0 0 20px;line-height:1.1;letter-spacing:-.045em}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px}.view,.controls{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.view{display:flex;flex-direction:column}.cap,.playbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px}.cap{font-size:13px;color:var(--muted)}
+.stage{font-weight:650;color:var(--ink)}canvas{width:100%;display:block;aspect-ratio:2.5;background:#eaf0e6;margin:auto 0}.playbar{border-top:1px solid var(--line);font:13px ui-monospace,monospace}input[type=range]{accent-color:var(--green);min-width:40px;width:100%}button{background:var(--green);border:0;border-radius:5px;padding:9px 14px;font:inherit;font-size:14px;font-weight:600;color:white;cursor:pointer}button:disabled{opacity:.5}
+.controls{padding:18px}h2{font-size:18px;margin:0 0 15px}.control{display:block;margin:0 0 16px}.control span{display:flex;justify-content:space-between;font-size:14px;font-weight:560}.control output{font:13px ui-monospace,monospace}.control input{margin:10px 0 0}
+#run{width:100%;padding:11px}.summary{min-height:25px;color:var(--green);margin:15px 0 6px;font-weight:650}.help{font-size:14px;color:var(--muted);margin:6px 0 14px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line)}th{font-size:12px;color:var(--muted)}.table-scroll{overflow-x:auto}section{margin-top:22px}
+:focus-visible{outline:3px solid #c98722;outline-offset:2px}@media(max-width:780px){.layout{grid-template-columns:1fr}.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.controls h2{grid-column:1/-1}.control{margin:0}body{font-size:15px}.cap{font-size:12px}.help{line-height:1.45}}
+</style></head>
+<body><header>RANGEOPS &nbsp;/&nbsp; GOLF</header><main>
+<h1>Mulligan catcher simulator</h1>
+<div class="layout"><div class="view"><div class="cap"><span>Side section through the ball</span><span class="stage" id="stage">Loading</span></div>
+<canvas id="view" aria-label="Side view of the rover, hinged flap, ramp, divot and simulated ball"></canvas>
+<div class="playbar"><button id="play" disabled>Play</button><input id="scrub" type="range" min="0" max="1" value="0" aria-label="Replay position"><span id="time">0.0s</span></div></div>
+<form class="controls" id="form"><h2>Test settings</h2>
+<label class="control" for="depth"><span>Divot depth <output id="depthOut"></output></span><input type="range" id="depth" aria-label="Divot depth" name="depth" min="0" max="35" value="0"></label>
+<label class="control" for="tip"><span>Flap-tip clearance <output id="tipOut"></output></span><input type="range" id="tip" aria-label="Flap-tip clearance" name="tip" min="2" max="24" value="8"></label>
+<label class="control" for="sweep"><span>Sweep speed <output id="sweepOut"></output></span><input type="range" id="sweep" aria-label="Sweep speed" name="sweep" min="35" max="220" value="87"></label>
+<button id="run">Run simulation</button></form></div>
+<p class="summary" id="outcome" role="status">Calculating the first run…</p>
+<p class="help">One free ball, 15 hinged flaps and a 110 mm-wide divot. The wheels bridge the hole. The horizontal gate drive is capped at an assumed 1.5 N. Lag is the largest distance the gate falls behind its commanded sweep.</p>
+<section><h2>Run comparison</h2><div class="table-scroll"><table><thead><tr><th>Divot</th><th>Flap tip</th><th>Sweep</th><th>Gate entry</th><th>Final result</th><th>Peak lag</th></tr></thead><tbody id="runs"></tbody></table></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id), form=$('form'), canvas=$('view'), ctx=canvas.getContext('2d');
+const recording=document.getElementById('recording');
+const savedRuns=recording?JSON.parse(recording.textContent):null;
+let trial=null, index=0, playing=false, started=0;
+function labels(){if(savedRuns)return;for(const k of ['depth','tip','sweep']) $(k+'Out').value=form.elements[k].value+(k==='sweep'?' mm/s':' mm');}
+form.addEventListener('input',labels); labels();
+function playback(on){playing=on; $('play').textContent=on?'Pause':index>=trial.frames.length-1?'Replay':'Play'; if(on)started=performance.now()-trial.frames[index][0]*1000;}
+$('play').onclick=()=>{if(index>=trial.frames.length-1)index=0;playback(!playing);draw();};
+$('scrub').oninput=e=>{if(!trial)return;index=Number(e.target.value);playback(false);draw();};
+async function run(initial=false){
+ $('run').disabled=true; $('outcome').textContent='Solving contact…';
+ try{
+  if(savedRuns){
+   trial=savedRuns[Number(form.elements.scenario.value)];
+  }else{
+   const response=await fetch('/run?'+(initial?'':new URLSearchParams(new FormData(form))));
+   if(!response.ok)throw Error(await response.text());
+   trial=await response.json();
+  }
+  index=0;
+  if(initial&&!savedRuns){for(const k of ['depth','tip','sweep'])form.elements[k].value=trial.options[k];labels();}
+  $('scrub').max=trial.frames.length-1; $('play').disabled=false;
+  const row=$('runs').insertRow(0), opt=trial.options;
+  for(const v of [opt.depth+' mm',opt.tip+' mm',opt.sweep+' mm/s',trial.entered?'Yes':'No',trial.result,trial.lag+' mm'])row.insertCell().textContent=v;
+  while($('runs').rows.length>6)$('runs').deleteRow(-1);
+  $('outcome').textContent=trial.result+' · Peak flap opening '+trial.peakAngle+'° · Peak gate lag '+trial.lag+' mm';
+  playback(true);draw();
+ }catch(err){$('outcome').textContent='Could not run simulation. '+err.message;}
+ finally{$('run').disabled=false;}
+}
+form.onsubmit=e=>{e.preventDefault();run();};
+function draw(){
+ if(!trial)return;
+ const g=trial.geo, frame=trial.frames[index], [t,drive,slide,lift,bx,by,bz,a]=frame;
+ const w=canvas.clientWidth,h=canvas.clientHeight,dpr=window.devicePixelRatio||1;
+ if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ const scale=Math.min(w/920,h/335), xs=x=>w*.055+(x+211)*scale, zs=z=>h*.79-z*scale;
+ function poly(points,color,outline){ctx.beginPath();points.forEach(([x,z],i)=>i?ctx.lineTo(xs(x),zs(z)):ctx.moveTo(xs(x),zs(z)));ctx.closePath();ctx.fillStyle=color;ctx.fill();if(outline){ctx.strokeStyle=outline;ctx.lineWidth=1;ctx.stroke();}}
+ function line(points,color,thick){ctx.beginPath();points.forEach(([x,z],i)=>i?ctx.lineTo(xs(x),zs(z)):ctx.moveTo(xs(x),zs(z)));ctx.strokeStyle=color;ctx.lineWidth=Math.max(1,thick*scale);ctx.lineJoin='round';ctx.stroke();}
+ function circle(x,z,r,fill){ctx.beginPath();ctx.arc(xs(x),zs(z),r*scale,0,2*Math.PI);ctx.fillStyle=fill;ctx.fill();}
+ const soil=[];for(let x=-320;x<=950;x+=2){const r=Math.min(1,Math.hypot(x+drive-g.pitX,by-g.pitY)/g.pitRadius);soil.push([x,-g.depth*(1+Math.cos(Math.PI*r))/2]);}
+ poly([...soil,[950,-160],[-320,-160]],'#b9cba3');line(soil,'#58825d',2.6);
+ const crown=g.shell.map(([z,length])=>[-length/2,z]);const top=g.shell.at(-1)[0];
+ poly([...crown,[g.shell.at(-1)[1]/2,top],...[...g.shell].reverse().map(([z,length])=>[Math.min(length/2,g.rear-2),z])],'#bf482f');
+ line([[-43,top],[43,top]],'#ece2c5',5);poly([[-200,50],[g.crest,50],[g.crest,g.floor],[-160,80],[-200,72]],'#516157');
+ for(const x of [-g.wheelbase/2,g.wheelbase/2]){circle(x,g.wheelRadius,g.wheelRadius,'#29372f');circle(x,g.wheelRadius,g.wheelRadius*.53,'#59685a');circle(x,g.wheelRadius,8,'#d7ab48');}
+ line([[g.rear,g.floor+g.wall],[g.rear,g.floor],[g.crest,g.floor],[g.crest,g.lip]],'#897952',4);
+ poly([[g.crest,g.lip],[g.toe,0],[g.toe-5,0],[g.crest,g.lip-3]],'#536855');
+ line([[g.crest-8,g.hinge+g.lip+14],[g.crest,g.hinge+g.lip+14],[g.toe,g.hinge+14],[g.mouth,g.hinge+14]],'#96a99c',3);
+ const hingeX=g.mouth-slide,hingeZ=g.hinge+lift,length=g.hinge-g.tip;
+ line([[hingeX,hingeZ],[hingeX-Math.sin(a)*length,hingeZ-Math.cos(a)*length]],'#26734b',5);
+ circle(hingeX,hingeZ,4,'#243d32');circle(bx-drive,bz,g.radius,'#9e791c');circle(bx-drive,bz,g.radius-1.6,'#f4cd40');
+ const marks=[[g.rear+28,g.floor+g.wall+19,'BIN'],[hingeX,hingeZ+32,'GATE']];
+ ctx.font='600 '+Math.max(9,12*scale)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#365241';for(const [x,z,label] of marks)ctx.fillText(label,xs(x),zs(z));
+ const [start,park,sweep,full,reset,home]=trial.times;
+ $('stage').textContent=t<start?'Settling':t<park?'Approach':t<sweep?'Parked':t<full?'Transfer':t<reset?'Hold':t<home?'Gate return':'Settled';
+ $('scrub').value=index;$('time').textContent=t.toFixed(1)+'s';
+}
+function tick(ts){if(playing&&trial){const elapsed=(ts-started)/1000;while(index<trial.frames.length-1&&trial.frames[index+1][0]<=elapsed)index++; if(index===trial.frames.length-1)playback(false);draw();}requestAnimationFrame(tick);}
+new ResizeObserver(draw).observe(canvas);requestAnimationFrame(tick);run(true);
+</script></body></html>

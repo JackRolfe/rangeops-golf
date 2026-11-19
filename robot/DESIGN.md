@@ -4,6 +4,8 @@ This is the design of the robot: what it is made of, how big it is, why it is th
 
 Nothing here has been built or tested. The dimensions and sizing come from [design/params.mjs](design/params.mjs), which is the one place the numbers live. Running `npm run robot:design` checks them ([design/calcs.md](design/calcs.md)) and redraws the drawings. Several inputs are assumptions, marked as such, to be replaced by measurements from the first rover.
 
+The [3D design study and film](README.md#mulligan-in-motion) show the current onboard-storage concept with a curved fairing, chassis-mounted bin and sliding gate. The dimensions and passive pen described below are the original prototype baseline. The planar shell angles, sheet construction and strike estimates below apply to the flat-panel prototype. The curved fairing needs its own material, mounting and impact tests.
+
 ## At a glance
 
 ![Side view of Mulligan](drawings/side.svg)

@@ -17,6 +17,14 @@ export const P = {
   // A hip-roof shell: shallow faces fore and aft, steeper on the sides.
   shell: { baseZ: 80, topZ: 220, halfLength: 207, halfWidth: 162, endSlopeDeg: 35, sideSlopeDeg: 55 },
 
+  // Styled CAD concept. Sections are [z, length, width, plan corner radius].
+  // The sheet-built prototype above retains its original slope calculations.
+  bodywork: {
+    sections: [[80, 414, 324, 44], [96, 406, 321, 46], [127, 368, 307, 54],
+      [165, 292, 276, 65], [194, 211, 224, 66], [212, 142, 175, 58], [218, 98, 137, 44]],
+    hatchLength: 226, hatchWidth: 153,
+  },
+
   battery: { length: 130, width: 80, height: 90 },
 
   // The pen is a bottomless frame hinged to the chassis front. It rides on its own skids.
@@ -26,6 +34,9 @@ export const P = {
     railBottomZ: 12, railTopZ: 60, rail: 10,
     funnelLength: 80, funnelMouth: 420, funnelTopZ: 50,
   },
+
+  // Onboard layout, measured rearward from the gate. The bin seats in the chassis nose.
+  transfer: { binRearX: 165, flatRun: 82, crestRun: 222, lipZ: 70, overtravel: 8 },
 
   // The gate: a row of light flaps hanging from a rod, free to swing in, stopped from swinging out.
   gate: { hingeZ: 62, flapLength: 54, flapWidth: 15, flapPitch: 20, flapThickness: 1.5, flapDensity: 0.9, stopZ: 45 },
