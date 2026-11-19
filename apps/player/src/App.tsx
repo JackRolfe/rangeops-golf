@@ -29,6 +29,7 @@ import { TabScreen } from './screens/TabScreen';
 import { TabBar } from './components/TabBar';
 import { parseLink, type AppLink } from './routes';
 import { AccountSection } from './account/AccountSection';
+import { BookScreen } from './book/BookScreen';
 import { apiErrorMessage, useAccount } from './account/AccountContext';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { SessionDetailScreen } from './screens/SessionDetailScreen';
@@ -123,6 +124,8 @@ export default function App() {
   const account = useAccount();
   const [linkMessage, setLinkMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const linkHandled = useRef(false);
+  /** A hire key to drive with, from a link, a booking or a check-in. */
+  const [hireKey, setHireKey] = useState<Uint8Array | null>(null);
   const targetSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const pendingTargetSave = useRef<{ sessionId: string; target: Target } | null>(null);
   const targetSaveInFlight = useRef(false);
@@ -342,6 +345,11 @@ export default function App() {
     }
   }
 
+  function openDrive(key: Uint8Array): void {
+    setHireKey(key);
+    setView('drive');
+  }
+
   function selectTab(tab: TabId): void {
     setError(null);
     setView(tab);
@@ -422,7 +430,7 @@ export default function App() {
   } else if (view === 'drive') {
     screen = <DriveScreen onTab={selectTab} />;
   } else if (view === 'book') {
-    screen = <TabScreen tab="book" title="Book" onTab={selectTab}><p>Booking comes next.</p></TabScreen>;
+    screen = <BookScreen onTab={selectTab} onDrive={openDrive} />;
   } else if (view === 'balls') {
     screen = <TabScreen tab="balls" title="Balls" onTab={selectTab}><p>Balls come next.</p></TabScreen>;
   } else if (view === 'settings') {

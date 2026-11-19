@@ -1,6 +1,6 @@
 # 04. Book a bay
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 03
 
@@ -10,4 +10,8 @@ Book tab: the next 14 days, free start times from availability, 1 to 3 hours, th
 
 ## Acceptance
 
-- [ ] Component tests against the fake: book with a robot and see it in your bookings; a declined card says so; cancel.
+- [x] Component tests against the fake: book with a robot and see it in your bookings; a declined card says so; cancel.
+
+## Comments
+
+Done in `apps/player/src/book/`. Anyone can look at free times; signing in is asked for at Pay. Up to 3 hours in the picker (the API takes 4). A 409 reloads availability. Declined bookings show under 'Past and cancelled' as 'payment declined', as the API keeps them.
