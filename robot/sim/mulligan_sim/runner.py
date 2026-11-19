@@ -7,8 +7,10 @@ import numpy as np
 
 from . import params as P
 from .driver import Driver
+from .lane_limit import limit_command
 from .estimators import Odometry, OdometryGyro, SensorFrame, UwbEkf
 from .scenarios import Scenario
+from .world import World
 from .sensors import ONE_ANCHOR, TWO_ANCHORS, TWO_ANCHORS_WIDE, Encoders, Gyro, Uwb
 
 # Anchor layouts, each with its own random stream so adding one leaves the others alone.
@@ -58,8 +60,6 @@ class RunLog:
 def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = None,
              margin: float = 0.0) -> RunLog:
     """Simulate one run. If `enforce` names an estimator, the lane limit acts on its pose."""
-    from .world import World
-
     start = scenario.rng(5)
     world = World(
         scenario.ground, scenario.rng(1),
@@ -84,7 +84,6 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
     while step < n_max and not driver.done:
         v_cmd, w_cmd = driver.command(world.x, world.y, world.theta, dt)
         if enforce is not None:
-            from .lane_limit import limit_command
             e = ests[enforce]
             v_cmd, w_cmd = limit_command(e.x, e.y, e.theta, v_cmd, w_cmd, margin)
         world.step(v_cmd, w_cmd, dt)
