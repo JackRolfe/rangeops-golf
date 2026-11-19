@@ -64,6 +64,24 @@ h3{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.2}
 .lead{font-size:1.12rem;color:var(--muted);max-width:60ch}
 .label{font-family:var(--sign);font-weight:600;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase}
 
+/* ---------- section links ---------- */
+.sectionbar{position:sticky;top:0;z-index:20;background:var(--turf-deep);color:var(--on-turf);border-bottom:1px solid rgba(255,255,255,.08);transform:translateY(-100%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s ease;margin-bottom:-56px;height:56px}
+.sectionbar.shown,.sectionbar:focus-within{transform:none;opacity:1;pointer-events:auto}
+.sectionbar-in{display:flex;align-items:center;gap:24px;height:100%}
+.sectionbar .brand{font-size:1.1rem;flex:none}
+.sectionbar .brand i{width:14px;height:14px}
+.sectionbar-links{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.sectionbar-links.overflows{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.sectionbar-links::-webkit-scrollbar{display:none}
+.sectionbar-links a{flex:none;font-family:var(--sign);font-weight:600;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--on-turf-muted);padding:8px 12px;border-radius:999px}
+.sectionbar-links a:hover{color:var(--on-turf)}
+.sectionbar-links a[aria-current="true"]{color:var(--turf-deep);background:var(--ball)}
+main section[id]{scroll-margin-top:72px}
+.section-link{text-decoration:none;align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
+.section-link::after{content:"#";opacity:0;transition:opacity .15s ease}
+.section-link:hover::after,.section-link:focus-visible::after{opacity:.7}
+.section-link:hover{text-decoration:underline;text-underline-offset:4px}
+@media (prefers-reduced-motion:reduce){.sectionbar{transition:none}}
 /* ---------- hero ---------- */
 .hero{background:repeating-linear-gradient(90deg,var(--turf) 0 140px,var(--turf-2) 140px 280px);color:var(--on-turf)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
@@ -243,6 +261,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 }
 @media (max-width:520px){
   body{font-size:16px}
+  .sectionbar-in{gap:12px}
+  .sectionbar .brand{display:none}
   .four{grid-template-columns:1fr}
   .rows li{grid-template-columns:1fr}
   .spec dd{font-size:1.4rem}
@@ -258,8 +278,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
       <nav class="nav" aria-label="Sections">
         <a href="#how">How it works</a>
         <a href="#games">Games</a>
-        <a href="#robot">The robot</a>
-        <a href="#ranges">For ranges</a>
+        <a href="#robot">Mulligan, the robot</a>
+        <a href="#safety">Safety</a>
+        <a href="#ranges">For range owners</a>
       </nav>
     </div>
 
@@ -382,11 +403,24 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   </div>
 </header>
 
+<nav class="sectionbar" id="sectionbar" aria-label="Jump to a section">
+  <div class="wrap sectionbar-in">
+    <a class="brand" href="#top"><i></i>RangeOps</a>
+    <div class="sectionbar-links">
+      <a href="#how">How it works</a>
+      <a href="#games">Games</a>
+      <a href="#robot">Mulligan, the robot</a>
+      <a href="#safety">Safety</a>
+      <a href="#ranges">For range owners</a>
+    </div>
+  </div>
+</nav>
+
 <main>
   <section class="band" id="how">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">How it works</span>
+        <a class="label section-link" href="#how" style="color:var(--accent-text)">How it works</a>
         <h2>From topped shot back to the tee in a minute.</h2>
         <p class="lead">Juniors top a lot of shots, and most of them stop within twenty metres. Mulligan turns those into extra swings instead of a wasted bucket.</p>
       </div>
@@ -401,7 +435,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   <section class="band games-band" id="games">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">Games</span>
+        <a class="label section-link" href="#games" style="color:var(--accent-text)">Games</a>
         <h2>Turn a bucket of balls into a game.</h2>
         <p class="lead">Pick a club, drop a target ring on a map of the range, and tap where each ball lands. The app keeps score, so every bucket has something to beat.</p>
       </div>
@@ -453,7 +487,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
         <figcaption>A design concept of Mulligan collecting a ball. The first robot is being built from bought parts, below.</figcaption>
       </figure>
       <div class="stack">
-        <span class="label" style="color:var(--accent-text)">Mulligan, the robot</span>
+        <a class="label section-link" href="#robot" style="color:var(--accent-text)">Mulligan, the robot</a>
         <h2>Small, low and built to take a hit.</h2>
         <p class="lead">A knee-high buggy with chunky tyres for range grass, a bright flag so everyone can see it, and a ball corral with no rollers or blades in it.</p>
         <dl class="spec">
@@ -479,7 +513,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
   <section class="band safety" id="safety">
     <div class="wrap">
       <div class="stack">
-        <span class="label" style="color:var(--ball)">Safety</span>
+        <a class="label section-link" href="#safety" style="color:var(--ball)">Safety</a>
         <h2>Made for a range with people hitting on it.</h2>
         <p class="lead">The robot goes out so that children never have to.</p>
       </div>
@@ -496,7 +530,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
     <div class="wrap">
       <div class="range">
         <div class="stack">
-          <span class="label" style="color:var(--accent-text)">For range owners</span>
+          <a class="label section-link" href="#ranges" style="color:var(--accent-text)">For range owners</a>
           <h2>What it does for the range.</h2>
           <p class="lead">RangeOps makes a family hour at the range go further, without changing how the range runs.</p>
         </div>
@@ -525,6 +559,26 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 </footer>
 
 <script>
+(() => {
+  // Show the section bar once the hero has scrolled away, and mark the section in view.
+  const bar = document.getElementById('sectionbar');
+  const hero = document.querySelector('header.hero');
+  if (!bar || !hero || !('IntersectionObserver' in window)) { bar && bar.classList.add('shown'); return; }
+  new IntersectionObserver(([e]) => bar.classList.toggle('shown', !e.isIntersecting), { rootMargin: '-56px 0px 0px 0px' }).observe(hero);
+  const row = bar.querySelector('.sectionbar-links');
+  const fit = () => row.classList.toggle('overflows', row.scrollWidth > row.clientWidth + 1);
+  fit(); window.addEventListener('resize', fit);
+  const links = new Map([...bar.querySelectorAll('.sectionbar-links a')].map(a => [a.getAttribute('href').slice(1), a]));
+  const seen = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of links.values()) a.removeAttribute('aria-current');
+      const a = links.get(e.target.id);
+      if (a) { a.setAttribute('aria-current', 'true'); const row = a.parentElement; row.scrollTo({ left: a.offsetLeft - row.offsetLeft - 12 }); }
+    }
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  for (const id of links.keys()) { const el = document.getElementById(id); if (el) seen.observe(el); }
+})();
 (() => {
   const film = document.getElementById('robot-film');
   if (!film || !('IntersectionObserver' in window)) return;
