@@ -1,0 +1,22 @@
+# AGENTS.md
+
+## Agent skills
+
+### Issue tracker
+
+Specs and tickets live as local Markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, created as terms and decisions are settled. See `docs/agents/domain.md`.
+
+## Working rules
+
+- **Everything stays on this machine for now.** Commit locally on your own branch as often as you like. Don't `git push`, open or update pull requests, merge into `main` or deploy anything. Pushing to `main` publishes the site to GitHub Pages, so it counts as a deploy.
+- **Work in your own worktree and branch** when other sessions may be running, and stay inside the files your task names.
+- **Keep moving.** When a decision is yours to make and reversible, pick a sensible default, write it down (in the spec, the ticket, `CONTEXT.md` or an ADR), and carry on. Stop to ask only for something irreversible, outward-facing, or a real product choice the plan doesn't settle.
+- **The plan is [docs/PLAN.md](docs/PLAN.md).** The robot's plan, design and control link are in [robot/](robot/README.md).

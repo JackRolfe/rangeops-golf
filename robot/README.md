@@ -1,6 +1,6 @@
 # Mulligan, the RangeOps robot
 
-Mulligan is a knee-high remote-control buggy that lives at a driving range bay. A child drives it out from the RangeOps app, rolls it over the short shots to scoop them up, and drives them back to hit again.
+Mulligan is a knee-high remote-control buggy that lives at a driving range bay. A child drives it out from a phone, rolls it over the short shots to scoop them up, and drives them back to hit again. A range hires it out with a bay booking, through the RangeOps app or another booking platform; see [docs/PLAN.md](../docs/PLAN.md#built-to-swap).
 
 Nothing here is built yet. The first build is a private proof of concept, tested by the builder with no children and no public demos, so the strike-proof shell and the pilot's safety work come later (stage R3). This is the plan for building it, and [DESIGN.md](DESIGN.md) is the design: dimensions, drawings, parts and the reasons behind them. [BUILD.md](BUILD.md) is how to build it from bought parts with hand tools, for someone who has never built anything, and there is a 3D model of it in [cad/](cad/README.md). Firmware and test notes will live in this folder as they appear. How the robot fits with the app and the rest of the offering is in [docs/PLAN.md](../docs/PLAN.md).
 
@@ -69,7 +69,7 @@ Plan: build R0 with odometry and a gyro and measure the drift over a 30 m out-an
 
 The app and the firmware both build against this, which is what lets them be built at the same time. It is a draft: change it freely until R0 drives, then version it.
 
-One Bluetooth LE service with three characteristics. The robot advertises as `Mulligan-` followed by four characters of its serial.
+One Bluetooth LE service with four characteristics. The robot advertises as `Mulligan-` followed by four characters of its serial.
 
 | | UUID |
 | --- | --- |
@@ -77,12 +77,14 @@ One Bluetooth LE service with three characteristics. The robot advertises as `Mu
 | Drive | `618deb22-0248-48ee-8de9-e8d739eba464` |
 | Telemetry | `618deb23-0248-48ee-8de9-e8d739eba464` |
 | Info | `618deb24-0248-48ee-8de9-e8d739eba464` |
+| Unlock | `618deb25-0248-48ee-8de9-e8d739eba464` |
 
 | Characteristic | Direction | Rate | Contents |
 | --- | --- | --- | --- |
 | Drive | app to robot, write without response | 20 times a second while the stick is held | 4 bytes, below |
 | Telemetry | robot to app, notify | 5 times a second | 8 bytes, below |
 | Info | read | once on connect | Text: robot name, firmware version and hardware revision, separated by semicolons |
+| Unlock | app to robot, write with response | once on connect | The hire key, 78 bytes, below |
 
 Drive, 4 bytes:
 
@@ -97,7 +99,7 @@ Telemetry, 8 bytes:
 
 | Byte | Meaning |
 | --- | --- |
-| 0 | State: 0 idle, 1 driving, 2 at a limit, 3 link lost, 4 stopped by the switch, 5 fault, 6 low battery |
+| 0 | State: 0 idle, 1 driving, 2 at a limit, 3 link lost, 4 stopped by the switch, 5 fault, 6 low battery, 7 locked: no valid hire key |
 | 1 | Battery, percent |
 | 2 | Balls on board; 255 if the robot does not count them |
 | 3 | Fault flags. Bit 0 stall, bit 1 tilt, bit 2 sensor, bit 3 low voltage |
@@ -105,13 +107,26 @@ Telemetry, 8 bytes:
 | 6 | Limit flags, set while a limit is overriding the stick. Bit 0 far end, bit 1 left edge, bit 2 right edge, bit 3 speed |
 | 7 | The sequence number of the last Drive message it acted on |
 
+Hire key, 78 bytes, issued by the backend for a hired robot and carried to the phone in a link:
+
+| Bytes | Meaning |
+| --- | --- |
+| 0 | Version, 1 |
+| 1 to 4 | The robot's four serial characters, as in its advertised name |
+| 5 to 8 | Start of the hire, Unix seconds, low byte first |
+| 9 to 12 | End of the hire, the same way |
+| 13 | Bay number |
+| 14 to 77 | Ed25519 signature over bytes 0 to 13, by the service's signing key |
+
+The robot checks the signature against the public key in its firmware, that the serial is its own, and that the time is inside the hire. It needs no network to do that, only a clock it trusts (an open decision in [docs/PLAN.md](../docs/PLAN.md#decisions)). The key is longer than Bluetooth's default 20-byte write, so the app asks for a larger packet size first, which phones do routinely.
+
 Rules:
 
 - When the stick is released the app sends three Drive messages with x and y at zero and the flag clear, then stops sending. The robot brakes on the first.
 - The robot also stops if 300 ms pass without a valid Drive message. That covers a lost signal or a crashed app; it is the backstop, not the normal way to stop.
 - The sequence number lets firmware ignore a message that arrives late or out of order.
 - Speed cap, acceleration ramp and lane limit are applied by the robot to whatever the stick asks for. When a limit is overriding the stick, telemetry says so, so the app can explain it.
-- One controller at a time. Until the backend exists, any phone nearby can connect. With booking, the robot accepts only a phone holding the key for the current hire.
+- One controller at a time, and only with a hire key. Until a phone writes a valid key, the robot reports state 7 and ignores Drive messages. On the bench, a key can be issued by hand.
 
 One open question to settle on R0: what the stick means. The site demo steers in range terms, where pushing the stick up the screen sends the robot up the range whichever way it is facing. That is easiest for a child but needs the robot to know its heading. The simple alternative is robot terms, where up is forward and sideways is turn. Start R0 in robot terms, and switch to range terms once heading is trustworthy.
 
@@ -121,7 +136,7 @@ Each stage ends with a test on grass. The thresholds are proposals to argue with
 
 **R0. Bench rover.** The goBILDA chassis, the controller, motor driver, encoders, motion sensor and a tool battery. No pickup, no shell.
 
-- Drives from a phone, held to the speed cap.
+- Drives from a phone, held to the speed cap, and only for a phone holding a valid hire key.
 - Stops within 30 cm of the stick being released, and within 60 cm when the phone is switched off or walks out of range.
 - Power draw measured over an hour of stop-start driving on grass, giving a real runtime figure.
 - Odometry drift measured over ten 30 m out-and-back runs.
