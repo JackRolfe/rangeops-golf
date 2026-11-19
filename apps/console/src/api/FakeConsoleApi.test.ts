@@ -68,3 +68,38 @@ describe('the demo data', () => {
     expect(orders.filter((o) => !isWellFormedCode(o.code))).toEqual([]);
   });
 });
+
+describe('the fake fleet', () => {
+  it('drains hired robots as its clock moves', async () => {
+    let now = new Date('2026-11-19T17:10:00');
+    const api = new FakeConsoleApi({ clock: () => now });
+    const before = (await api.listRobots()).find((r) => r.hire)!;
+    now = new Date('2026-11-19T17:30:00');
+    const after = (await api.listRobots()).find((r) => r.id === before.id)!;
+    expect(after.battery).toBe(before.battery - 10);
+  });
+
+  it('sends a robot when staff check in a booking that hired one', async () => {
+    let now = new Date('2026-11-19T17:10:00');
+    const api = new FakeConsoleApi({ clock: () => now });
+    // Bring every robot home by the end of the day, then check in a fresh evening booking with a robot.
+    now = new Date('2026-11-19T21:05:00');
+    await api.listRobots();
+    const evening = (await api.listBookings('2026-11-19')).find((b) => b.start === 21 && b.status === 'booked');
+    expect(evening).toBeDefined();
+    if (!evening) return;
+    (api as unknown as { state: { bookings: { id: string; robotHire: boolean }[] } }).state.bookings.find((b) => b.id === evening.id)!.robotHire = true;
+    await api.setBookingStatus(evening.id, 'checked-in');
+    const robots = await api.listRobots();
+    expect(robots.some((r) => r.hire?.bookingId === evening.id)).toBe(true);
+  });
+});
+
+describe('the demo takings', () => {
+  it('look like a day at a 20-bay range, not a week', async () => {
+    const { takings } = await import('../domain/takings');
+    const t = takings(await new FakeConsoleApi({ clock: THURSDAY_5PM }).listPayments('2026-11-19'));
+    expect(t.total).toBeGreaterThan(1000_00);
+    expect(t.total).toBeLessThan(6000_00);
+  });
+});

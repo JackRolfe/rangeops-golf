@@ -119,8 +119,15 @@ export function seedDemoRange(nowDate: Date): FakeState {
         const end = dateTimeAt(date, hour + hours);
         const roll = random();
         const source: Source = offset > 0 ? (roll < 0.85 ? 'app' : 'partner') : roll < 0.7 ? 'app' : roll < 0.9 ? 'counter' : 'partner';
+        // Counter bookings are paid on arrival. App and partner bookings are paid one to three days
+        // ahead; for bookings further out than that, sometime in the past week.
+        const paidHour = 8 + Math.floor(random() * 13);
+        const paidMinute = Math.floor(random() * 60);
+        const aheadPaid = dateTimeAt(addDays(date, -1 - Math.floor(random() * 3)), paidHour, paidMinute);
         const paidAt =
-          source === 'counter' ? notAfterNow(addMinutes(start, -5)) : notAfterNow(dateTimeAt(addDays(date, -1 - Math.floor(random() * 3)), 8 + Math.floor(random() * 13), Math.floor(random() * 60)));
+          source === 'counter'
+            ? notAfterNow(addMinutes(start, -5))
+            : notAfterNow(aheadPaid > now ? dateTimeAt(addDays(today, -Math.floor(random() * 7)), paidHour, paidMinute) : aheadPaid);
         let status: Booking['status'] = 'booked';
         if (random() < 0.05) status = 'cancelled';
         else if (end <= now) status = random() < 0.93 ? 'checked-in' : 'booked';

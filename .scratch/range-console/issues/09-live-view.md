@@ -1,6 +1,6 @@
 # 09 Live view and today's takings
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 

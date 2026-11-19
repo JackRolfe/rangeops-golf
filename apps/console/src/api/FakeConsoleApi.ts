@@ -1,8 +1,9 @@
 import { generateCode, handOver, type HandoverResult } from '../domain/buckets';
+import { advanceRobot, assignHires } from '../domain/fleet';
 import { newPass, redeemBucket } from '../domain/passes';
 import { quoteBooking } from '../domain/pricing';
 import { validateSetup } from '../domain/setup';
-import { toIsoDate, toLocalDateTime, dateOf } from '../domain/time';
+import { dateOf, hourOf, toIsoDate, toLocalDateTime } from '../domain/time';
 import type { Booking, IsoDate, Order, Pass, PassKind, Payment, RangeSetup, Result, Robot } from '../domain/types';
 import type { Clock, ConsoleApi } from './ConsoleApi';
 import { seedDemoRange } from './seed';
@@ -131,6 +132,11 @@ export class FakeConsoleApi implements ConsoleApi {
   }
 
   async listRobots(): Promise<Robot[]> {
+    // Move the fleet on to now: hired robots drain, docked ones charge, ended hires come home,
+    // and checked-in bookings that hired a robot get one.
+    const now = this.now();
+    const advanced = this.state.robots.map((r) => advanceRobot(r, now));
+    this.state.robots = assignHires(advanced, this.state.bookings, now, hourOf(now));
     return copy(this.state.robots);
   }
 
