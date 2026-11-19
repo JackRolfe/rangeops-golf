@@ -1,6 +1,6 @@
 # 03. RobotLink and SimulatedRobot
 
-Status: ready-for-agent
+Status: resolved
 Spec: ../spec.md
 Blocked by: 01, 02
 
@@ -11,4 +11,8 @@ Blocked by: 01, 02
 
 ## Acceptance
 
-- [ ] Tests: refuses each bad key and stays locked; drives only after unlock; stops on release; link lost after 300 ms; ignores a stale sequence number; holds the far end, left and right edges with the right flags; speed flag at full stick; picks up balls up to ten and unloads at the bay; telemetry five times a second.
+- [x] Tests: refuses each bad key and stays locked; drives only after unlock; stops on release; link lost after 300 ms; ignores a stale sequence number; holds the far end, left and right edges with the right flags; speed flag at full stick; picks up balls up to ten and unloads at the bay; telemetry five times a second.
+
+## Comments
+
+Done. `RobotLink.ts` and `SimulatedRobot.ts` (a `SimulatedFirmware` that only sees bytes, wrapped by the `SimulatedRobot` link). Robot terms by default; range terms as an option, as in the site demo. 20 tests in `SimulatedRobot.test.ts`.
