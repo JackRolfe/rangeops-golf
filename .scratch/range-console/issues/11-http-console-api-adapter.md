@@ -13,3 +13,7 @@ Needs: the OpenAPI file merged into this branch, and a decision on how staff sig
 ## Acceptance
 
 - The contract tests the fake passes (`src/api/consoleApi.contract.ts`) also pass against a running local API.
+
+## Comments
+
+- The fake and every screen are done (tickets 01 to 10). This is the only open console ticket. The backend branch `feature/backend-api-7a8320` has its own ADRs (0010 backend stack, 0011 hire-key signing); read them and its OpenAPI file when it lands. See also `docs/adr/0020-console-reads-and-writes-through-one-consoleapi.md`.
