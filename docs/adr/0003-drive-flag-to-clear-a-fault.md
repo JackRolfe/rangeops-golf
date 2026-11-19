@@ -1,6 +1,6 @@
 # 3. Drive flags bit 1 clears a fault
 
-Status: proposed change to the draft control link, implemented in the R0 firmware, 2026-11-19
+Status: accepted, implemented in the R0 firmware and added to the control link in robot/README.md, 2026-11-19
 
 ## Context
 

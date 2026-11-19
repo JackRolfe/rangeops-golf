@@ -84,7 +84,7 @@ One Bluetooth LE service with four characteristics. The robot advertises as `Mul
 | Drive | app to robot, write without response | 20 times a second while the stick is held | 4 bytes, below |
 | Telemetry | robot to app, notify | 5 times a second | 8 bytes, below |
 | Info | read | once on connect | Text: robot name, firmware version and hardware revision, separated by semicolons |
-| Unlock | app to robot, write with response | once on connect | The hire key, 78 bytes, below |
+| Unlock | app to robot, write with response; also read | write once on connect, then read | Write: the hire key, 78 bytes, below. Read: 1 byte, the result of the last key written on this connection, below |
 
 Drive, 4 bytes:
 
@@ -93,7 +93,7 @@ Drive, 4 bytes:
 | 0 | Sequence number, counting up and wrapping at 255 |
 | 1 | Stick x, signed, -100 to 100, right is positive |
 | 2 | Stick y, signed, -100 to 100, forward is positive |
-| 3 | Flags. Bit 0: a thumb is on the stick |
+| 3 | Flags. Bit 0: a thumb is on the stick. Bit 1: clear a fault. The robot clears a latched fault only when bit 1 is set, bit 0 is clear and the cause has gone ([ADR 0003](../docs/adr/0003-drive-flag-to-clear-a-fault.md)). The app sends it from a button shown while the state is 5 |
 
 Telemetry, 8 bytes:
 
@@ -118,7 +118,22 @@ Hire key, 78 bytes, issued by the backend for a hired robot and carried to the p
 | 13 | Bay number |
 | 14 to 77 | Ed25519 signature over bytes 0 to 13, by the service's signing key |
 
-The robot checks the signature against the public key in its firmware, that the serial is its own, and that the time is inside the hire. It needs no network to do that, only a clock it trusts (an open decision in [docs/PLAN.md](../docs/PLAN.md#decisions)). The key is longer than Bluetooth's default 20-byte write, so the app asks for a larger packet size first, which phones do routinely.
+The robot checks the signature against the public key in its firmware, that the serial is its own, and that the time is inside the hire. It needs no network to do that, only a clock it trusts (an open decision in [docs/PLAN.md](../docs/PLAN.md#decisions); R0 uses the anchored clock in [ADR 0002](../docs/adr/0002-robot-clock-anchored-on-hire-key.md), and [docs/research/robot-clock.md](../docs/research/robot-clock.md) recommends a DS3231 clock module).
+
+The key is longer than one Bluetooth packet, and that's fine: a write with response that doesn't fit in one packet is sent as a long write (Prepare and Execute Write), which every phone does by itself. An iPhone app can't ask for a larger packet size, so the app must not depend on one ([docs/research/ble-iphone-to-robot.md](../docs/research/ble-iphone-to-robot.md)). Confirm on the bench that the firmware's Bluetooth library accepts the long write.
+
+Unlock read-back, 1 byte ([ADR 0005](../docs/adr/0005-unlock-result-read-back.md)). The write itself always succeeds; the app writes the key, waits about 100 ms for the next control tick, then reads Unlock to learn why the robot is still locked:
+
+| Value | Meaning |
+| --- | --- |
+| 0 | ok |
+| 1 | bad length, and the value before any key is written |
+| 2 | bad version |
+| 3 | bad signature |
+| 4 | wrong serial: a key for another robot |
+| 5 | not yet: the hire has not started |
+| 6 | expired |
+| 7 | the robot does not know the time |
 
 Rules:
 
@@ -126,7 +141,10 @@ Rules:
 - The robot also stops if 300 ms pass without a valid Drive message. That covers a lost signal or a crashed app; it is the backstop, not the normal way to stop.
 - The sequence number lets firmware ignore a message that arrives late or out of order.
 - Speed cap, acceleration ramp and lane limit are applied by the robot to whatever the stick asks for. When a limit is overriding the stick, telemetry says so, so the app can explain it.
-- One controller at a time, and only with a hire key. Until a phone writes a valid key, the robot reports state 7 and ignores Drive messages. On the bench, a key can be issued by hand.
+- One controller at a time, and only with a hire key. Until a phone writes a valid key, the robot reports state 7 and ignores Drive messages. The robot forgets the key when the phone disconnects. On the bench, a key can be issued by hand.
+- The app sends Drive on a "latest value wins" basis: if a write is still queued, the next one replaces it rather than queueing behind it.
+- The app keeps no Bluetooth connection in the background. When it comes back to the foreground, it treats the stick as released, reconnects and writes the key again.
+- The robot asks for a 15 to 30 ms connection interval with no latency, inside Apple's accessory guidelines. The 300 ms timeout stays the real stop.
 
 One open question to settle on R0: what the stick means. The site demo steers in range terms, where pushing the stick up the screen sends the robot up the range whichever way it is facing. That is easiest for a child but needs the robot to know its heading. The simple alternative is robot terms, where up is forward and sideways is turn. Start R0 in robot terms, and switch to range terms once heading is trustworthy.
 

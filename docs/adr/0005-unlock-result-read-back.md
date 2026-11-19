@@ -1,6 +1,6 @@
 # 5. The app reads Unlock back to learn what the robot made of its key
 
-Status: proposed change to the draft control link, implemented in the R0 firmware, 2026-11-19
+Status: accepted, implemented in the R0 firmware and added to the control link in robot/README.md, 2026-11-19
 
 ## Context
 
