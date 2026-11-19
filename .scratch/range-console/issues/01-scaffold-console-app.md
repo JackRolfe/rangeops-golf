@@ -1,6 +1,6 @@
 # 01 Scaffold apps/console
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: none
 
