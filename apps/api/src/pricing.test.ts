@@ -7,7 +7,7 @@ const bay = (over: Partial<BayRow> = {}): BayRow => ({
 });
 
 const data: RangeData = {
-  range: { id: 'r', slug: 'x', name: 'X', time_zone: 'Australia/Sydney', currency: 'AUD', off_peak_cents: 1800, peak_cents: 2800 },
+  range: { id: 'r', slug: 'x', name: 'X', time_zone: 'Australia/Sydney', currency: 'AUD', off_peak_cents: 1800, peak_cents: 2800, floor_cents: 0 },
   bays: [],
   hours: [{ weekday: 2, opens_min: 450, closes_min: 1320 }], // Tuesday 07:30–22:00
   peaks: [{ weekday: 2, from_min: 960, to_min: 1260 }],

@@ -6,7 +6,8 @@ import { bearer } from '../auth/schemas.js';
 import { AddOnRequestSchema, BookingSchema, bookingOut } from '../bookings/schemas.js';
 import { createBooking, MAX_HOURS, type BookingRow } from '../bookings/service.js';
 import type { Deps } from '../deps.js';
-import { badRequest, conflict, errors, notFound } from '../errors.js';
+import { badRequest, conflict, errors, notFound, unprocessable } from '../errors.js';
+import { formatCents } from './money.js';
 import { OrderSchema, orderOut, type OrderRow } from '../orders/service.js';
 import { findBay, findRange, loadRange, type BayRow } from '../ranges/repo.js';
 import { Cents, Instant, LocalTime, RangeIdParam, RangeSchema, Weekday, rangeOut } from '../ranges/schemas.js';
@@ -37,8 +38,8 @@ const routes = {
     method: 'patch',
     path: '/ranges/{rangeId}',
     tags: ['Console'],
-    summary: 'Rename a range or change its bay-hour prices (staff)',
-    description: 'Prices apply to new bookings; existing ones keep what they paid.',
+    summary: 'Rename a range or change its bay-hour prices and floor (staff)',
+    description: 'Prices apply to new bookings; existing ones keep what they paid. No range or bay price may be below the floor (422 below_floor).',
     security: bearer,
     request: {
       params: RangeIdParam,
@@ -47,13 +48,18 @@ const routes = {
         content: {
           'application/json': {
             schema: z
-              .object({ name: z.string().trim().min(1).max(100).optional(), offPeakCentsPerHour: Cents.min(0).optional(), peakCentsPerHour: Cents.min(0).optional() })
+              .object({
+                name: z.string().trim().min(1).max(100).optional(),
+                offPeakCentsPerHour: Cents.min(0).optional(),
+                peakCentsPerHour: Cents.min(0).optional(),
+                floorCentsPerHour: Cents.min(0).optional(),
+              })
               .openapi('RangeUpdate'),
           },
         },
       },
     },
-    responses: { 200: { description: 'The range', content: { 'application/json': { schema: RangeSchema } } }, ...errors(400, 401, 403, 404) },
+    responses: { 200: { description: 'The range', content: { 'application/json': { schema: RangeSchema } } }, ...errors(400, 401, 403, 404, 422) },
   }),
   putHours: createRoute({
     method: 'put',
@@ -130,7 +136,7 @@ const routes = {
         },
       },
     },
-    responses: { 201: { description: 'Added', content: { 'application/json': { schema: StaffBaySchema } } }, ...errors(400, 401, 403, 404, 409) },
+    responses: { 201: { description: 'Added', content: { 'application/json': { schema: StaffBaySchema } } }, ...errors(400, 401, 403, 404, 409, 422) },
   }),
   updateBay: createRoute({
     method: 'patch',
@@ -157,7 +163,7 @@ const routes = {
         },
       },
     },
-    responses: { 200: { description: 'Updated', content: { 'application/json': { schema: StaffBaySchema } } }, ...errors(400, 401, 403, 404) },
+    responses: { 200: { description: 'Updated', content: { 'application/json': { schema: StaffBaySchema } } }, ...errors(400, 401, 403, 404, 422) },
   }),
   rotateCode: createRoute({
     method: 'post',
@@ -258,6 +264,14 @@ const routes = {
   }),
 };
 
+const belowFloor = (floor: number) =>
+  unprocessable(`Bay-hour prices can't be below the floor of ${formatCents(floor)}.`, 'below_floor');
+
+/** A bay's own prices, where set, must not be below the range's floor. */
+function checkBayPrices(floor: number, ...prices: (number | null | undefined)[]) {
+  if (prices.some((p) => p !== null && p !== undefined && p < floor)) throw belowFloor(floor);
+}
+
 export function consoleRoutes(app: Api, deps: Deps) {
   const { db } = deps;
 
@@ -291,9 +305,18 @@ export function consoleRoutes(app: Api, deps: Deps) {
   app.openapi(routes.updateRange, async (c) => {
     const range = await staffRange(c, c.req.valid('param').rangeId);
     const b = c.req.valid('json');
+    const floor = b.floorCentsPerHour ?? range.floor_cents;
+    const offPeak = b.offPeakCentsPerHour ?? range.off_peak_cents;
+    const peak = b.peakCentsPerHour ?? range.peak_cents;
+    if (offPeak < floor || peak < floor) throw belowFloor(floor);
+    const lowBay = await db.maybeOne<{ number: number }>(
+      'select number from bays where range_id = $1 and (off_peak_cents < $2 or peak_cents < $2) order by number limit 1',
+      [range.id, floor],
+    );
+    if (lowBay) throw unprocessable(`Bay ${lowBay.number} has its own price below the floor. Change it first.`, 'below_floor');
     await db.many(
-      'update ranges set name = coalesce($2, name), off_peak_cents = coalesce($3, off_peak_cents), peak_cents = coalesce($4, peak_cents) where id = $1',
-      [range.id, b.name ?? null, b.offPeakCentsPerHour ?? null, b.peakCentsPerHour ?? null],
+      'update ranges set name = coalesce($2, name), off_peak_cents = $3, peak_cents = $4, floor_cents = $5 where id = $1',
+      [range.id, b.name ?? null, offPeak, peak, floor],
     );
     return c.json(rangeOut(await loadRange(db, range.id)), 200);
   });
@@ -334,6 +357,7 @@ export function consoleRoutes(app: Api, deps: Deps) {
   app.openapi(routes.createBay, async (c) => {
     const range = await staffRange(c, c.req.valid('param').rangeId);
     const b = c.req.valid('json');
+    checkBayPrices(range.floor_cents, b.offPeakCentsPerHour, b.peakCentsPerHour);
     const bay = await db.maybeOne<BayRow>(
       `insert into bays (range_id, number, name, off_peak_cents, peak_cents) values ($1, $2, $3, $4, $5)
        on conflict (range_id, number) do nothing returning *`,
@@ -346,6 +370,7 @@ export function consoleRoutes(app: Api, deps: Deps) {
   app.openapi(routes.updateBay, async (c) => {
     const bay = await staffBay(c, c.req.valid('param').bayId);
     const b = c.req.valid('json');
+    checkBayPrices((await findRange(db, bay.range_id)).floor_cents, b.offPeakCentsPerHour, b.peakCentsPerHour);
     const updated = await db.one<BayRow>(
       `update bays set
          name = coalesce($2, name),

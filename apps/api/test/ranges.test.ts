@@ -20,7 +20,7 @@ describe('ranges', () => {
     const r = bySlug.body;
     expect(r.bays).toHaveLength(8);
     expect(r.bays[0]).toMatchObject({ number: 1, name: 'Bay 1', active: true, offPeakCentsPerHour: null });
-    expect(r.prices).toEqual({ offPeakCentsPerHour: 1800, peakCentsPerHour: 2800 });
+    expect(r.prices).toEqual({ offPeakCentsPerHour: 1800, peakCentsPerHour: 2800, floorCentsPerHour: 0 });
     expect(r.openingHours).toHaveLength(7);
     expect(r.openingHours[0]).toEqual({ weekday: 0, opens: '07:00', closes: '22:00' });
     expect(r.peakWindows).toContainEqual({ weekday: 1, from: '16:00', to: '21:00' });

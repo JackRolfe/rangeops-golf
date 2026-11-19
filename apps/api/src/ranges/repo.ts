@@ -10,6 +10,8 @@ export interface RangeRow {
   currency: string;
   off_peak_cents: number;
   peak_cents: number;
+  /** The least a bay-hour may cost; 0 for no floor. */
+  floor_cents: number;
 }
 
 export interface BayRow {

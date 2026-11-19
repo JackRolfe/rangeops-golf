@@ -90,11 +90,17 @@
                     "type": "integer",
                     "description": "Money in cents of the range currency",
                     "example": 1800
+                  },
+                  "floorCentsPerHour": {
+                    "type": "integer",
+                    "description": "The least a bay-hour may cost. No price can be set below it; 0 is no floor.",
+                    "example": 1800
                   }
                 },
                 "required": [
                   "offPeakCentsPerHour",
-                  "peakCentsPerHour"
+                  "peakCentsPerHour",
+                  "floorCentsPerHour"
                 ]
               },
               "openingHours": {
@@ -1701,6 +1707,12 @@
             "minimum": 0,
             "description": "Money in cents of the range currency",
             "example": 1800
+          },
+          "floorCentsPerHour": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Money in cents of the range currency",
+            "example": 1800
           }
         }
       },
@@ -2268,8 +2280,8 @@
         "tags": [
           "Console"
         ],
-        "summary": "Rename a range or change its bay-hour prices (staff)",
-        "description": "Prices apply to new bookings; existing ones keep what they paid.",
+        "summary": "Rename a range or change its bay-hour prices and floor (staff)",
+        "description": "Prices apply to new bookings; existing ones keep what they paid. No range or bay price may be below the floor (422 below_floor).",
         "security": [
           {
             "bearerAuth": []
@@ -2341,6 +2353,16 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {
@@ -4162,6 +4184,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4242,6 +4274,16 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed, but breaks a booking or pricing rule",
             "content": {
               "application/json": {
                 "schema": {

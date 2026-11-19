@@ -20,7 +20,7 @@ describe('console set-up', () => {
   it('changes range prices, and availability follows', async () => {
     const res = await t.call('PATCH', '/ranges/demo', { token: staff, body: { offPeakCentsPerHour: 2000, peakCentsPerHour: 3200 } });
     expect(res.status).toBe(200);
-    expect(res.body.prices).toEqual({ offPeakCentsPerHour: 2000, peakCentsPerHour: 3200 });
+    expect(res.body.prices).toEqual({ offPeakCentsPerHour: 2000, peakCentsPerHour: 3200, floorCentsPerHour: 0 });
     const slots = (await day()).bays[0].slots;
     expect(slots.find((s: any) => s.localTime === '10:00').priceCents).toBe(2000);
     expect(slots.find((s: any) => s.localTime === '16:00').priceCents).toBe(3200);

@@ -62,7 +62,11 @@ export const PassProductSchema = z
   .openapi('PassProduct');
 
 export const RangeSchema = RangeSummarySchema.extend({
-  prices: z.object({ offPeakCentsPerHour: Cents, peakCentsPerHour: Cents }),
+  prices: z.object({
+    offPeakCentsPerHour: Cents,
+    peakCentsPerHour: Cents,
+    floorCentsPerHour: Cents.openapi({ description: 'The least a bay-hour may cost. No price can be set below it; 0 is no floor.' }),
+  }),
   openingHours: z.array(OpeningHoursSchema),
   peakWindows: z.array(PeakWindowSchema),
   bays: z.array(BaySchema),
@@ -108,7 +112,7 @@ export const passProductOut = (p: PassProductRow): z.infer<typeof PassProductSch
 export function rangeOut(d: RangeData): z.infer<typeof RangeSchema> {
   return {
     ...rangeSummary(d.range),
-    prices: { offPeakCentsPerHour: d.range.off_peak_cents, peakCentsPerHour: d.range.peak_cents },
+    prices: { offPeakCentsPerHour: d.range.off_peak_cents, peakCentsPerHour: d.range.peak_cents, floorCentsPerHour: d.range.floor_cents },
     openingHours: d.hours.map(hoursOut),
     peakWindows: d.peaks.map(peakOut),
     bays: d.bays.map(bayOut),
