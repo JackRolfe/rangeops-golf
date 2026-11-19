@@ -50,6 +50,9 @@ export interface CounterSale {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export const isEmail = (value: string) => EMAIL.test(value.trim());
+export const NEED_EMAIL = 'Passes are held on an account: enter the player’s email.';
+
 /**
  * Sell a pass or ball credit at the counter, against the passes the range already holds.
  * A monthly pass starts today, or the day after the player's current one ends. Ball credit tops up the
@@ -64,7 +67,7 @@ export function sellPass(
   newId: () => string,
 ): Result<{ pass: Pass; replaces: string | null; price: number }> {
   const email = sale.email.trim().toLowerCase();
-  if (!EMAIL.test(email)) return { ok: false, errors: ['Passes are held on an account: enter the player’s email.'] };
+  if (!EMAIL.test(email)) return { ok: false, errors: [NEED_EMAIL] };
   const mine = passes.filter((p) => p.email === email);
   const accountId = mine[0]?.accountId ?? `acct-${email}`;
   const player = mine[0]?.player ?? (sale.name?.trim() || email);

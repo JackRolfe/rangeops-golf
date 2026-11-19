@@ -336,7 +336,7 @@ describe('fleet and passes', () => {
     expect(robots[0]!.lastSeen).toBe('2026-11-24T16:09');
   });
 
-  it('lists discount passes and ball credit, and refuses counter sales', async () => {
+  it('lists discount passes and ball credit', async () => {
     const holder = { id: 'a1', email: 'parent@example.com', name: null };
     const { console: api } = make({
       [`GET /ranges/${RANGE_ID}/passes`]: () => ({
@@ -349,8 +349,50 @@ describe('fleet and passes', () => {
     const passes = await api.listPasses();
     expect(passes[0]).toMatchObject({ accountId: 'a1', player: 'parent@example.com', email: 'parent@example.com', kind: 'monthly', discountPercent: 10, soldAt: '2026-11-24T09:00', validUntil: '2026-12-23' });
     expect(passes[1]).toMatchObject({ id: 'credit-a1', player: 'Grace Tan', kind: 'credits', ballsLeft: 350, validUntil: null, soldAt: null });
-    expect(api.capabilities.sellPasses).toBe(false);
-    expect((await api.sellPass({ email: 'sam@example.com', kind: 'credits' })).ok).toBe(false);
+  });
+
+  it('sells a monthly pass and ball credit at the counter', async () => {
+    const holder = { id: 'a7', email: 'walkers@example.com', name: 'The Walkers' };
+    const { console: api, calls } = make({
+      [`POST /ranges/${RANGE_ID}/counter/passes`]: (body: any) => ({
+        status: 201,
+        json:
+          body.passProductId === 'pp1'
+            ? { order: order({ kind: 'pass' }), account: holder, ballCredit: null, pass: { id: 'p9', account: holder, name: 'Monthly pass', discountPercent: 10, validFrom: '2026-11-23T22:00:00.000Z', validTo: '2026-12-23T22:00:00.000Z', createdAt: '2026-11-23T22:00:00.000Z' } }
+            : { order: order({ kind: 'ball_credit' }), account: holder, pass: null, ballCredit: 500 },
+      }),
+    });
+    expect(api.capabilities).toMatchObject({ sellPasses: true, redeemPasses: true });
+    expect(await api.sellPass({ email: ' walkers@example.com ', name: 'The Walkers', kind: 'monthly' })).toMatchObject({
+      ok: true,
+      value: { id: 'p9', kind: 'monthly', player: 'The Walkers', validUntil: '2026-12-24', discountPercent: 10 },
+    });
+    expect(await api.sellPass({ email: 'walkers@example.com', kind: 'credits' })).toMatchObject({ ok: true, value: { id: 'credit-a7', ballsLeft: 500 } });
+    expect(calls.filter((c) => c.method === 'POST').map((c) => c.body)).toEqual([
+      { email: 'walkers@example.com', name: 'The Walkers', passProductId: 'pp1' },
+      { email: 'walkers@example.com', passProductId: 'pp2' },
+    ]);
+    expect(await api.sellPass({ email: 'nope', kind: 'credits' })).toEqual({ ok: false, errors: ['Passes are held on an account: enter the player’s email.'] });
+  });
+
+  it('hands a bucket out of ball credit, and passes on a refusal', async () => {
+    const holder = { id: 'a7', email: 'grace@example.com', name: 'Grace Tan' };
+    let credit = 500;
+    const { console: api, calls } = make({
+      [`POST /ranges/${RANGE_ID}/counter/ball-credit/redeem`]: (body: any) => {
+        if (body.bucketProductId === 'p-large' && credit < 150) return { status: 409, json: { error: { code: 'not_enough_credit', message: 'Large bucket needs 150 balls of credit; you have 50.' } } };
+        credit -= body.bucketProductId === 'p-large' ? 150 : 100;
+        const code = { id: 'c', code: 'ABCD-EFGH', rangeId: RANGE_ID, bucket: { productId: body.bucketProductId, name: 'Large bucket', balls: 150 }, orderId: 'o5', accountId: 'a7', createdAt: '2026-11-23T22:00:00.000Z', redeemedAt: '2026-11-23T22:00:00.000Z' };
+        return { status: 201, json: { order: order({ id: 'o5', kind: 'bucket', totalCents: 0, paymentProvider: 'ball_credit' }), bucketCode: code, ballCredit: credit } };
+      },
+      [`GET /ranges/${RANGE_ID}/passes`]: () => ({ json: { passes: [], ballCredit: [{ account: holder, balls: credit }] } }),
+    });
+    const done = await api.redeemBallCredit('credit-a7', 'large');
+    expect(done).toMatchObject({ ok: true, value: { pass: { player: 'Grace Tan', ballsLeft: 350 }, order: { bucket: 'large', balls: 150, status: 'handed-over', amount: 0, passId: 'ball-credit' } } });
+    expect(calls.find((c) => c.method === 'POST')!.body).toEqual({ accountId: 'a7', bucketProductId: 'p-large' });
+    credit = 50;
+    expect(await api.redeemBallCredit('credit-a7', 'large')).toEqual({ ok: false, errors: ['Large bucket needs 150 balls of credit; you have 50.'] });
+    expect((await api.redeemBallCredit('p9', 'small')).ok).toBe(false);
   });
 });
 
