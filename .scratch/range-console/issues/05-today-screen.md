@@ -1,6 +1,6 @@
 # 05 Today's bookings and orders
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 
