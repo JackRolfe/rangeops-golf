@@ -1,6 +1,6 @@
 # 04 Setup: bays, opening hours, prices
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02, 03
 

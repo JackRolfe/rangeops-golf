@@ -1,5 +1,6 @@
 import { Nav } from './components/Nav';
 import { useRoute, type RouteId } from './routes';
+import { SetupScreen } from './screens/SetupScreen';
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -17,7 +18,7 @@ const SCREENS: Record<RouteId, () => React.ReactElement> = {
   handover: () => <Placeholder title="Handover" />,
   passes: () => <Placeholder title="Passes" />,
   'check-in': () => <Placeholder title="Check-in QR" />,
-  setup: () => <Placeholder title="Setup" />,
+  setup: SetupScreen,
 };
 
 export default function App() {

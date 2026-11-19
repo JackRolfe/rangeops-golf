@@ -1,4 +1,5 @@
-import { quoteBooking, validateOpeningHours, validatePrices } from '../domain/pricing';
+import { quoteBooking } from '../domain/pricing';
+import { validateSetup } from '../domain/setup';
 import { toIsoDate, toLocalDateTime, dateOf } from '../domain/time';
 import type { Booking, IsoDate, Order, Pass, Payment, RangeSetup, Result, Robot } from '../domain/types';
 import type { Clock, ConsoleApi } from './ConsoleApi';
@@ -47,7 +48,7 @@ export class FakeConsoleApi implements ConsoleApi {
   }
 
   async saveSetup(setup: RangeSetup): Promise<Result<RangeSetup>> {
-    const errors = [...validateOpeningHours(setup.openingHours), ...validatePrices(setup.prices, setup.openingHours)];
+    const errors = validateSetup(setup);
     if (errors.length) return { ok: false, errors };
     this.state.setup = copy(setup);
     return { ok: true, value: copy(setup) };

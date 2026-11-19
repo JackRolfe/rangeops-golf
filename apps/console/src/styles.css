@@ -203,3 +203,20 @@ h3 { font-size: 16px; font-weight: 700; }
 
 .error-list { margin: 0; padding: 12px 16px 12px 32px; border-radius: var(--radius-sm); background: var(--clay-soft); color: #8f2a16; font-size: 14px; }
 .notice { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--forest-soft); color: var(--forest-deep); font-size: 14px; font-weight: 600; }
+
+.stack { display: grid; gap: 24px; }
+.grow { flex: 1 1 220px; }
+.grow .input { width: 100%; }
+.check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px; font-weight: 600; }
+.money-input { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.table td .field > span:first-child { display: none; }
+.table td .field { display: block; }
+.table td .money-input { display: inline-flex; }
+.table tr.total th, .table tr.total td { font-weight: 800; font-size: 16px; border-top: 1px solid var(--line-strong); }
+.days { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; border: 0; }
+.days legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.day-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.day-toggle span { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 50%; font-size: 13px; font-weight: 700; cursor: pointer; }
+.day-toggle input:checked + span { border-color: var(--forest); background: var(--forest); color: #fff; }
+.day-toggle input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--target) 80%, white); outline-offset: 2px; }
+.peak-window { padding: 12px; border-radius: var(--radius-sm); background: var(--paper); }
