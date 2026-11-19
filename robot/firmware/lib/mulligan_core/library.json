@@ -1,0 +1,8 @@
+{
+  "name": "mulligan_core",
+  "version": "0.1.0",
+  "description": "Mulligan's decisions in plain C++: control link, hire keys, safety rules, motion. No hardware calls.",
+  "frameworks": "*",
+  "platforms": "*",
+  "dependencies": [{ "name": "monocypher" }]
+}
