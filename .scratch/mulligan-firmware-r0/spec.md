@@ -1,6 +1,6 @@
 # Spec: Mulligan R0 firmware and hire-key tooling
 
-Status: ready-for-agent
+Status: resolved
 
 ## Problem
 
