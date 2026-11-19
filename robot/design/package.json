@@ -1,0 +1,7 @@
+{
+  "name": "mulligan-simulator",
+  "private": true,
+  "dependencies": {
+    "three": "0.180.0"
+  }
+}
