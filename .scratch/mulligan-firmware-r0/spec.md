@@ -31,7 +31,7 @@ A Node script, `robot/tools/hire-key.mjs`, with no dependencies, makes signing k
 
 - At boot and after every disconnect the robot is **locked**: telemetry state 7, Drive messages ignored, motors stopped.
 - Writing a valid 78-byte key to Unlock unlocks it for that connection. Valid means: length 78, version 1, the signature checks against the public key built into the firmware, the serial is the robot's own, and the robot's time is inside `[start, end)`.
-- A write that fails any check is rejected with an ATT error and the robot stays (or becomes) locked.
+- A write that fails any check leaves the robot locked (or locks it). The write itself succeeds; the app reads Unlock back for one byte saying why ([ADR 0005](../../docs/adr/0005-unlock-result-read-back.md)), and telemetry stays at state 7.
 - When the hire ends while driving, the robot brakes and locks.
 - **Clock (open).** The robot has no trusted clock. Time comes through a `Clock` interface. The R0 implementation is an *anchored clock*: unknown at boot; the first key whose signature and serial check out anchors it at that key's start time, and it counts up from the ESP32's monotonic timer. This enforces the hire's length but not its calendar time, and an old key can be replayed after a reboot. Acceptable for a private bench rover; the real time source is an open decision ([ADR 0002](../../docs/adr/0002-robot-clock-anchored-on-hire-key.md)).
 

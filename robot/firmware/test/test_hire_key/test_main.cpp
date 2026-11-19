@@ -147,6 +147,18 @@ static void test_explicit_lock() {
   TEST_ASSERT_FALSE(lock.unlocked(1));
 }
 
+static void test_result_codes_on_the_wire() {
+  // docs/adr/0005: what reading Unlock returns.
+  TEST_ASSERT_EQUAL_UINT8(0, static_cast<uint8_t>(KeyCheck::Ok));
+  TEST_ASSERT_EQUAL_UINT8(1, static_cast<uint8_t>(KeyCheck::BadLength));
+  TEST_ASSERT_EQUAL_UINT8(2, static_cast<uint8_t>(KeyCheck::BadVersion));
+  TEST_ASSERT_EQUAL_UINT8(3, static_cast<uint8_t>(KeyCheck::BadSignature));
+  TEST_ASSERT_EQUAL_UINT8(4, static_cast<uint8_t>(KeyCheck::WrongSerial));
+  TEST_ASSERT_EQUAL_UINT8(5, static_cast<uint8_t>(KeyCheck::NotYet));
+  TEST_ASSERT_EQUAL_UINT8(6, static_cast<uint8_t>(KeyCheck::Expired));
+  TEST_ASSERT_EQUAL_UINT8(7, static_cast<uint8_t>(KeyCheck::NoClock));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_every_vector_gives_its_expected_result);
@@ -158,5 +170,6 @@ int main() {
   RUN_TEST(test_a_bad_key_does_not_anchor_the_clock_and_locks);
   RUN_TEST(test_a_later_key_is_checked_against_the_anchored_time);
   RUN_TEST(test_explicit_lock);
+  RUN_TEST(test_result_codes_on_the_wire);
   return UNITY_END();
 }

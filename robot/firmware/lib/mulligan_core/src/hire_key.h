@@ -14,7 +14,8 @@ constexpr size_t kHireKeyLength = 78;
 constexpr size_t kHireKeyBodyLength = 14;
 constexpr uint8_t kHireKeyVersion = 1;
 
-// In the order the checks run, which is the order in hire-key.mjs.
+// In the order the checks run, which is the order in hire-key.mjs. The values
+// go over the air: reading Unlock gives the last one (docs/adr/0005).
 enum class KeyCheck : uint8_t {
   Ok,
   BadLength,

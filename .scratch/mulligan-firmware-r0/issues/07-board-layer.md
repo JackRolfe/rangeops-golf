@@ -1,6 +1,6 @@
 # 07. Board layer: BLE, motors, encoders, sensors, telemetry
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 03, 04, 05, 06
 Spec: [spec.md](../spec.md#ble)
@@ -24,5 +24,17 @@ Spec: [spec.md](../spec.md#ble)
 
 ## Acceptance
 
-- [ ] `pio run -e esp32s3` compiles with no warnings from our code beyond the bench-key warning.
-- [ ] README written.
+- [x] `pio run -e esp32s3` compiles with no warnings from our code beyond the bench-key warning.
+- [x] README written.
+
+## Comments
+
+Done in src/main.cpp and src/board.h; README in robot/firmware/README.md. Compiles with -Wall -Wextra on src and only the deliberate bench-key warning. Choices:
+
+- Bluetooth callbacks only copy bytes under a spinlock; the hire lock and safety core run on the loop task alone.
+- The Arduino BLE library answers a write before the firmware sees it, so a bad key can't be refused with an ATT error. Unlock is readable instead and gives the last check result (ADR 0005); the spec is updated.
+- Encoders use pin-change interrupts reading GPIO_IN_REG directly, with the step table in RAM. PCNT would also work if interrupts prove too busy.
+- The INA228 is read at 10 Hz; a reading outside 5–30 V counts as no reading. The BNO085 gives gravity (tilt) and the game rotation vector (heading) at 100 Hz.
+- Power-down waits 3 s so telemetry can say why, then deep-sleeps with no wake source.
+
+The pin 2 wiring gap moved to ticket 08. The control-link changes from ADR 0003 and 0005 are ticket 09.
