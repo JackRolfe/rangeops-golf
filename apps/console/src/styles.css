@@ -244,3 +244,30 @@ h3 { font-size: 16px; font-weight: 700; }
 .choice legend { padding: 0; margin-bottom: 4px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .choice .check { min-height: 30px; font-weight: 500; }
 .search { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+
+/* Check-in QR codes */
+.checkin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 24px; align-items: start; }
+@media (max-width: 1000px) { .checkin { grid-template-columns: 1fr; } }
+.bay-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 8px; }
+.bay-chip { min-height: 56px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); font-family: var(--ro-font-display); font-size: 20px; font-weight: 800; cursor: pointer; }
+.bay-chip:hover { border-color: var(--forest); }
+.bay-chip[aria-pressed='true'] { border-color: var(--forest); background: var(--forest); color: #fff; }
+.checkin__one { justify-items: center; }
+.url { max-width: 100%; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; text-align: center; }
+.bay-card { display: grid; gap: 10px; width: 100%; max-width: 340px; padding: 18px; border: 2px solid var(--forest-deep); border-radius: 18px; background: #fff; break-inside: avoid; }
+.bay-card__head { display: flex; align-items: center; justify-content: space-between; color: var(--forest); }
+.bay-card__number { display: grid; place-items: center; min-width: 54px; height: 54px; padding: 0 8px; border-radius: 12px; background: var(--target); color: var(--ro-on-ball); font-family: var(--ro-font-sign); font-size: 38px; font-weight: 800; }
+.qr { width: 100%; aspect-ratio: 1; }
+.qr svg { display: block; width: 100%; height: 100%; }
+.bay-card__foot { text-align: center; font-size: 16px; }
+.bay-card__range { text-align: center; color: var(--muted); font-size: 12px; }
+.print-sheet { display: none; }
+
+@media print {
+  @page { margin: 12mm; }
+  body, .main { background: #fff; padding: 0; }
+  .shell { display: block; }
+  .nav, .no-print { display: none !important; }
+  .print-sheet { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10mm; }
+  .bay-card { max-width: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

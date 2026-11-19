@@ -1,5 +1,6 @@
 import { Nav } from './components/Nav';
 import { useRoute, type RouteId } from './routes';
+import { CheckInScreen } from './screens/CheckInScreen';
 import { HandoverScreen } from './screens/HandoverScreen';
 import { PassesScreen } from './screens/PassesScreen';
 import { SetupScreen } from './screens/SetupScreen';
@@ -20,7 +21,7 @@ const SCREENS: Record<RouteId, () => React.ReactElement> = {
   today: TodayScreen,
   handover: HandoverScreen,
   passes: PassesScreen,
-  'check-in': () => <Placeholder title="Check-in QR" />,
+  'check-in': CheckInScreen,
   setup: SetupScreen,
 };
 

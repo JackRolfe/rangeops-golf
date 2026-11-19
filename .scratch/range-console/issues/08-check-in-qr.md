@@ -1,6 +1,6 @@
 # 08 Bay check-in QR codes
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 
@@ -12,3 +12,7 @@ The public app URL is a range setting, defaulting to a placeholder until decisio
 
 - Vitest: the link for a bay.
 - Screen: a QR renders for every in-service bay; Print opens the print dialog.
+
+## Comments
+
+- Decided: the link is `<publicAppUrl>check-in?range=<rangeId>&bay=<bayId>`, for example `https://rangeops.example/app/check-in?range=demo-range&bay=bay-7`. It is static and printed once, so it carries no secret; the player's own booking in the app is what starts the session and gets the hire key. The player app needs a `check-in` route that reads these two parameters (not built here). The default public app URL is a placeholder until decision 7 picks a domain.
