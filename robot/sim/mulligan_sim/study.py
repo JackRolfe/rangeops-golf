@@ -25,7 +25,7 @@ PLOTS = ROOT / "plots"
 RESULTS = ROOT / "results"
 
 MAIN = ["odometry", "odo_gyro", "uwb1", "uwb2"]
-ALL = MAIN + ["uwb2_wide"]
+ALL = MAIN + ["uwb2_wide", "rtk"]
 MC_SEED0 = 1000
 DIST_BINS = np.arange(0.0, 71.0, 1.0)  # metres travelled
 
@@ -36,8 +36,23 @@ COLOURS = {
     "uwb1": "#1baf7a",
     "uwb2": "#eda100",
     "uwb2_wide": "#e87ba4",
+    "rtk": "#008300",
+    "rtk_poor_sky": "#008300",  # same estimator, harder sky: same colour, dotted
 }
-STYLES = {"odometry": "-", "odo_gyro": "--", "uwb1": "-.", "uwb2": "-", "uwb2_wide": ":"}
+STYLES = {"odometry": "-", "odo_gyro": "--", "uwb1": "-.", "uwb2": "-", "uwb2_wide": ":", "rtk": "-",
+          "rtk_poor_sky": ":"}
+
+# RTK in a poor spot: next to steel net poles and tall nets, under a deep roof. ASSUMED:
+# four times the float dropouts, longer ones, and three times the wrong fixes.
+from .sensors import GnssSpec  # noqa: E402
+
+POOR_SKY = GnssSpec(float_rate_open_per_s=1.0 / 30.0, float_rate_edge_per_s=1.0 / 5.0,
+                    float_episode_s=(4.0, 15.0), wrong_fix_p=0.03)
+
+# Margin-study cases: key -> (estimator, scenario overrides).
+CASES = {name: (name, {}) for name in ALL}
+CASES["rtk_poor_sky"] = ("rtk", {"gnss": POOR_SKY})
+CASE_LABELS = {**LABELS, "rtk_poor_sky": "Gyro + RTK GNSS, poor sky"}
 INK, INK2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 
 
@@ -110,7 +125,7 @@ def plot_far_error(acc: dict) -> None:
     ax.axvline(P.LANE_HALF_WIDTH_M, color=INK2, linewidth=1, linestyle=(0, (4, 3)))
     ax.text(P.LANE_HALF_WIDTH_M * 1.05, len(names) - 0.45, "half a lane, 1.5 m", fontsize=8, color=INK2)
     ax.set_xscale("log")
-    ax.set_xlim(0.003, 40)
+    ax.set_xlim(0.001, 40)
     ax.set_yticks(range(len(names)), [LABELS[n] for n in names], fontsize=9, color=INK)
     ax.set_ylim(-0.6, len(names) - 0.2)
     ax.set_xlabel("Sideways error at the furthest point out (m, log scale)", fontsize=9, color=INK)
@@ -232,23 +247,24 @@ MARGIN_SEED0 = 5000
 TARGET = 0.95  # nineteen runs in twenty
 
 
-def chaser(seed: int):
+def chaser(seed: int, **overrides):
     """A child who goes after balls in the neighbouring bays more often than not."""
-    return generate(seed, chase_p=0.6, chase_y=(2.0, 3.5), return_balls=1)
+    return generate(seed, chase_p=0.6, chase_y=(2.0, 3.5), return_balls=1, **overrides)
 
 
 def _margin_run(args) -> tuple:
-    name, margin, seed = args
-    sc = chaser(seed)
-    log = simulate(sc, [name], enforce=name, margin=margin)
+    key, margin, seed = args
+    est, overrides = CASES[key]
+    sc = chaser(seed, **overrides)
+    log = simulate(sc, [est], enforce=est, margin=margin)
     in_lane = [i for i, g in enumerate(sc.goals) if g.kind == "ball" and abs(g.y) <= P.LANE_HALF_WIDTH_M]
     got = sum(1 for i in in_lane if i in log.reached)
-    return name, margin, float(np.max(np.abs(log.y))), log.completed, got, len(in_lane)
+    return key, margin, float(np.max(np.abs(log.y))), log.completed, got, len(in_lane)
 
 
 def margins(pool: Pool, quick: bool) -> str:
     n = 60 if quick else 400
-    jobs = [(name, m, seed) for name in ALL for m in MARGINS for seed in range(MARGIN_SEED0, MARGIN_SEED0 + n)]
+    jobs = [(key, m, seed) for key in CASES for m in MARGINS for seed in range(MARGIN_SEED0, MARGIN_SEED0 + n)]
     rows = pool.map(_margin_run, jobs, chunksize=8)
     worst, done, got, avail = {}, {}, {}, {}
     for name, m, max_y, completed, n_got, n_avail in rows:
@@ -257,7 +273,7 @@ def margins(pool: Pool, quick: bool) -> str:
         got[(name, m)] = got.get((name, m), 0) + n_got
         avail[(name, m)] = avail.get((name, m), 0) + n_avail
     table = {}
-    for name in ALL:
+    for name in CASES:
         for m in MARGINS:
             ys = np.array(worst[(name, m)])
             table[(name, m)] = {
@@ -286,32 +302,32 @@ def margins(pool: Pool, quick: bool) -> str:
     lines.append("")
     lines.append("| Estimator | Margin, centre inside 19 in 20 | Lane left to drive in | Inside at that margin | In-lane balls reached | Got home | Margin, whole body inside 19 in 20 |")
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
-    for name in ALL:
+    for name in CASES:
         m = required("inside")
         mb = required("body_inside")
         if m is None:
-            lines.append(f"| {LABELS[name]} | not reached by 1.4 m | - | best {max(table[(name, x)]['inside'] for x in MARGINS):.0%} | - | - | "
+            lines.append(f"| {CASE_LABELS[name]} | not reached by 1.4 m | - | best {max(table[(name, x)]['inside'] for x in MARGINS):.0%} | - | - | "
                          f"{'not reached' if mb is None else f'{mb:.1f} m'} |")
             continue
         t = table[(name, m)]
-        lines.append(f"| {LABELS[name]} | {m:.1f} m | {2 * (P.LANE_HALF_WIDTH_M - m):.1f} m wide | {t['inside']:.1%} | "
+        lines.append(f"| {CASE_LABELS[name]} | {m:.1f} m | {2 * (P.LANE_HALF_WIDTH_M - m):.1f} m wide | {t['inside']:.1%} | "
                      f"{t['balls']:.0%} | {t['home']:.0%} | {'not reached' if mb is None else f'{mb:.1f} m'} |")
     lines.append("")
     lines.append("Share of runs with the centre inside, by margin:")
     lines.append("")
-    lines.append("| Margin (m) | " + " | ".join(LABELS[n] for n in ALL) + " |")
-    lines.append("| ---: | " + " | ".join("---:" for _ in ALL) + " |")
+    lines.append("| Margin (m) | " + " | ".join(CASE_LABELS[n] for n in CASES) + " |")
+    lines.append("| ---: | " + " | ".join("---:" for _ in CASES) + " |")
     for m in MARGINS:
-        lines.append(f"| {m:.1f} | " + " | ".join(f"{table[(n, m)]['inside']:.1%}" for n in ALL) + " |")
+        lines.append(f"| {m:.1f} | " + " | ".join(f"{table[(n, m)]['inside']:.1%}" for n in CASES) + " |")
     lines.append("")
     return "\n".join(lines)
 
 
 def plot_margins(table: dict, n: int) -> None:
     plt, fig, ax = _figure(8, 4.2)
-    for name in ALL:
+    for name in CASES:
         ax.plot(MARGINS, [100 * table[(name, m)]["inside"] for m in MARGINS], STYLES[name],
-                color=COLOURS[name], linewidth=2, marker="o", markersize=4, label=LABELS[name])
+                color=COLOURS[name], linewidth=2, marker="o", markersize=4, label=CASE_LABELS[name])
     ax.axhline(100 * TARGET, color=INK2, linewidth=1, linestyle=(0, (4, 3)))
     ax.text(0.75, 100 * TARGET - 4.5, "19 runs in 20", fontsize=8, color=INK2)
     ax.set_ylim(0, 102)
@@ -337,10 +353,13 @@ def _variants():
         "Dock heading 1.5 deg (1 sd)": {"dock_sd_theta_rad": math.radians(1.5)},
         "UWB 15 cm white, 5% outliers": {"uwb": UwbSpec(white_sd_m=0.15, outlier_p=0.05)},
         "All wet grass": {"ground": WET},
+        "RTK: poor sky (nets, poles)": {"gnss": POOR_SKY},
+        "RTK: slow first fix, 20-40 s": {"gnss": GnssSpec(first_fix_s=(20.0, 40.0))},
+        "RTK: no corrections (Wi-Fi or caster down)": {"gnss": GnssSpec(corrections=False)},
     }
 
 
-SENS_EST = ["odo_gyro", "uwb1", "uwb2", "uwb2_wide"]
+SENS_EST = ["odo_gyro", "uwb1", "uwb2", "uwb2_wide", "rtk"]
 
 
 def _sens_run(args) -> tuple:
