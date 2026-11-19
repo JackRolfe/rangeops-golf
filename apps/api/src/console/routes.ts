@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import type { Api } from '../app.js';
 import { requireStaff } from '../auth/auth.js';
+import { BucketCodeSchema, bucketCodeOut, type BucketCodeRow } from '../balls/schemas.js';
 import { bearer } from '../auth/schemas.js';
 import { AddOnRequestSchema, BookingSchema, bookingOut } from '../bookings/schemas.js';
 import { createBooking, MAX_HOURS, type BookingRow } from '../bookings/service.js';
@@ -208,7 +209,11 @@ const routes = {
               .object({
                 date: z.string(),
                 totals: z.object({ paidCents: Cents, refundedCents: Cents, orders: z.number().int() }),
-                orders: z.array(OrderSchema),
+                orders: z.array(
+                  OrderSchema.extend({
+                    bucketCode: BucketCodeSchema.nullable().openapi({ description: 'For a bucket order, its code and whether it was handed over' }),
+                  }).openapi('StaffOrder'),
+                ),
               })
               .openapi('DayOrders'),
           },
@@ -393,7 +398,12 @@ export function consoleRoutes(app: Api, deps: Deps) {
       {
         date,
         totals: { paidCents: sum('paid'), refundedCents: sum('refunded'), orders: rows.length },
-        orders: await Promise.all(rows.map((o) => orderOut(deps, o))),
+        orders: await Promise.all(
+          rows.map(async (o) => {
+            const code = o.kind === 'bucket' ? await db.maybeOne<BucketCodeRow>('select * from bucket_codes where order_id = $1', [o.id]) : undefined;
+            return { ...(await orderOut(deps, o)), bucketCode: code ? bucketCodeOut(code) : null };
+          }),
+        ),
       },
       200,
     );
