@@ -16,7 +16,8 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, created as te
 
 ## Working rules
 
-- **Everything stays on this machine for now.** Commit locally on your own branch as often as you like. Don't `git push`, open or update pull requests, merge into `main` or deploy anything. Pushing to `main` publishes the site to GitHub Pages, so it counts as a deploy.
+- **Nothing goes to GitHub for now.** Commit locally on your own branch as often as you like. Don't `git push`, open or update pull requests or merge into `main` unless the user asks. Pushing to `main` publishes the site to GitHub Pages.
+- **Deploys go to Azure.** The demo runs in the resource group `rg-rangeops-aue`, described in [deploy/azure/README.md](deploy/azure/README.md). Ship with `deploy/azure/deploy.sh`. Keep it cheap: ask before adding anything that costs more than a few dollars a month.
 - **Work in your own worktree and branch** when other sessions may be running, and stay inside the files your task names.
 - **Keep moving.** When a decision is yours to make and reversible, pick a sensible default, write it down (in the spec, the ticket, `CONTEXT.md` or an ADR), and carry on. Stop to ask only for something irreversible, outward-facing, or a real product choice the plan doesn't settle.
 - **The plan is [docs/PLAN.md](docs/PLAN.md).** The robot's plan, design and control link are in [robot/](robot/README.md).
