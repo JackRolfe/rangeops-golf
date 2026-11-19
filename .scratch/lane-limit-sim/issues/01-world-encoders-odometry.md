@@ -1,6 +1,6 @@
 # 01: Skid-steer world, encoders and odometry-only estimator, end to end
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 
 ## Parent
@@ -13,12 +13,12 @@ The tracer bullet. Set up `robot/sim/` as a `uv` project (Python 3.13, numpy, ma
 
 ## Acceptance criteria
 
-- [ ] `uv run pytest` passes in `robot/sim`.
-- [ ] With slip switched off, straight driving goes straight, a spin turns by the commanded angle, and odometry matches truth to within quantisation.
-- [ ] With slip on, the robot travels less than its wheels say, more so on wet grass.
-- [ ] Encoder counts are integers at 753.2 counts per wheel turn.
-- [ ] A seeded out-and-back run is reproducible and reports a lateral error at 30 m.
-- [ ] The odometry step function uses only scalars and `math`.
+- [x] `uv run pytest` passes in `robot/sim`.
+- [x] With slip switched off, straight driving goes straight, a spin turns by the commanded angle, and odometry matches truth to within quantisation.
+- [x] With slip on, the robot travels less than its wheels say, more so on wet grass.
+- [x] Encoder counts are integers at 753.2 counts per wheel turn.
+- [x] A seeded out-and-back run is reproducible and reports a lateral error at 30 m.
+- [x] The odometry step function uses only scalars and `math`.
 
 ## Blocked by
 
