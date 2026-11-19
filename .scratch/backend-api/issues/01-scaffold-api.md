@@ -1,6 +1,6 @@
 # 01. Scaffold apps/api: server, database, tests, OpenAPI
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: none
 Spec: [../spec.md](../spec.md)
 
@@ -15,3 +15,7 @@ Stand up `apps/api` as a self-contained package (own `package.json`, lockfile, `
 - [ ] `openapi.json` is generated from the routes and a test fails if it is stale
 - [ ] `.data/` and `.keys/` are gitignored
 - [ ] Errors use `{error: {code, message}}`, including schema validation failures (400)
+
+## Comments
+
+Done: Hono + PGlite + Vitest scaffold. Tests clone one migrated in-memory PGlite per test. btree_gist is loaded so exclusion constraints can refuse double bookings. CORS is open to any origin for local dev.
