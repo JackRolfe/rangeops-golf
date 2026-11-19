@@ -2065,6 +2065,107 @@
           "startsAt",
           "externalRef"
         ]
+      },
+      "StaffPasses": {
+        "type": "object",
+        "properties": {
+          "passes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffPass"
+            }
+          },
+          "ballCredit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffBallCredit"
+            }
+          }
+        },
+        "required": [
+          "passes",
+          "ballCredit"
+        ]
+      },
+      "StaffPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account": {
+            "$ref": "#/components/schemas/PassHolder"
+          },
+          "name": {
+            "type": "string"
+          },
+          "discountPercent": {
+            "type": "integer"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-24T05:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "name",
+          "discountPercent",
+          "validFrom",
+          "validTo",
+          "createdAt"
+        ]
+      },
+      "PassHolder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ]
+      },
+      "StaffBallCredit": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/PassHolder"
+          },
+          "balls": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "account",
+          "balls"
+        ]
       }
     },
     "parameters": {}
@@ -4570,6 +4671,75 @@
           },
           "409": {
             "description": "Conflicts with something that already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranges/{rangeId}/passes": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Passes and ball credit held at a range (staff)",
+        "description": "Monthly passes, newest first, and every account with ball credit left at the range.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Range id, or its slug",
+              "example": "demo"
+            },
+            "required": true,
+            "description": "Range id, or its slug",
+            "name": "rangeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Passes and ball credit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPasses"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed to do this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
