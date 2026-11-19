@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from . import params as P
 from .driver import Goal, Style
+from .sensors import GyroSpec
 from .world import DRY, Ground
 
 
@@ -18,6 +19,7 @@ class Scenario:
     # guides the wheels to within 2 cm and half a degree (1 sd).
     dock_sd_xy_m: float = 0.02
     dock_sd_theta_rad: float = 0.5 * 3.141592653589793 / 180.0
+    gyro: GyroSpec = field(default_factory=GyroSpec)
     max_time_s: float = 400.0
 
     def rng(self, stream: int) -> random.Random:
@@ -26,11 +28,12 @@ class Scenario:
 
 
 def out_and_back(seed: int = 0, ground: Ground = DRY, far_y: float = 0.0,
-                 style: Style | None = None) -> Scenario:
+                 style: Style | None = None, **overrides) -> Scenario:
     """The simplest run: straight out to 30 m, turn round, come home."""
     return Scenario(
         seed=seed,
         ground=ground,
         goals=(Goal(P.REACH_M, far_y, "far"), Goal(0.0, 0.0, "home")),
         style=style or Style(),
+        **overrides,
     )

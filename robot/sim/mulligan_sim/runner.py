@@ -7,12 +7,13 @@ import numpy as np
 
 from . import params as P
 from .driver import Driver
-from .estimators import Odometry, SensorFrame
+from .estimators import Odometry, OdometryGyro, SensorFrame
 from .scenarios import Scenario
-from .sensors import Encoders
+from .sensors import Encoders, Gyro
 
 ESTIMATORS = {
     "odometry": lambda scenario: Odometry(),
+    "odo_gyro": lambda scenario: OdometryGyro(),
 }
 
 
@@ -50,6 +51,7 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
     )
     driver = Driver(list(scenario.goals), scenario.style, scenario.rng(2))
     encoders = Encoders()
+    gyro = Gyro(scenario.gyro, scenario.rng(3))
     ests = {name: ESTIMATORS[name](scenario) for name in estimators}
     if enforce is not None and enforce not in ests:
         raise ValueError(f"enforce={enforce!r} is not among the estimators")
@@ -68,7 +70,8 @@ def simulate(scenario: Scenario, estimators: list[str], enforce: str | None = No
         world.step(v_cmd, w_cmd, dt)
         step += 1
         d_left, d_right = encoders.read(world)
-        frame = SensorFrame(dt=dt, d_counts_left=d_left, d_counts_right=d_right)
+        frame = SensorFrame(dt=dt, d_counts_left=d_left, d_counts_right=d_right,
+                            gyro_z=gyro.read(world, dt))
         for name, e in ests.items():
             e.step(frame)
             lx, ly, lth = est_log[name]

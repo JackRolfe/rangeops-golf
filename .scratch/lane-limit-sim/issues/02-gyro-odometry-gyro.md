@@ -1,6 +1,6 @@
 # 02: BNO085-like gyro and odometry + gyro estimator
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Parent
@@ -13,10 +13,10 @@ Add the gyro model (scale error, residual bias after dock calibration, bias rand
 
 ## Acceptance criteria
 
-- [ ] With noise, bias and scale error zeroed, the gyro reports the true yaw rate.
-- [ ] Over many seeds, stationary heading drift matches the configured bias.
-- [ ] The odometry + gyro estimator tracks truth with perfect sensors and beats odometry on lateral error in a seeded run.
-- [ ] Step function is scalar-only.
+- [x] With noise, bias and scale error zeroed, the gyro reports the true yaw rate.
+- [x] Over many seeds, stationary heading drift matches the configured bias.
+- [x] The odometry + gyro estimator tracks truth with perfect sensors and beats odometry on lateral error in a seeded run.
+- [x] Step function is scalar-only.
 
 ## Blocked by
 

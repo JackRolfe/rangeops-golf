@@ -50,3 +50,28 @@ class Odometry:
         self.x += d * math.cos(mid)
         self.y += d * math.sin(mid)
         self.theta += d_theta
+
+
+class OdometryGyro:
+    """Distance from the encoders, heading from the gyro.
+
+    The gyro rate arrives already corrected by the dock's bias calibration, so the residual
+    bias, scale error and noise all integrate into heading. Wheel slip still affects the
+    distance, and sideslip goes unseen.
+    """
+
+    name = "odo_gyro"
+
+    def __init__(self) -> None:
+        self.x = 0.0
+        self.y = 0.0
+        self.theta = 0.0
+        self.metres_per_count = P.METRES_PER_COUNT * P.ODOMETRY_DISTANCE_SCALE
+
+    def step(self, f: SensorFrame) -> None:
+        d = 0.5 * (f.d_counts_left + f.d_counts_right) * self.metres_per_count
+        d_theta = f.gyro_z * f.dt
+        mid = self.theta + 0.5 * d_theta
+        self.x += d * math.cos(mid)
+        self.y += d * math.sin(mid)
+        self.theta += d_theta
