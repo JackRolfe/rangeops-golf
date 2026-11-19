@@ -1,6 +1,6 @@
 # 07: RTK GNSS receiver model
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06
 
 ## Parent
@@ -13,10 +13,10 @@ A ZED-F9P-like RTK receiver on the robot: position in the lane frame at 5 Hz wit
 
 ## Acceptance criteria
 
-- [ ] Fixed error matches the configured cm-level sigma; float error is tens of cm.
-- [ ] No solution under the roof; the first fix after leaving it arrives within the configured time.
-- [ ] Float episodes and wrong fixes occur at the configured rates.
-- [ ] Seeded and reproducible; a "perfect" spec reports truth.
+- [x] Fixed error matches the configured cm-level sigma; float error is tens of cm.
+- [x] No solution under the roof; the first fix after leaving it arrives within the configured time.
+- [x] Float episodes and wrong fixes occur at the configured rates.
+- [x] Seeded and reproducible; a "perfect" spec reports truth.
 
 ## Blocked by
 
