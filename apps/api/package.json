@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:demo": "SEED_DEMO_DAY=1 tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",

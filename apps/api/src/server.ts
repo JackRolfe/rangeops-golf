@@ -5,6 +5,7 @@ import { createApp } from './app.js';
 import { consoleMailer } from './auth/mailer.js';
 import { openDatabase } from './db/db.js';
 import { seedDemo } from './db/seed.js';
+import { seedDemoDay } from './db/seedDay.js';
 import type { Deps } from './deps.js';
 import { loadOrCreateSigner } from './hires/signer.js';
 import { FakePaymentProvider } from './payments/fake.js';
@@ -29,6 +30,11 @@ const deps: Deps = {
   payments: new FakePaymentProvider(process.env.FAKE_PAYMENTS === 'decline'),
   signer,
 };
+
+if (process.env.SEED_DEMO_DAY === '1') {
+  const seeded = await seedDemoDay(deps);
+  console.log(seeded.bookings ? `Seeded today at the demo range: ${seeded.bookings} bookings, ${seeded.buckets} buckets.` : 'Today at the demo range already has bookings; not seeding.');
+}
 
 const app = createApp(deps);
 
