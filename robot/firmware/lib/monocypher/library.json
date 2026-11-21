@@ -1,0 +1,7 @@
+{
+  "name": "monocypher",
+  "version": "4.0.2",
+  "description": "Monocypher 4.0.2 with its optional Ed25519 (SHA-512) file, vendored unchanged from monocypher.org. CC0 or BSD-2, see LICENCE.md.",
+  "frameworks": "*",
+  "platforms": "*"
+}

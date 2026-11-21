@@ -111,12 +111,34 @@ export function calculate(p = P) {
   }));
 
   // Envelope
-  const rear = Math.min(-p.shell.halfLength, -p.wheel.wheelbase / 2 - p.wheel.dia / 2);
-  r.frontX = p.pen.backX + p.pen.depth + p.pen.funnelLength;
+  const rear = Math.min(-p.shell.halfLength, p.chassis.rearX, -p.wheel.wheelbase / 2 - p.wheel.dia / 2);
+  r.frontX = p.pen.sideEndX + p.pen.funnelLength;
   r.rearX = rear;
   r.lengthMm = r.frontX - rear;
   r.widthMm = Math.max(p.wheel.track + p.wheel.width, p.pen.funnelMouth);
   r.heightMm = p.shell.topZ;
+
+  // Corrugated plastic panels to cut, measured on their outside faces. The shell is a hip roof:
+  // two trapezoid sides, two trapezoid ends and a small flat top.
+  const rise = p.shell.topZ - p.shell.baseZ;
+  const endRun = rise / Math.tan(rad(p.shell.endSlopeDeg));
+  const sideRun = rise / Math.tan(rad(p.shell.sideSlopeDeg));
+  r.ridgeHalf = p.shell.halfLength - endRun;
+  r.topHalfWidth = p.shell.halfWidth - sideRun;
+  const wingSpread = p.pen.funnelMouth / 2 - p.pen.innerWidth / 2;
+  const wingLength = Math.hypot(p.pen.funnelLength, wingSpread);
+  const wingTall = p.pen.funnelTopZ - p.pen.railBottomZ;
+  const trapezoid = (bottom, top, height) => ({ area: ((bottom + top) / 2) * height, size: `trapezoid: ${f(bottom, 0)} along the bottom, ${f(top, 0)} along the top, ${f(height, 0)} high` });
+  const rectangle = (a, b) => ({ area: a * b, size: `rectangle: ${f(a, 0)} by ${f(b, 0)}` });
+  r.panels = [
+    { name: 'Shell side', count: 2, ...trapezoid(2 * p.shell.halfLength, 2 * r.ridgeHalf, rise / Math.sin(rad(p.shell.sideSlopeDeg))) },
+    { name: 'Shell end', count: 2, ...trapezoid(2 * p.shell.halfWidth, 2 * r.topHalfWidth, rise / Math.sin(rad(p.shell.endSlopeDeg))) },
+    { name: 'Shell top', count: 1, ...rectangle(2 * r.ridgeHalf, 2 * r.topHalfWidth) },
+    { name: 'Chassis end skirt', count: 2, ...rectangle(p.chassis.width - 2 * p.chassis.rail, p.chassis.wallTopZ - p.chassis.floorZ - p.chassis.plate) },
+    { name: 'Pen back wall', count: 1, ...rectangle(p.pen.innerWidth, p.pen.railTopZ - p.pen.railBottomZ) },
+    { name: 'Funnel wing', count: 2, area: wingLength * (wingTall - 6), size: `${f(wingLength, 0)} long, ${f(wingTall, 0)} high at one end and ${f(wingTall - 12, 0)} at the other` },
+  ];
+  r.panelAreaM2 = r.panels.reduce((sum, panel) => sum + panel.count * panel.area, 0) / 1e6;
   return r;
 }
 
@@ -224,6 +246,16 @@ ${rows([
   ])}
 
 A face at 45° sends a level ball straight up. Shallower than that and the ball carries on the way it was going; steeper and it starts to come back.
+
+## Panels to cut
+
+From 4 mm corrugated plastic sign board, with a craft knife and a steel rule. Sizes are in millimetres. Each trapezoid is symmetrical: centre the top edge over the bottom one and join the ends. Its height is measured square to the bottom edge.
+
+| Panel | Number | Size |
+| --- | --- | --- |
+${r.panels.map((panel) => `| ${panel.name} | ${panel.count} | ${panel.size} |`).join('\n')}
+
+All of them together use ${f(r.panelAreaM2, 2)} m², so one 600 × 900 mm sheet is enough with room for mistakes. Cut the shell panels with the flutes running up the slope, from the bottom edge to the top, so any water that gets inside drains out.
 `;
 }
 

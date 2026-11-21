@@ -76,7 +76,8 @@ const ballR = ball.dia / 2;
 const axleX = wheel.wheelbase / 2;
 const wheelR = wheel.dia / 2;
 const gateX = pen.backX + pen.depth;
-const frontX = gateX + pen.funnelLength;
+const SKID_X = gateX - 24;
+const frontX = pen.sideEndX + pen.funnelLength;
 const endRun = (shell.topZ - shell.baseZ) / Math.tan((shell.endSlopeDeg * Math.PI) / 180);
 const sideRun = (shell.topZ - shell.baseZ) / Math.tan((shell.sideSlopeDeg * Math.PI) / 180);
 const ridgeHalf = shell.halfLength - endRun;
@@ -91,10 +92,11 @@ function side() {
   d.line(-270, 0, 630, 0, `stroke="${TURF}" stroke-width="2"`);
   // shell
   d.poly([[-shell.halfLength, shell.baseZ], [-ridgeHalf, shell.topZ], [ridgeHalf, shell.topZ], [shell.halfLength, shell.baseZ]], `fill="${FLAG}" fill-opacity=".16" stroke="${FLAG}" stroke-width="2.2"`);
-  // chassis walls and plate
-  d.box(-chassis.length / 2, chassis.floorZ, chassis.length / 2, chassis.wallTopZ, `fill="#e6ece2"`);
-  // battery and electronics (inside, dashed)
-  d.box(-battery.length / 2, chassis.floorZ + chassis.plate, battery.length / 2, chassis.floorZ + chassis.plate + battery.height, `stroke-dasharray="6 4" stroke="${MUTED}"`);
+  // chassis rails
+  d.box(chassis.rearX, chassis.floorZ, chassis.frontX, chassis.wallTopZ, `fill="#e6ece2"`);
+  // battery on its adapter (inside, dashed)
+  const packZ = chassis.floorZ + chassis.plate + battery.adapterHeight;
+  d.box(-battery.length / 2, packZ, battery.length / 2, packZ + battery.height, `stroke-dasharray="6 4" stroke="${MUTED}"`);
   // wheels and motors
   for (const x of [-axleX, axleX]) {
     d.circle(x, wheelR, wheelR, `fill="#1c2420" fill-opacity=".9"`);
@@ -104,28 +106,30 @@ function side() {
   // balls: three in the pen, one about to be collected
   for (const x of [pen.backX + 28, pen.backX + 76, pen.backX + 122, frontX + 70]) d.circle(x, ballR, ballR, `fill="${BALL}"`);
   // pen: side rail, funnel wing, skid, hinge
-  d.poly([[pen.hingeX, pen.railBottomZ], [gateX, pen.railBottomZ], [gateX, pen.railTopZ], [pen.hingeX, pen.railTopZ]], `fill="${INK}" fill-opacity=".1"`);
-  d.poly([[gateX, pen.railBottomZ], [frontX, pen.railBottomZ], [frontX, pen.funnelTopZ - 12], [gateX, pen.funnelTopZ]], `fill="${INK}" fill-opacity=".05" stroke-dasharray="5 3"`);
-  d.poly([[gateX - 40, 0], [gateX - 4, 0], [gateX + 4, pen.railBottomZ], [gateX - 48, pen.railBottomZ]], `fill="${MUTED}"`);
-  d.circle(pen.hingeX, pen.hingeZ, 5, `fill="${PAPER}"`);
+  d.box(pen.sideStartX, pen.railBottomZ, pen.sideEndX, pen.railTopZ, `fill="${INK}" fill-opacity=".1"`);
+  d.poly([[pen.sideEndX, pen.railBottomZ], [frontX, pen.railBottomZ], [frontX, pen.funnelTopZ - 12], [pen.sideEndX, pen.funnelTopZ]], `fill="${INK}" fill-opacity=".05" stroke-dasharray="5 3"`);
+  d.box(SKID_X - 20, 0, SKID_X + 20, pen.railBottomZ, `fill="${MUTED}"`);
+  // brackets standing on the pen wall carry the pen pivot and the gate rod
+  for (const [x, z] of [[pen.hingeX, pen.hingeZ], [gateX, gate.hingeZ]]) d.box(x - 12, pen.railTopZ, x + 12, z + 12, `fill="#e6ece2"`);
+  d.circle(pen.hingeX, pen.hingeZ, 4, `fill="${PAPER}"`);
   // gate: hinge rod, flap, stop rod
   d.line(gateX, gate.hingeZ, gateX, gate.hingeZ - gate.flapLength, `stroke="${TURF}" stroke-width="3"`);
   d.circle(gateX, gate.hingeZ, 3.5, `fill="${TURF}" stroke="${TURF}"`);
-  d.circle(gateX - 5, gate.stopZ, 2.5, `fill="${INK}"`);
-  // flag whip with a break
-  d.line(flag.x, shell.topZ - 40, flag.x, 272);
+  d.circle(gateX + gate.stopOffset, gate.stopZ, 2.5, `fill="${INK}"`);
+  // flag pole with a break
+  d.line(flag.x, flag.baseZ, flag.x, 272);
   o.push(`<path d="M${d.X(flag.x - 8)} ${d.V(278)}l16 -8M${d.X(flag.x - 8)} ${d.V(288)}l16 -8" stroke="${INK}" stroke-width="1.4" fill="none"/>`);
   d.line(flag.x, 286, flag.x, 350);
   d.poly([[flag.x, 350], [flag.x + 46, 336], [flag.x, 322]], `fill="${BALL}"`);
 
   // notes
-  d.note(-40, 195, 60, 330, 'Shell, polycarbonate');
-  d.note(flag.x + 30, 336, 20, 345, `Flag, top at ${flag.topZ} mm`);
-  d.note(0, 120, 60, 290, 'Battery (inside)');
-  d.note(pen.hingeX, pen.hingeZ, 250, 250, 'Pen hinge: the pen floats on its skids');
-  d.note(gateX, 40, 440, 190, 'Gate of hanging flaps');
-  d.note(frontX - 30, 30, 520, 140, 'Funnel wing');
-  d.note(gateX - 26, 6, 470, -62, 'Skid');
+  d.note(-40, 195, -140, 340, 'Shell, corrugated plastic', 'end');
+  d.note(flag.x + 30, 336, flag.x + 90, 345, `Flag pole in the pen wall, top at ${flag.topZ} mm`);
+  d.note(0, 140, -140, 300, 'Battery (inside)', 'end');
+  d.note(pen.hingeX, pen.hingeZ, 180, 360, 'Pen pivot bolt: the pen floats on its skids', 'end');
+  d.note(gateX, 36, 470, 190, 'Gate of hanging flaps');
+  d.note(frontX - 20, 30, 540, 140, 'Funnel wing');
+  d.note(SKID_X, 6, 400, -62, 'Skid');
   d.note(-axleX - 40, 30, -200, -62, 'Wheel', 'end');
 
   // dimensions
@@ -151,22 +155,21 @@ function top() {
     d.box(x - wheelR, y - wheel.width / 2, x + wheelR, y + wheel.width / 2, `fill="#1c2420" fill-opacity=".9"`);
   }
   // chassis and shell
-  d.box(-chassis.length / 2, -chassis.width / 2, chassis.length / 2, chassis.width / 2, `fill="#e6ece2"`);
+  d.box(chassis.rearX, -chassis.width / 2, chassis.frontX, chassis.width / 2, `fill="#e6ece2"`);
   d.box(-shell.halfLength, -shell.halfWidth, shell.halfLength, shell.halfWidth, `fill="${FLAG}" fill-opacity=".14" stroke="${FLAG}" stroke-width="2.2"`);
   d.box(-ridgeHalf, -topHalfWidth, ridgeHalf, topHalfWidth, `stroke="${FLAG}"`);
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) d.line(sx * shell.halfLength, sy * shell.halfWidth, sx * ridgeHalf, sy * topHalfWidth, `stroke="${FLAG}"`);
   d.box(-battery.length / 2, -battery.width / 2, battery.length / 2, battery.width / 2, `stroke-dasharray="6 4" stroke="${MUTED}"`);
-  d.circle(flag.x, 0, 5, `fill="${BALL}"`);
+  d.circle(flag.x, flag.y, 5, `fill="${BALL}"`);
   // pen: back wall, rails, funnel wings, skids
   const half = pen.innerWidth / 2;
   for (const s of [-1, 1]) {
-    d.box(pen.backX - pen.rail, s * half, gateX, s * (half + pen.rail), `fill="${INK}" fill-opacity=".1"`);
-    d.line(gateX, s * (half + pen.rail / 2), frontX, s * (pen.funnelMouth / 2), `stroke-width="3"`);
-    d.box(gateX - 48, s * (half + pen.rail + 2), gateX, s * (half + pen.rail + 16), `fill="${MUTED}" stroke="none"`);
+    d.box(pen.sideStartX, s * half, pen.sideEndX, s * (half + pen.rail), `fill="${INK}" fill-opacity=".1"`);
+    d.line(pen.sideEndX, s * half, frontX, s * (pen.funnelMouth / 2), `stroke-width="3"`);
+    d.circle(SKID_X, s * (half + pen.rail / 2), 20, `fill="${MUTED}" stroke="none"`);
+    d.circle(pen.hingeX, s * (chassis.width / 2 + 5), 4, `fill="${PAPER}"`);
   }
-  d.box(pen.backX - pen.rail, -half - pen.rail, pen.backX, half + pen.rail, `fill="${INK}" fill-opacity=".1"`);
-  d.line(chassis.length / 2, -half * 0.8, pen.backX - pen.rail, -half * 0.8);
-  d.line(chassis.length / 2, half * 0.8, pen.backX - pen.rail, half * 0.8);
+  d.box(pen.backX - pen.backWall, -half, pen.backX, half, `fill="${INK}" fill-opacity=".1"`);
   // gate flaps
   for (let i = 0; i < R.flapCount; i++) {
     const y = -half + (pen.innerWidth - R.flapCount * gate.flapPitch) / 2 + i * gate.flapPitch + (gate.flapPitch - gate.flapWidth) / 2;
@@ -180,11 +183,11 @@ function top() {
   // notes
   d.note(-60, -110, -30, -250, 'Shell');
   d.note(20, 20, 60, 255, 'Battery');
-  d.note(flag.x, 0, -150, 255, 'Flag mast', 'end');
+  d.note(flag.x, flag.y, 300, 250, 'Flag pole');
   d.note(gateX, -40, 500, -250, `Gate: ${R.flapCount} flaps`);
   d.note(frontX - 20, -pen.funnelMouth / 2 + 14, 560, -200, 'Funnel wing');
-  d.note(gateX - 24, half + pen.rail + 9, 500, 255, 'Skid');
-  d.note(pen.backX + 60, 150, 300, 255, `Pen, ${P.target.balls} balls shown`);
+  d.note(SKID_X, half + pen.rail / 2, 520, 270, 'Skid');
+  d.note(pen.backX + 60, 150, 380, 290, `Pen, ${P.target.balls} balls shown`);
 
   // dimensions
   d.dimH(R.rearX, frontX, 300, `${n(R.lengthMm)} overall`, halfTrack, pen.funnelMouth / 2);
@@ -212,18 +215,18 @@ function gateDetail() {
   const bx = (-ballR + drop * Math.sin(phi)) / Math.cos(phi);
   d.circle(bx, ballR, ballR, `fill="${BALL}"`);
   d.line(0, gate.hingeZ, 0, gate.hingeZ - gate.flapLength, `stroke="${TURF}" stroke-width="4" stroke-dasharray="8 6" opacity=".75"`);
-  d.circle(-2.5, gate.stopZ, 1.5, `fill="${INK}"`);
+  d.circle(-gate.stopOffset, gate.stopZ, 1.5, `fill="${INK}"`);
   d.line(0, gate.hingeZ, gate.flapLength * Math.sin(phi), gate.hingeZ - gate.flapLength * Math.cos(phi), `stroke="${TURF}" stroke-width="6" stroke-linecap="round"`);
   d.circle(0, gate.hingeZ, 1.5, `fill="${INK}"`);
   // a ball about to meet the gate
   d.circle(-ballR - 34, ballR, ballR, `fill="${BALL}" fill-opacity=".45" stroke-dasharray="5 3"`);
   o.push(`<path d="M${d.X(-78)} ${d.V(ballR)}H${d.X(-62)}" stroke="${MUTED}" stroke-width="1.4" marker-end="url(#a)" fill="none"/>`);
 
-  d.note(0, gate.hingeZ, 40, 82, 'Hinge rod, 3 mm');
-  d.note(-2.5, gate.stopZ, -40, 78, 'Stop rod: flaps cannot swing out', 'end');
+  d.note(0, gate.hingeZ, 40, 82, 'Hinge rod, M4 threaded rod');
+  d.note(-gate.stopOffset, gate.stopZ, -40, 78, 'Stop rod: flaps cannot swing out', 'end');
   d.note(24, 34, 62, 66, 'Flap riding over a ball');
   d.note(0, 14, -42, 52, 'Flap at rest', 'end');
-  d.note(60, 50, 70, 34, 'Pen rail');
+  d.note(60, 50, 70, 34, 'Pen wall');
   d.dimV(0, gate.hingeZ, 108, `${gate.hingeZ}`, 0);
   d.dimV(0, gate.hingeZ - gate.flapLength, -22 + 10, `${R.flapTipClearance}`, 0);
   d.dimV(0, pen.railBottomZ, 96, `${pen.railBottomZ}`, 60);

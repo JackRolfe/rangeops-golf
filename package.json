@@ -6,6 +6,8 @@
   "description": "RangeOps: the driving range app, the Mulligan ball-fetching robot, and the site that sells both.",
   "workspaces": [
     "apps/player",
+    "apps/api",
+    "apps/console",
     "packages/brand"
   ],
   "scripts": {
@@ -13,9 +15,11 @@
     "build": "node scripts/build.mjs",
     "build:site": "node scripts/build.mjs --site-only",
     "preview": "vite preview --outDir dist",
-    "typecheck": "npm run typecheck -w @rangeops/player",
-    "test": "npm test -w @rangeops/player",
+    "typecheck": "npm run typecheck -w @rangeops/player -w @rangeops/api -w @rangeops/console --if-present",
+    "test": "npm test -w @rangeops/player -w @rangeops/api -w @rangeops/console",
     "test:e2e": "npm run test:e2e -w @rangeops/player",
-    "robot:design": "node robot/design/calc.mjs && node robot/design/draw.mjs"
+    "robot:design": "node robot/design/calc.mjs && node robot/design/draw.mjs",
+    "dev:api": "npm run dev -w @rangeops/api",
+    "dev:console": "npm run dev -w @rangeops/console"
   }
 }

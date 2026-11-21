@@ -1,10 +1,11 @@
 // Builds the whole RangeOps web property into dist/:
 //   dist/          the site (apps/site)
 //   dist/brand/    the brand tokens the site links to (packages/brand)
+//   dist/media/    the robot film and renders the site shows (robot/drawings, robot/cad/renders)
 //   dist/app/      the practice app (apps/player)
 //
 // RANGEOPS_BASE sets the path the site is served from when it is not the domain root,
-// for example RANGEOPS_BASE=/rangeops-golf/ for a GitHub Pages project site.
+// for example RANGEOPS_BASE=/rangeops/. The Azure deploy serves it from the root.
 // --site-only refreshes the site and brand files without rebuilding the app.
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, rmSync } from 'node:fs';
@@ -25,6 +26,15 @@ mkdirSync(join(dist, 'brand'), { recursive: true });
 cpSync(join(root, 'apps/site'), dist, { recursive: true });
 cpSync(join(root, 'packages/brand/tokens.css'), join(dist, 'brand/tokens.css'));
 cpSync(join(root, 'apps/player/public/favicon.svg'), join(dist, 'favicon.svg'));
+// The robot's film and renders live with the robot; the site shows copies of them.
+mkdirSync(join(dist, 'media'), { recursive: true });
+for (const [from, to] of [
+  ['robot/drawings/mulligan.mp4', 'mulligan-film.mp4'],
+  ['robot/drawings/mulligan-preview.jpg', 'mulligan-concept.jpg'],
+  ['robot/cad/renders/mulligan.png', 'build-assembled.png'],
+  ['robot/cad/renders/mulligan_rover.png', 'build-rover.png'],
+  ['robot/cad/renders/mulligan_pen.png', 'build-pen.png'],
+]) cpSync(join(root, from), join(dist, 'media', to));
 console.log('Built the site into dist/');
 
 if (!siteOnly) {
