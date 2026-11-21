@@ -67,7 +67,7 @@ Made, and reflected in this repository:
 
 - **One name.** RangeOps is the offering and the app. Mulligan is the robot only.
 - **One repository**, with the app, site, robot and plan side by side.
-- **One web property.** The site is at `/` and the app at `/app/`, built together and published to GitHub Pages on every push to `main`.
+- **One web property.** The site is at `/` and the app at `/app/`, built together and hosted on Azure with the API and console ([deploy/azure](../deploy/azure/README.md)). GitHub Pages is switched off.
 - **One brand.** The app and site share colours and type from `packages/brand`.
 
 Open, with a recommendation for each:
@@ -77,7 +77,7 @@ Open, with a recommendation for each:
 | 1 | Is the name RangeOps free to use? | Check trademarks and domains in the launch country before printing anything. Nothing has been checked yet. | Before the pilot |
 | 2 | How does an iPhone talk to the robot? Safari on iPhone and iPad has no Web Bluetooth, so the web app cannot drive the robot there. | Wrap the existing React app in Capacitor and use a native Bluetooth plugin. Keep the web app for everything else. Use Web Bluetooth in Chrome on Android or a laptop for bench testing, since it needs no app store. | App stage 3 |
 | 3 | How does the robot know where it is, to hold the lane limit? | Start with wheel odometry and a gyro, reset at the dock. Expect it to be too loose for a single-bay lane at 30 m, and plan for ultra-wideband ranging to the dock. See the robot plan. | Robot stage R2 |
-| 4 | Backend stack | GitHub Pages serves static files only, so booking needs a host for an API. A small TypeScript API on serverless functions with Postgres, and Stripe for payments. Choose the host when stage 4 starts; the site and app can stay on Pages. | App stage 4 |
+| 4 | Backend stack | GitHub Pages serves static files only, so booking needs a host for an API. A small TypeScript API on serverless functions with Postgres, and Stripe for payments. Settled: the API runs on Azure Container Apps (PGlite for the demo), and the site and app moved to Azure too. | App stage 4 |
 | 5 | How does a paid bucket reach the ball machine? | Depends entirely on the pilot range's dispenser. For the pilot, staff see the order in the console and hand over the bucket. Integrate with the machine only once a range commits. Japan shows another route: a payment unit added to an existing dispenser. | Pilot |
 | 8 | Sweetspot | Build everything, behind the boundaries in [Built to swap](#built-to-swap). Approach them once R1 works on video, after checking the RangeOps name. They appear to have no Australian ranges, so ask where a trial could run. | After R1 |
 | 6 | Launch country and currency | The demo shows dollars and the tests use the Australian locale. Confirm, because it sets the payment setup, the radio compliance mark the robot needs and the trademark search. | App stage 4 |

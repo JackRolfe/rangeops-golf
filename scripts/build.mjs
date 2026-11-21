@@ -5,7 +5,7 @@
 //   dist/app/      the practice app (apps/player)
 //
 // RANGEOPS_BASE sets the path the site is served from when it is not the domain root,
-// for example RANGEOPS_BASE=/rangeops-golf/ for a GitHub Pages project site.
+// for example RANGEOPS_BASE=/rangeops/. The Azure deploy serves it from the root.
 // --site-only refreshes the site and brand files without rebuilding the app.
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, rmSync } from 'node:fs';

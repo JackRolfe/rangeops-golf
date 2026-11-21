@@ -1,6 +1,6 @@
 # RangeOps on Azure
 
-A demo deployment, in one resource group in the Pay-As-You-Go subscription. GitHub Pages can't run the API, so everything runs here instead, and nothing about it needs a push to GitHub.
+A demo deployment, in one resource group in the Pay-As-You-Go subscription. This is the only place RangeOps is hosted: GitHub Pages is switched off, and nothing here needs a push to GitHub.
 
 | What | Azure resource | Address |
 | --- | --- | --- |

@@ -8,10 +8,10 @@ This repository holds all of it: the app, the site, the robot and the plan.
 
 | Product | What it is | Where | Status |
 | --- | --- | --- | --- |
-| RangeOps app | The phone app golfers and families use. Practice tracking today; games, driving the robot, booking and buying balls to come. | [apps/player](apps/player) | Practice tracking is [live](https://jackrolfe.github.io/rangeops-golf/app/). The rest is planned. |
+| RangeOps app | The phone app golfers and families use. Practice tracking today; games, driving the robot, booking and buying balls to come. | [apps/player](apps/player) | Practice tracking is [live](https://gray-pond-0a3488900.6.azurestaticapps.net/app/). The rest is planned. |
 | Mulligan | The robot. A knee-high buggy a child drives from the app to scoop up topped shots and bring them back to the bay. | [robot](robot) | Not built yet. Designed on paper, with a build plan. |
 | Range console | The range owner's side: bays, prices, bookings, bucket codes and the robot fleet. | not started | Planned, after the robot and games. |
-| Site | The public page that explains the offering, with a working demo of where the app is heading. | [apps/site](apps/site) | [Live](https://jackrolfe.github.io/rangeops-golf/) as a concept preview. |
+| Site | The public page that explains the offering, with a working demo of where the app is heading. | [apps/site](apps/site) | [Live](https://gray-pond-0a3488900.6.azurestaticapps.net/) as a concept preview. |
 
 **On names.** RangeOps is the name of the whole offering and of the app. Mulligan is the name of the robot and nothing else. It suits the robot, because a mulligan is a second go at a bad shot, and that is exactly what the robot gives you. The name has not been checked for trademark or domain availability.
 
@@ -74,9 +74,9 @@ The end-to-end tests run against the app on its own by default. To run them agai
 
 ## Deploy
 
-Every push to `main` is tested, built and published to GitHub Pages by [.github/workflows/deploy.yml](.github/workflows/deploy.yml). The live site is https://jackrolfe.github.io/rangeops-golf/ and the app is at https://jackrolfe.github.io/rangeops-golf/app/.
+Every push and pull request is tested, typechecked and built by [.github/workflows/ci.yml](.github/workflows/ci.yml), which deploys nothing. The live demo runs on Azure: the site is https://gray-pond-0a3488900.6.azurestaticapps.net/ and the app is at https://gray-pond-0a3488900.6.azurestaticapps.net/app/. [deploy/azure/README.md](deploy/azure/README.md) explains it, and `deploy/azure/deploy.sh` ships a new version. GitHub Pages is switched off.
 
-The build is a plain static folder, `dist/`, so any static host can serve it. When the site is served from a sub-path instead of the domain root, set `RANGEOPS_BASE` when building, for example `RANGEOPS_BASE=/rangeops-golf/ npm run build`. The workflow does this for you, and needs no change if a custom domain is added later.
+The build is a plain static folder, `dist/`, so any static host can serve it. When the site is served from a sub-path instead of the domain root, set `RANGEOPS_BASE` when building, for example `RANGEOPS_BASE=/rangeops-golf/ npm run build`. The Azure deploy serves it from the root, so it needs no setting.
 
 ## Data and privacy
 
